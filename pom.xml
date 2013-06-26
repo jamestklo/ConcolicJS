@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.concolicjs</groupId>
+  <artifactId>ConcolicJS</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <dependencies>
+  	<dependency>
+        <groupId>com.google.javascript</groupId>
+        <artifactId>closure-compiler</artifactId>
+        <version>v20130603</version>
+    </dependency>
+	<dependency>
+		<groupId>com.crawljax</groupId>
+		<artifactId>crawljax-core</artifactId>
+		<version>3.1</version>
+	</dependency>
+	<dependency>
+		<groupId>com.crawljax.plugins</groupId>
+		<artifactId>crawloverview-plugin</artifactId>
+		<version>3.1</version>
+	</dependency>
+	<dependency>
+		<groupId>com.crawljax.plugins</groupId>
+		<artifactId>proxy-plugin</artifactId>
+		<version>1.4</version>
+	</dependency>
+	<dependency>
+		<groupId>com.crawljax.plugins</groupId>
+		<artifactId>jsmodify</artifactId>
+		<version>1.0</version>
+	</dependency>
+	<dependency>
+		<groupId>org.mozilla</groupId>
+		<artifactId>rhino</artifactId>
+		<version>1.7R4</version>
+	</dependency>
+	<dependency>
+		<groupId>ch.qos.logback</groupId>
+		<artifactId>logback-classic</artifactId>
+		<version>1.0.9</version>
+	</dependency>
+</dependencies>    
+<repositories>
+	<repository>
+		<id>crawljax.mvn.repo</id>
+		<url>https://github.com/crawljax/crawljax-mvn-repo/raw/master</url>
+		<snapshots>
+			<enabled>true</enabled>
+			<updatePolicy>always</updatePolicy>
+		</snapshots>
+	</repository>
+</repositories>    
+</project>
