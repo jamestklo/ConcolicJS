@@ -120,5 +120,7 @@ public class InsertJScriptTransformer implements Transformer {
 	  //srcs.add(host+"tracing/trazing/instrument.js");
 	  srcs.add(host+"tracing/trazing/traceCond.js");
 	  srcs.add(host+"tracing/trazing/traceDOM.js");
+	  
+	  return srcs.toArray(new String[srcs.size()]);
 	}
 }

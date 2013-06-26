@@ -10,9 +10,9 @@ public class HTMLTransformer {
 	private StringBuffer output;
 	private boolean inScript = false;
 	private StringBuffer buffer = new StringBuffer();
-	private RhinoTransformerBase transformer;
+	private Transformer transformer;
 	
-	public HTMLTransformer(Reader input, StringBuffer output, RhinoTransformerBase rtb) throws FileNotFoundException {
+	public HTMLTransformer(Reader input, StringBuffer output, Transformer rtb) throws FileNotFoundException {
 		this.input = input;
 		this.output = output;
 		this.transformer = rtb;

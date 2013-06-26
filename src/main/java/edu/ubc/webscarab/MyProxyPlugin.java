@@ -7,22 +7,27 @@ package edu.ubc.webscarab;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.fireinsight.proxy.transformer.InsertJScriptTransformer;
-import org.fireinsight.proxy.transformer.Transformer;
-import org.fireinsight.util.Props;
 import org.owasp.webscarab.httpclient.HTTPClient;
 import org.owasp.webscarab.model.HttpUrl;
 import org.owasp.webscarab.model.Request;
 import org.owasp.webscarab.model.Response;
 import org.owasp.webscarab.plugin.proxy.ProxyPlugin;
 
-import edu.ubc.javascript.ExpressionDecompositionVisitor;
 import edu.ubc.javascript.NodeUti1;
 
 public class MyProxyPlugin extends ProxyPlugin {
 
 	public static boolean PROFILE = false;
+	private final Map<String, Transformer> transformers = new HashMap<String, Transformer>();
+	
+	public MyProxyPlugin() {
+		super();
+		transformers.put("InsertJScript", new InsertJScriptTransformer());
+		transformers.put("Trace", new TraceTransformer());
+	}
 	
 	@Override
 	public String getPluginName() {
@@ -84,14 +89,15 @@ public class MyProxyPlugin extends ProxyPlugin {
 							if (href.contains("zzv2") || href.contains("firebug-lite") || href.contains("fbug.googlecode.com")) {
 								return response;
 							}							
-							modifyResponse(href, response, charset, ( (Class<Transformer>) Class.forName(Props.getProperty("TransformerClassJs")) ).newInstance());
+							//modifyResponse(href, response, charset, ( (Class<Transformer>) Class.forName(Props.getProperty("TransformerClassJs")) ).newInstance());
+							modifyResponse(href, response, charset, transformers.get("Trace"));
 						} 
 						else if (cType.contains("html")) {							
 							if (href.contains("zzv2") && href.contains("openZZ")) {
 							    return response;
-							}		
-							// insert __zzv2__instruments.js
-							modifyResponse(href, response, charset, ( (Class<Transformer>) Class.forName(Props.getProperty("TransformerClassHTML")) ).newInstance());
+							}									
+							//modifyResponse(href, response, charset, ( (Class<Transformer>) Class.forName(Props.getProperty("TransformerClassHTML")) ).newInstance());
+							modifyResponse(href, response, charset, transformers.get("InsertJScript"));
 						}
 					} 
 					catch(Exception e) {
