@@ -55,14 +55,14 @@ public class MyProxyPlugin extends ProxyPlugin {
 			if (url != null) {
 				href = url.toString();
 				NodeUti1.setURL(href);
-				href = href.toLowerCase();
+				href = href.toLowerCase();				
+			}
+			else {
+				//System.out.println(request);
 			}
 			
-			if (href.contains("notarealwebsiteurl")) {		
-			    //ReadClosuresVisitor.reset();
-			    return new Response();
-			}			
 			long startFetch = System.currentTimeMillis();
+			
 			Response response = in.fetchResponse(request);
 			long stopFetch = System.currentTimeMillis();
 			if(PROFILE) {
