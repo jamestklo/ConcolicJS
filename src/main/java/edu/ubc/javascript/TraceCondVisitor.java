@@ -39,18 +39,19 @@ public class TraceCondVisitor implements Callback {
 		Node enterCond = new Node(Token.CALL);
 		comma.addChildrenToFront(enterCond);
 		enterCond.addChildrenToFront(Node.newString(Token.NAME, "__condEnter"));
+		enterCond.addChildrenToBack(Node.newString(varname));
 		enterCond.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
 		enterCond.addChildrenToBack(Node.newNumber(n.getLineno()));
 		enterCond.addChildrenToBack(Node.newString(Token.STRING, Token.name(n.getType())));
 		enterCond.addChildrenToBack(Node.newString(Token.STRING, Token.name(parent.getType())));
-		enterCond.addChildrenToBack(Node.newString(varname));
 		enterCond.addChildrenToBack(Node.newString(num));
 		
 		Node exitCond = new Node(Token.CALL);						
 		comma.addChildrenToBack(exitCond);
 		exitCond.addChildrenToFront(Node.newString(Token.NAME, "__condExit"));
-		exitCond.addChildrenToBack(cloned);
 		exitCond.addChildrenToBack(Node.newString(varname));
+		exitCond.addChildrenToBack(cloned);
+		
 	}
 
 	@Override

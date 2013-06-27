@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory;
 import com.crawljax.core.CrawlerContext;
 import com.crawljax.core.plugin.OnNewStatePlugin;
 import com.crawljax.core.state.StateVertex;
-
+/*
+ * @author Mehdimir
+ */
 public class DomAnalysisPlugin implements OnNewStatePlugin {
 	private static final Logger LOG = LoggerFactory.getLogger(DomAnalysisPlugin.class);
 

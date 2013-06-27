@@ -20,6 +20,7 @@ import edu.ubc.webscarab.MyProxyPlugin;
 /**
  * Example of running Crawljax with the CrawlOverview plugin on a single-page web app. The crawl
  * will produce output using the {@link CrawlOverview} plugin.
+ * @author Mehdimir
  */
 public final class DomAnalysisExample {
 
@@ -47,20 +48,19 @@ public final class DomAnalysisExample {
 
 		WebScarabWrapper proxy = new WebScarabWrapper();
 		proxy.addPlugin(new MyProxyPlugin());
+		//builder.setProxyConfig(ProxyConfiguration.manualProxyOn("localhost", 8084));
+		//builder.addPlugin(proxy);
 
-		builder.setProxyConfig(ProxyConfiguration.manualProxyOn("localhost", 8084));
-
+		
 		File outFolder = new File("output");
 		if (outFolder.exists()) {
 			FileUtils.deleteDirectory(outFolder);
 		}
 
-		builder.addPlugin(new DomAnalysisPlugin());
-
-		builder.addPlugin(proxy);
+		//builder.addPlugin(new DomAnalysisPlugin());
 		builder.addPlugin(new CrawlOverview(outFolder));
 
-		 System.setProperty("webdriver.chrome.driver", "lib/chromedriver");
+		 System.setProperty("webdriver.chrome.driver", "C:/Temp/eclipse-jee-juno-SR1-win32-x86_64/chromedriver.exe");
 		// We want to use two browsers simultaneously.
 		builder.setBrowserConfig(new BrowserConfiguration(BrowserType.chrome, 1));
 
