@@ -58,12 +58,18 @@ public class TraceCondVisitor implements Callback {
 
 	private String funcNamePrefix = "JSCompiler_func_";
 	private void visitFunc(NodeTraversal t, Node n, Node parent) {
+		Node block = n.getChildAtIndex(2);		
+		Node target = block.getFirstChild();
+		if (target==null) {
+			return;
+		}
+
 		String num = safeNameIdSupplier.get();
 		String varname = funcNamePrefix + num;
 		Node name = n.getFirstChild();
 		if (name.getString().length() < 1) {
 			name.setString(varname);
-		}		
+		}
 		
 		Node enterFunc = new Node(Token.CALL);
 		enterFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcEnter"));
@@ -73,27 +79,35 @@ public class TraceCondVisitor implements Callback {
 		enterFunc.addChildrenToBack(Node.newString(name.getString()));
 		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "this"));
 		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "arguments"));
-		enterFunc.addChildrenToBack(Node.newString(num));
-		
+		enterFunc.addChildrenToBack(Node.newString(num));		
 		Node before[] = {enterFunc};
-		Node block = n.getChildAtIndex(2);		
-		Node target = block.getFirstChild();
-		if (target==null) {
-			target = new Node(Token.EMPTY);
-			block.addChildToFront(target);
-		}
 		tx.insert(target, before, null);
 
-		target = block.getLastChild();
-		int ttype = target.getType();		
-		if (ttype!=Token.EMPTY && ttype!=Token.RETURN) {
-			Node exitFunc = new Node(Token.CALL);
-			exitFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcExit"));
-			Node after[] = {exitFunc};
-			tx.insert(target, null, after);
-		}
+		Node blck = new Node(Token.BLOCK);
+		Node tryc = new Node(Token.TRY);
+		blck.addChildrenToFront(tryc);
+		Node cloned = block.cloneTree();
+		tryc.addChildrenToFront(cloned);
+		
+		Node catb = new Node(Token.BLOCK);
+		tryc.addChildrenToBack(catb);
+		Node catc = new Node(Token.CATCH);
+		catb.addChildrenToFront(catc);
+		catc.addChildrenToFront(Node.newString(Token.NAME, varname+"e"));
+		catb = new Node(Token.BLOCK);
+		catc.addChildrenToBack(catb);
+				
+		Node exitFunc = new Node(Token.CALL);
+		catb.addChildrenToBack(exitFunc);
+		exitFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcExit"));
+		
+		Node thrw = new Node(Token.THROW);
+		catb.addChildrenToBack(thrw);
+		thrw.addChildrenToFront(Node.newString(Token.NAME, varname+"e"));
+		
+		blck.addChildrenToBack(exitFunc.cloneNode());
+		tx.replace(block, blck, cloned);
 	}
-	
 	
 	private void visitReturn(NodeTraversal t, Node n, Node parent) {
 		Node target = n.getFirstChild();

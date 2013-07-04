@@ -46,7 +46,7 @@ public class ReflectiveNodeTransformer {
 	public void replace(Node n, Node newNode, Node cloned) {
 		if (isTxMode) {
 			if (replacing.containsKey(n)) {
-				newNode.replaceChild(cloned, replacing.get(n));
+				cloned.getParent().replaceChild(cloned, replacing.get(n));
 			}
 			else {
 				order.add(n);
