@@ -101,7 +101,7 @@ public class InsertJScriptTransformer implements Transformer {
 		for (i=0; i < l; i++) {
 			inserts.append(getScriptHTML(sources[i])); 	
 		}
-		return inserts.toString();		
+		return inserts.toString();
 	}
 	
 	private static String getScriptHTML(String source) {
@@ -120,7 +120,8 @@ public class InsertJScriptTransformer implements Transformer {
 	  //srcs.add(host+"tracing/trazing/instrument.js");
 	  srcs.add(host+"tracing/trazing/traceCond.js");
 	  srcs.add(host+"tracing/trazing/traceDOM.js");
-	  
+	  srcs.add(host+"tracing/trazing/traceFunc.js");
+		  	  
 	  return srcs.toArray(new String[srcs.size()]);
 	}
 }

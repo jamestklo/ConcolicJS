@@ -46,7 +46,7 @@ public class TraceTransformer implements Transformer {
 		options.prettyPrint = true;
 		
 		inputs.add(input);
-		Compiler compiler = new Compiler(System.out);		
+		Compiler compiler = new Compiler(System.out);
 		compiler.compile(externs, inputs, options);
 		
 		Node node = compiler.getRoot().getLastChild();		

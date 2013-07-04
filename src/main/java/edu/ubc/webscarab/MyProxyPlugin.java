@@ -77,7 +77,7 @@ public class MyProxyPlugin extends ProxyPlugin {
 			}
 						
 			if(response != null) {
-				String cType = response.getHeader("Content-Type");				
+				String cType = response.getHeader("Content-Type");
 				if (cType != null) { 					
 					cType = cType.toLowerCase();
 					if (cType.contains("audio/")) {

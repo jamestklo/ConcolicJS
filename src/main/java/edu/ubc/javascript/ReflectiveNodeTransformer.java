@@ -15,6 +15,7 @@ public class ReflectiveNodeTransformer {
 	private List<Node> nodes = new ArrayList<Node>();
 	private List<Node[]> befores = new ArrayList<Node[]>();
 	private List<Node[]> afters = new ArrayList<Node[]>(); 
+	private List<Node> order = new ArrayList<Node>(); 
 	private Map<Node, Node> replacing = new HashMap<Node, Node>();
 	
 	public int commit(boolean newTxMode) {
@@ -30,25 +31,31 @@ public class ReflectiveNodeTransformer {
 		befores.clear();
 		afters.clear();
 				
-		Iterator<Node> itr = replacing.keySet().iterator();
+		Iterator<Node> itr = order.iterator();
 		while (itr.hasNext()) {
 			Node n = itr.next();
-			Node r = replacing.get(n);
+			Node r;
+			r = replacing.get(n);
 			n.getParent().replaceChild(n, r);
+			r = itr.next();
+			r.getParent().replaceChild(r, n.cloneTree());
 		}		
 		return ret;
 	}	
 	
 	public void replace(Node n, Node newNode, Node cloned) {
 		if (isTxMode) {
-		  n.getParent().replaceChild(n, newNode);
+			if (replacing.containsKey(n)) {
+				newNode.replaceChild(cloned, replacing.get(n));
+			}
+			else {
+				order.add(n);
+				order.add(cloned);
+			}
+			replacing.put(n, newNode);		  
 		}
 		else {
-		  if (replacing.containsKey(n)) {
-		    Node r = replacing.get(n);
-		    newNode.replaceChild(cloned, r);
-		  }
-		  replacing.put(n, newNode);		  
+			n.getParent().replaceChild(n, newNode);
 		}
 	}
 	public void insert(Node n, Node[] before, Node[] after) {
@@ -65,7 +72,7 @@ public class ReflectiveNodeTransformer {
 		// detect if it's a COMMA or EXPR_RESULT
 		int types[] = {-1, Token.COMMA};
 		Node ancestor = NodeUti1.isStatement(n)?n:NodeUti1.detectAncestor(n, types);
-		Node parent = ancestor.getParent();		
+		Node parent = ancestor.getParent();	
 		Node empty = new Node(Token.EMPTY);
 		int blen = (before==null)?0:before.length;
 		int alen = (after ==null)?0:after.length;
@@ -144,5 +151,10 @@ public class ReflectiveNodeTransformer {
 				gparent.replaceChild(empty, comma);
 			}			
 		}
+		
+		if (n.getType()==Token.EMPTY) {
+			n.getParent().removeChild(n);
+		}
+
 	}	
 }
