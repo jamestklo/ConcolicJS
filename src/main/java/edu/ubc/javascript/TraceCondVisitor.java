@@ -25,16 +25,8 @@ public class TraceCondVisitor implements Callback {
 		return true;
 	}
 
-	private String condNamePrefix = "JSCompiler_cond_";
 	private void visitCond(NodeTraversal t, Node n, Node parent) {
-		String num = safeNameIdSupplier.get();
-		String varname = condNamePrefix + num;
-		/*
-		int etypes[] = {-1};					
-		Node expr = ExpressionDecompositionVisitor.detectAncestor(n, etypes);		
-		expr.getParent().addChildBefore(NodeUtil.newVarNode(varname, null), expr);
-		*/		
-		
+		String num = safeNameIdSupplier.get();		
 		Node comma = new Node(Token.COMMA);
 		Node cloned = n.cloneTree();
 		tx.replace(n, comma, cloned);		
@@ -42,21 +34,34 @@ public class TraceCondVisitor implements Callback {
 		Node enterCond = new Node(Token.CALL);
 		comma.addChildrenToFront(enterCond);
 		enterCond.addChildrenToFront(Node.newString(Token.NAME, "__condEnter"));
-		enterCond.addChildrenToBack(Node.newString(varname));
+		enterCond.addChildrenToBack(Node.newString(num));
 		enterCond.addChildrenToBack(Node.newString(NodeUti1.getURL()));
-		enterCond.addChildrenToBack(Node.newNumber(n.getLineno()));
 		enterCond.addChildrenToBack(Node.newString(Token.name(n.getType())));
 		enterCond.addChildrenToBack(Node.newString(Token.name(parent.getType())));
-		enterCond.addChildrenToBack(Node.newString(num));
 		
 		Node exitCond = new Node(Token.CALL);						
 		comma.addChildrenToBack(exitCond);
 		exitCond.addChildrenToFront(Node.newString(Token.NAME, "__condExit"));
-		exitCond.addChildrenToBack(Node.newString(varname));
+		exitCond.addChildrenToBack(Node.newString(num));
+		exitCond.addChildrenToBack(Node.newString(NodeUti1.getURL()));
 		exitCond.addChildrenToBack(cloned);		
 	}
 
-	private String funcNamePrefix = "JSCompiler_func_";
+	private Map<Node, String> nodeNums = new HashMap<Node, String>();
+	private String getNodeNum(Node n) {
+		if (nodeNums.containsKey(n)) {
+			return nodeNums.get(n);
+		}
+		String num = safeNameIdSupplier.get();
+		nodeNums.put(n, num);
+		if (n.getType()==Token.FUNCTION) {
+			Node name = n.getFirstChild();
+			if (name.getString().length() < 1) {
+				name.setString("JSCompiler_func_" + num);
+			}
+		}
+		return num;
+	}
 	private void visitFunc(NodeTraversal t, Node n, Node parent) {
 		Node block = n.getChildAtIndex(2);		
 		Node target = block.getFirstChild();
@@ -64,22 +69,16 @@ public class TraceCondVisitor implements Callback {
 			return;
 		}
 
-		String num = safeNameIdSupplier.get();
-		String varname = funcNamePrefix + num;
-		Node name = n.getFirstChild();
-		if (name.getString().length() < 1) {
-			name.setString(varname);
-		}
+		String num = getNodeNum(n);
+		String funcname = n.getFirstChild().getString();
 		
 		Node enterFunc = new Node(Token.CALL);
 		enterFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcEnter"));
-		enterFunc.addChildrenToBack(Node.newString(varname));
+		enterFunc.addChildrenToBack(Node.newString(num));
 		enterFunc.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
-		enterFunc.addChildrenToBack(Node.newNumber(n.getLineno()));
-		enterFunc.addChildrenToBack(Node.newString(name.getString()));
+		enterFunc.addChildrenToBack(Node.newString(funcname));
 		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "this"));
 		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "arguments"));
-		enterFunc.addChildrenToBack(Node.newString(num));		
 		Node before[] = {enterFunc};
 		tx.insert(target, before, null);
 
@@ -93,19 +92,23 @@ public class TraceCondVisitor implements Callback {
 		tryc.addChildrenToBack(catb);
 		Node catc = new Node(Token.CATCH);
 		catb.addChildrenToFront(catc);
-		catc.addChildrenToFront(Node.newString(Token.NAME, varname+"e"));
+		catc.addChildrenToFront(Node.newString(Token.NAME, funcname+"e"));
 		catb = new Node(Token.BLOCK);
 		catc.addChildrenToBack(catb);
-				
+		
+		Node exitExpr = new Node(Token.EXPR_RESULT);
+		catb.addChildrenToBack(exitExpr);
 		Node exitFunc = new Node(Token.CALL);
-		catb.addChildrenToBack(exitFunc);
+		exitExpr.addChildrenToFront(exitFunc);
 		exitFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcExit"));
+		exitFunc.addChildrenToBack(Node.newString(num));
+		exitFunc.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
 		
 		Node thrw = new Node(Token.THROW);
 		catb.addChildrenToBack(thrw);
-		thrw.addChildrenToFront(Node.newString(Token.NAME, varname+"e"));
+		thrw.addChildrenToFront(Node.newString(Token.NAME, funcname+"e"));
 		
-		blck.addChildrenToBack(exitFunc.cloneNode());
+		blck.addChildrenToBack(exitExpr.cloneTree());
 		tx.replace(block, blck, cloned);
 	}
 	
@@ -117,17 +120,12 @@ public class TraceCondVisitor implements Callback {
 		}
 		int ftypes[] = {Token.FUNCTION};
 		Node func = NodeUti1.detectAncestor(parent, ftypes);
-		//if (! varnames.containsKey(func)) {
-			//visitFunc(t, func, func.getParent());
-		//}
-
+		 
 		Node cloned = target.cloneTree();
 		Node exitFunc = new Node(Token.CALL);
 		exitFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcExit"));
-		//exitFunc.addChildrenToBack(Node.newString(""));
-		//exitFunc.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
-		//exitFunc.addChildrenToBack(Node.newNumber(func.getLineno()));
-		//exitFunc.addChildrenToBack(Node.newString(func.getFirstChild().getString()));		
+		exitFunc.addChildrenToBack(Node.newString(getNodeNum(func)));
+		exitFunc.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
 		exitFunc.addChildrenToBack(cloned);
 		tx.replace(target, exitFunc, cloned);
 	}
@@ -143,12 +141,12 @@ public class TraceCondVisitor implements Callback {
 			n.addChildrenToBack(new Node(Token.EMPTY));
 		}
 		
-		boolean cond;
+		boolean cond=false;
 		//cond =( ((ptype==Token.IF || ptype==Token.HOOK || ptype==Token.SWITCH) && parent.getFirstChild() == n)
+		//     || ntype==Token.CALL || ntype==Token.NEW
         //     || ptype == Token.FOR && parent.getChildAtIndex(1) == n );
-		cond = ntype==Token.CALL || ntype==Token.NEW;
 		if (cond) {
-			//visitCond(t, n, parent);
+			visitCond(t, n, parent);
 		}		
 		else if (ntype==Token.FUNCTION){
 			visitFunc(t, n, parent);
