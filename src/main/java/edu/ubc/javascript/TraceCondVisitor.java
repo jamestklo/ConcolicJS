@@ -71,7 +71,7 @@ public class TraceCondVisitor implements Callback {
 
 		String num = getNodeNum(n);
 		String funcname = n.getFirstChild().getString();
-		
+				
 		Node enterFunc = new Node(Token.CALL);
 		enterFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcEnter"));
 		enterFunc.addChildrenToBack(Node.newString(num));
@@ -92,7 +92,7 @@ public class TraceCondVisitor implements Callback {
 		tryc.addChildrenToBack(catb);
 		Node catc = new Node(Token.CATCH);
 		catb.addChildrenToFront(catc);
-		catc.addChildrenToFront(Node.newString(Token.NAME, funcname+"e"));
+		catc.addChildrenToFront(Node.newString(Token.NAME, funcname+"_e"));
 		catb = new Node(Token.BLOCK);
 		catc.addChildrenToBack(catb);
 		
@@ -103,13 +103,34 @@ public class TraceCondVisitor implements Callback {
 		exitFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcExit"));
 		exitFunc.addChildrenToBack(Node.newString(num));
 		exitFunc.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
+		Node exitFun2 = exitFunc.cloneTree();
+		exitFunc.addChildrenToBack(Node.newString(Token.NAME, funcname+"_e"));
 		
 		Node thrw = new Node(Token.THROW);
 		catb.addChildrenToBack(thrw);
-		thrw.addChildrenToFront(Node.newString(Token.NAME, funcname+"e"));
+		thrw.addChildrenToFront(Node.newString(Token.NAME, funcname+"_e"));
 		
-		blck.addChildrenToBack(exitExpr.cloneTree());
+		blck.addChildrenToBack(exitFun2); // exception not thrown here
 		tx.replace(block, blck, cloned);
+		
+		Node assign = new Node(Token.ASSIGN);
+		Node getElem = new Node(Token.GETELEM);
+		assign.addChildrenToFront(getElem);
+		getElem.addChildrenToFront(Node.newString(Token.NAME, "__astGlobal"));
+		String split[] = NodeUti1.getURL().split("/");	
+		getElem.addChildrenToBack(Node.newString(Token.name(n.getType())+" "+ split[split.length-1] +":"+ num));
+		
+		if (NodeUti1.isStatement(n)) {
+			System.out.println(n.getParent().toStringTree());
+			assign.addChildrenToBack(Node.newString(Token.NAME, funcname));
+			Node after[] = {assign};
+			tx.insert(n, null, after);
+		}
+		else {
+			cloned = n.cloneTree();
+			assign.addChildrenToBack(cloned);
+			//tx.replace(n, assign, cloned);						
+		}
 	}
 	
 	private void visitReturn(NodeTraversal t, Node n, Node parent) {
@@ -147,7 +168,7 @@ public class TraceCondVisitor implements Callback {
         //     || ptype == Token.FOR && parent.getChildAtIndex(1) == n );
 		if (cond) {
 			visitCond(t, n, parent);
-		}		
+		}
 		else if (ntype==Token.FUNCTION){
 			visitFunc(t, n, parent);
 		}

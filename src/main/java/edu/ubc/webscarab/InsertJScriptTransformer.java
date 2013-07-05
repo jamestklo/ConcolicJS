@@ -116,12 +116,12 @@ public class InsertJScriptTransformer implements Transformer {
 	  // Future: read srcs from a file, hard-coding for now
 	  ArrayList<String> srcs = new ArrayList<String>();	  
 
-	  // tracing
+	  // logging
 	  //srcs.add(host+"tracing/trazing/instrument.js");
-	  srcs.add(host+"tracing/trazing/traceAST.js");
-	  srcs.add(host+"tracing/trazing/traceCond.js");
-	  srcs.add(host+"tracing/trazing/traceDOM.js");
-	  srcs.add(host+"tracing/trazing/traceFunc.js");
+	  srcs.add(host+"tracing/trazing/logAST.js");
+	  srcs.add(host+"tracing/trazing/logCond.js");
+	  srcs.add(host+"tracing/trazing/logDOM.js");
+	  srcs.add(host+"tracing/trazing/logFunc.js");
 		  	  
 	  return srcs.toArray(new String[srcs.size()]);
 	}
