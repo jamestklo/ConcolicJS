@@ -118,18 +118,17 @@ public class TraceCondVisitor implements Callback {
 		assign.addChildrenToFront(getElem);
 		getElem.addChildrenToFront(Node.newString(Token.NAME, "__astGlobal"));
 		String split[] = NodeUti1.getURL().split("/");	
-		getElem.addChildrenToBack(Node.newString(Token.name(n.getType())+" "+ split[split.length-1] +":"+ num));
+		getElem.addChildrenToBack(Node.newString(Token.name(n.getType())+" "+ split[split.length-1] +" "+ num));
 		
 		if (NodeUti1.isStatement(n)) {
-			System.out.println(n.getParent().toStringTree());
 			assign.addChildrenToBack(Node.newString(Token.NAME, funcname));
 			Node after[] = {assign};
 			tx.insert(n, null, after);
 		}
 		else {
-			cloned = n.cloneTree();
-			assign.addChildrenToBack(cloned);
-			//tx.replace(n, assign, cloned);						
+			Node n2 = n.cloneTree();
+			assign.addChildrenToBack(n2);
+			tx.replace(n, assign, n2);						
 		}
 	}
 	

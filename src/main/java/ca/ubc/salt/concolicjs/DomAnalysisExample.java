@@ -13,7 +13,7 @@ import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration.CrawljaxConfigurationBuilder;
 import com.crawljax.core.configuration.ProxyConfiguration;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
-import com.crawljax.plugins.proxy.WebScarabWrapper;
+import com.crawljax.plugins.proxy.WebScarabProxyPlugin;
 
 import edu.ubc.webscarab.MyProxyPlugin;
 
@@ -46,11 +46,10 @@ public final class DomAnalysisExample {
 		builder.crawlRules().waitAfterReloadUrl(WAIT_TIME_AFTER_RELOAD, TimeUnit.MILLISECONDS);
 		builder.crawlRules().waitAfterEvent(WAIT_TIME_AFTER_EVENT, TimeUnit.MILLISECONDS);
 
-		WebScarabWrapper proxy = new WebScarabWrapper();
+		WebScarabProxyPlugin proxy = new WebScarabProxyPlugin();
 		proxy.addPlugin(new MyProxyPlugin());
-		//builder.setProxyConfig(ProxyConfiguration.manualProxyOn("localhost", 8084));
-		//builder.addPlugin(proxy);
-
+		builder.setProxyConfig(ProxyConfiguration.manualProxyOn("localhost", 8084));
+		builder.addPlugin(proxy);
 		
 		File outFolder = new File("output");
 		if (outFolder.exists()) {

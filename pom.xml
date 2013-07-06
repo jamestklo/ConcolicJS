@@ -9,11 +9,11 @@
         <artifactId>closure-compiler</artifactId>
         <version>v20130603</version>
     </dependency>
-	<dependency>
-		<groupId>com.crawljax</groupId>
-		<artifactId>crawljax-core</artifactId>
-		<version>3.1</version>
-	</dependency>
+    <dependency>
+    	<groupId>com.crawljax</groupId>
+    	<artifactId>crawljax-core</artifactId>
+    	<version>3.1</version>
+    </dependency>
 	<dependency>
 		<groupId>com.crawljax.plugins</groupId>
 		<artifactId>crawloverview-plugin</artifactId>
@@ -22,7 +22,7 @@
 	<dependency>
 		<groupId>com.crawljax.plugins</groupId>
 		<artifactId>proxy-plugin</artifactId>
-		<version>1.4</version>
+		<version>1.5</version>
 	</dependency>
 	<dependency>
 		<groupId>com.crawljax.plugins</groupId>
