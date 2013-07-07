@@ -61,8 +61,9 @@ public class TraceCondVisitor implements Callback {
 	// goal: unique label for each logged AST node
 	public static String getLabel(Node n, String num) {
 		int scriptCount = NodeUti1.scriptCount.get();
-		return n.getType() +" "+ NodeUti1.filename.get() + ((scriptCount>0)?"_"+scriptCount:"") + " "+ num;
+		return Token.name(n.getType()) +" "+ NodeUti1.filename.get() + ((scriptCount>0)?"_"+scriptCount:"") + " "+ num;
 	}
+	
 	public static Node genCall(String name, Node n, String num) {
 		Node call = new Node(Token.CALL);
 		call.addChildrenToFront(Node.newString(Token.NAME, name));
@@ -143,7 +144,7 @@ public class TraceCondVisitor implements Callback {
 		Node func = NodeUti1.detectAncestor(parent, ftypes);
 		if (func.getType()==Token.FUNCTION) { 
 			Node cloned = target.cloneTree();
-			Node exitFunc = genCall("__funcExit", n, getNodeNum(func));
+			Node exitFunc = genCall("__funcExit", func, getNodeNum(func));
 			exitFunc.addChildrenToBack(cloned);
 			tx.replace(target, exitFunc, cloned);
 		}
