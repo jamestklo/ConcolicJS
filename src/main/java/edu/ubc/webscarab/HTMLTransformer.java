@@ -5,12 +5,15 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.Reader;
 
+import edu.ubc.javascript.NodeUti1;
+
 public class HTMLTransformer {
 	private Reader input;
 	private StringBuffer output;
 	private boolean inScript = false;
 	private StringBuffer buffer = new StringBuffer();
 	private Transformer transformer;
+	private int scriptCount = 0;
 	
 	public HTMLTransformer(Reader input, StringBuffer output, Transformer rtb) throws FileNotFoundException {
 		this.input = input;
@@ -22,8 +25,12 @@ public class HTMLTransformer {
 		inScript = false;
 		buffer.delete(buffer.length()-9, buffer.length());
 		try {
-			String newScript = this.transformer.transform(new StringReader(buffer.toString()));
-			output.append(newScript + "</script>");
+			String script = buffer.toString();
+			if (script.length() > 0) {
+				NodeUti1.scriptCount.set(++scriptCount);
+				script = this.transformer.transform(new StringReader(script));
+			}					
+			output.append(script + "</script>");
 			buffer = new StringBuffer();
 		} 
 		catch(Exception e) {
@@ -197,6 +204,7 @@ public class HTMLTransformer {
 			}
 			a = read();
 		}
+		NodeUti1.scriptCount.set(0);
 	}
 
 }

@@ -7,13 +7,15 @@ import com.google.javascript.rhino.Node;
 import com.google.javascript.rhino.Token;
 
 public final class NodeUti1 {
-	public static ThreadLocal<String> currentURL = new ThreadLocal<String>();
+	public static ThreadLocal<String> currentURL 	= new ThreadLocal<String>();
+	public static ThreadLocal<String> filename 		= new ThreadLocal<String>();
+	public static ThreadLocal<Integer> scriptCount 	= new ThreadLocal<Integer>();
 	public static void setURL(String url) {
 		currentURL.set(url);
+		String split[] = url.split("/");	
+		filename.set(split[split.length-1]);
+		scriptCount.set(0);
 	}	
-	public static String getURL() {
-		return currentURL.get();
-	}
 	
 	public static Node detectAncestor(Node n, int[] types) {
 		Node detected = null;

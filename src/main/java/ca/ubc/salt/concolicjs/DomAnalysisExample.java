@@ -41,7 +41,8 @@ public final class DomAnalysisExample {
 		// click these elements
 
 		builder.crawlRules().clickDefaultElements();
-		builder.setMaximumStates(3);
+		//builder.setMaximumStates(3);
+		
 		// Set timeouts
 		builder.crawlRules().waitAfterReloadUrl(WAIT_TIME_AFTER_RELOAD, TimeUnit.MILLISECONDS);
 		builder.crawlRules().waitAfterEvent(WAIT_TIME_AFTER_EVENT, TimeUnit.MILLISECONDS);

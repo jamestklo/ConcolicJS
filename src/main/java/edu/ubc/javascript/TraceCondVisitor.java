@@ -31,19 +31,13 @@ public class TraceCondVisitor implements Callback {
 		Node cloned = n.cloneTree();
 		tx.replace(n, comma, cloned);		
 				
-		Node enterCond = new Node(Token.CALL);
+		Node enterCond = genCall("__condEnter", n, num);
 		comma.addChildrenToFront(enterCond);
-		enterCond.addChildrenToFront(Node.newString(Token.NAME, "__condEnter"));
-		enterCond.addChildrenToBack(Node.newString(num));
-		enterCond.addChildrenToBack(Node.newString(NodeUti1.getURL()));
 		enterCond.addChildrenToBack(Node.newString(Token.name(n.getType())));
 		enterCond.addChildrenToBack(Node.newString(Token.name(parent.getType())));
 		
-		Node exitCond = new Node(Token.CALL);						
+		Node exitCond = genCall("__condExit", n, num); 			
 		comma.addChildrenToBack(exitCond);
-		exitCond.addChildrenToFront(Node.newString(Token.NAME, "__condExit"));
-		exitCond.addChildrenToBack(Node.newString(num));
-		exitCond.addChildrenToBack(Node.newString(NodeUti1.getURL()));
 		exitCond.addChildrenToBack(cloned);		
 	}
 
@@ -62,6 +56,20 @@ public class TraceCondVisitor implements Callback {
 		}
 		return num;
 	}
+	
+	// problem: html file can have multiple <script> tags
+	// goal: unique label for each logged AST node
+	public static String getLabel(Node n, String num) {
+		int scriptCount = NodeUti1.scriptCount.get();
+		return n.getType() +" "+ NodeUti1.filename.get() + ((scriptCount>0)?"_"+scriptCount:"") + " "+ num;
+	}
+	public static Node genCall(String name, Node n, String num) {
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, name));
+		call.addChildrenToBack(Node.newString(getLabel(n, num)));
+		return call;
+	}
+	
 	private void visitFunc(NodeTraversal t, Node n, Node parent) {
 		Node block = n.getChildAtIndex(2);		
 		Node target = block.getFirstChild();
@@ -71,11 +79,8 @@ public class TraceCondVisitor implements Callback {
 
 		String num = getNodeNum(n);
 		String funcname = n.getFirstChild().getString();
-				
-		Node enterFunc = new Node(Token.CALL);
-		enterFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcEnter"));
-		enterFunc.addChildrenToBack(Node.newString(num));
-		enterFunc.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
+		
+		Node enterFunc = genCall("__funcEnter", n, num);				
 		enterFunc.addChildrenToBack(Node.newString(funcname));
 		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "this"));
 		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "arguments"));
@@ -98,11 +103,8 @@ public class TraceCondVisitor implements Callback {
 		
 		Node exitExpr = new Node(Token.EXPR_RESULT);
 		catb.addChildrenToBack(exitExpr);
-		Node exitFunc = new Node(Token.CALL);
+		Node exitFunc = genCall("__funcExit", n, num);
 		exitExpr.addChildrenToFront(exitFunc);
-		exitFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcExit"));
-		exitFunc.addChildrenToBack(Node.newString(num));
-		exitFunc.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
 		Node exitFun2 = exitFunc.cloneTree();
 		exitFunc.addChildrenToBack(Node.newString(Token.NAME, funcname+"_e"));
 		
@@ -117,8 +119,7 @@ public class TraceCondVisitor implements Callback {
 		Node getElem = new Node(Token.GETELEM);
 		assign.addChildrenToFront(getElem);
 		getElem.addChildrenToFront(Node.newString(Token.NAME, "__astGlobal"));
-		String split[] = NodeUti1.getURL().split("/");	
-		getElem.addChildrenToBack(Node.newString(Token.name(n.getType())+" "+ split[split.length-1] +" "+ num));
+		getElem.addChildrenToBack(Node.newString(getLabel(n, num)));
 		
 		if (NodeUti1.isStatement(n)) {
 			assign.addChildrenToBack(Node.newString(Token.NAME, funcname));
@@ -140,14 +141,12 @@ public class TraceCondVisitor implements Callback {
 		}
 		int ftypes[] = {Token.FUNCTION};
 		Node func = NodeUti1.detectAncestor(parent, ftypes);
-		 
-		Node cloned = target.cloneTree();
-		Node exitFunc = new Node(Token.CALL);
-		exitFunc.addChildrenToFront(Node.newString(Token.NAME, "__funcExit"));
-		exitFunc.addChildrenToBack(Node.newString(getNodeNum(func)));
-		exitFunc.addChildrenToBack(Node.newString(Token.STRING, NodeUti1.getURL()));
-		exitFunc.addChildrenToBack(cloned);
-		tx.replace(target, exitFunc, cloned);
+		if (func.getType()==Token.FUNCTION) { 
+			Node cloned = target.cloneTree();
+			Node exitFunc = genCall("__funcExit", n, getNodeNum(func));
+			exitFunc.addChildrenToBack(cloned);
+			tx.replace(target, exitFunc, cloned);
+		}
 	}
 	
 	@Override
@@ -162,9 +161,9 @@ public class TraceCondVisitor implements Callback {
 		}
 		
 		boolean cond=false;
-		//cond =( ((ptype==Token.IF || ptype==Token.HOOK || ptype==Token.SWITCH) && parent.getFirstChild() == n)
+		cond =( ((ptype==Token.IF || ptype==Token.HOOK || ptype==Token.SWITCH) && parent.getFirstChild() == n)
 		//     || ntype==Token.CALL || ntype==Token.NEW
-        //     || ptype == Token.FOR && parent.getChildAtIndex(1) == n );
+             || ptype == Token.FOR && parent.getChildAtIndex(1) == n );
 		if (cond) {
 			visitCond(t, n, parent);
 		}

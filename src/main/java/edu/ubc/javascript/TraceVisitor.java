@@ -22,10 +22,6 @@ public class TraceVisitor implements Callback {
 		this.tx = tx;
 	}
 	
-	static String getURL() {
-		return NodeUti1.getURL();
-	}
-
 	@Override
 	public boolean shouldTraverse(NodeTraversal nodeTraversal, Node n, Node parent) {
 		return true;
@@ -127,7 +123,7 @@ public class TraceVisitor implements Callback {
 
 		Node call = new Node(Token.CALL);
 		call.addChildrenToFront(Node.newString(Token.NAME, "_trace"+Token.name(ntype)));
-		call.addChildrenToBack(Node.newString(getURL()));
+		call.addChildrenToBack(Node.newString(NodeUti1.filename.get()));
 		call.addChildrenToBack(Node.newNumber(n.getLineno()));					
 		call.addChildrenToBack(cloned);			
 		call.addChildrenToBack(traces);		
@@ -164,7 +160,7 @@ public class TraceVisitor implements Callback {
 	private Node trace(Node value, Node[] scope, Node rhs) {
 		Node call = new Node(Token.CALL);
 		call.addChildToFront(Node.newString(Token.NAME, "_setTrace"));
-		call.addChildrenToBack(Node.newString(getURL()));
+		call.addChildrenToBack(Node.newString(NodeUti1.filename.get()));
 		call.addChildrenToBack(Node.newNumber(value.getLineno()));
 		call.addChildrenToBack(value.cloneTree());
 		call.addChildrenToBack(scope[0]);
@@ -213,7 +209,7 @@ public class TraceVisitor implements Callback {
 			Node call = new Node(Token.CALL);
 			vname.addChildrenToFront(call);
 			call.addChildrenToFront(Node.newString(Token.NAME, "_traceCall"));
-			call.addChildrenToBack(Node.newString(getURL()));
+			call.addChildrenToBack(Node.newString(NodeUti1.filename.get()));
 			call.addChildrenToBack(Node.newNumber(n.getLineno()));
 			call.addChildrenToBack(Node.newString(tname));
 			call.addChildrenToBack(Node.newString(Token.NAME, "arguments"));
