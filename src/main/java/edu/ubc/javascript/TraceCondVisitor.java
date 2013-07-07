@@ -29,14 +29,15 @@ public class TraceCondVisitor implements Callback {
 		String num = safeNameIdSupplier.get();		
 		Node comma = new Node(Token.COMMA);
 		Node cloned = n.cloneTree();
-		tx.replace(n, comma, cloned);		
-				
-		Node enterCond = genCall("__condEnter", n, num);
+		tx.replace(n, comma, cloned);
+		
+		String nodeType = Token.name(parent.getType()) +"_"+ Token.name(n.getType());
+		Node enterCond = genCall("__condEnter", nodeType, num);
 		comma.addChildrenToFront(enterCond);
 		enterCond.addChildrenToBack(Node.newString(Token.name(n.getType())));
 		enterCond.addChildrenToBack(Node.newString(Token.name(parent.getType())));
 		
-		Node exitCond = genCall("__condExit", n, num); 			
+		Node exitCond = genCall("__condExit", nodeType, num); 			
 		comma.addChildrenToBack(exitCond);
 		exitCond.addChildrenToBack(cloned);		
 	}
@@ -59,15 +60,15 @@ public class TraceCondVisitor implements Callback {
 	
 	// problem: html file can have multiple <script> tags
 	// goal: unique label for each logged AST node
-	public static String getLabel(Node n, String num) {
+	public static String getLabel(String nodeType, String num) {
 		int scriptCount = NodeUti1.scriptCount.get();
-		return Token.name(n.getType()) +" "+ NodeUti1.filename.get() + ((scriptCount>0)?"_"+scriptCount:"") + " "+ num;
+		return nodeType +" "+ NodeUti1.filename.get() + ((scriptCount>0)?"_"+scriptCount:"") + " "+ num;
 	}
 	
-	public static Node genCall(String name, Node n, String num) {
+	public static Node genCall(String name, String nodeType, String num) {
 		Node call = new Node(Token.CALL);
 		call.addChildrenToFront(Node.newString(Token.NAME, name));
-		call.addChildrenToBack(Node.newString(getLabel(n, num)));
+		call.addChildrenToBack(Node.newString(getLabel(nodeType, num)));
 		return call;
 	}
 	
@@ -81,7 +82,9 @@ public class TraceCondVisitor implements Callback {
 		String num = getNodeNum(n);
 		String funcname = n.getFirstChild().getString();
 		
-		Node enterFunc = genCall("__funcEnter", n, num);				
+		String nodeType = Token.name(n.getType()); 
+		
+		Node enterFunc = genCall("__funcEnter", nodeType, num);				
 		enterFunc.addChildrenToBack(Node.newString(funcname));
 		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "this"));
 		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "arguments"));
@@ -104,7 +107,7 @@ public class TraceCondVisitor implements Callback {
 		
 		Node exitExpr = new Node(Token.EXPR_RESULT);
 		catb.addChildrenToBack(exitExpr);
-		Node exitFunc = genCall("__funcExit", n, num);
+		Node exitFunc = genCall("__funcExit", nodeType, num);
 		exitExpr.addChildrenToFront(exitFunc);
 		Node exitFun2 = exitFunc.cloneTree();
 		exitFunc.addChildrenToBack(Node.newString(Token.NAME, funcname+"_e"));
@@ -120,7 +123,7 @@ public class TraceCondVisitor implements Callback {
 		Node getElem = new Node(Token.GETELEM);
 		assign.addChildrenToFront(getElem);
 		getElem.addChildrenToFront(Node.newString(Token.NAME, "__astGlobal"));
-		getElem.addChildrenToBack(Node.newString(getLabel(n, num)));
+		getElem.addChildrenToBack(Node.newString(getLabel(nodeType, num)));
 		
 		if (NodeUti1.isStatement(n)) {
 			assign.addChildrenToBack(Node.newString(Token.NAME, funcname));
@@ -144,7 +147,7 @@ public class TraceCondVisitor implements Callback {
 		Node func = NodeUti1.detectAncestor(parent, ftypes);
 		if (func.getType()==Token.FUNCTION) { 
 			Node cloned = target.cloneTree();
-			Node exitFunc = genCall("__funcExit", func, getNodeNum(func));
+			Node exitFunc = genCall("__funcExit", Token.name(func.getType()), getNodeNum(func));
 			exitFunc.addChildrenToBack(cloned);
 			tx.replace(target, exitFunc, cloned);
 		}
