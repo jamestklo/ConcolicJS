@@ -67,7 +67,7 @@ public class ReflectiveNodeTransformer {
 		else {
 			_insert(n, before, after);
 		}
-	}	
+	}
 	private void _insert(Node n, Node[] before, Node[] after) {
 		// detect if it's a COMMA or EXPR_RESULT
 		int types[] = {-1, Token.COMMA};

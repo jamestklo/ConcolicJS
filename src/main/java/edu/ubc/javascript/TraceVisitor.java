@@ -167,7 +167,7 @@ public class TraceVisitor implements Callback {
 		call.addChildrenToBack(scope[1]);
 		call.addChildrenToBack(rhs);		
 		return call;
-	}	
+	}
 	private void visitAssign(NodeTraversal t, Node n, Node parent) {
 		Node left = n.getFirstChild(), scope[] = scope(left, n), right = null;
 						

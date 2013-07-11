@@ -50,7 +50,7 @@ public class TraceTransformer implements Transformer {
 		compiler.compile(externs, inputs, options);
 		
 		Node node = compiler.getRoot().getLastChild();		
-		NodeTraversal traversal  = null;		
+		NodeTraversal traversal  = null;
 		ReflectiveNodeTransformer rnt = new ReflectiveNodeTransformer();
 
 		//traversal = new NodeTraversal(compiler, new ExpressionDecompositionVisitor(compiler));			
@@ -61,18 +61,17 @@ public class TraceTransformer implements Transformer {
 		traversal.traverse(node);
 
 		traversal = new NodeTraversal(compiler, new ClosureCheck(sv));
-		traversal.traverse(node);		
+		traversal.traverse(node);
 */
 		//traversal = new NodeTraversal(compiler, new TraceVisitor(compiler, rnt));
 		//traversal.traverse(node);
 
-		// to be merged with TraceVisitor(), to increase efficiency							
+		// to be merged with TraceVisitor(), to increase efficiency		
 		traversal = new NodeTraversal(compiler, new TraceCondVisitor(compiler, rnt));			
 		traversal.traverse(node);
 
 		rnt.commit(false);
-		return compiler.toSource();		
-		
+		return compiler.toSource();
 	}
 	
 	public String transform(Reader r) throws IOException  {
