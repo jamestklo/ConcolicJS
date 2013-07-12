@@ -9,7 +9,6 @@ import com.google.common.base.Supplier;
 import com.google.javascript.jscomp.Compiler;
 import com.google.javascript.jscomp.NodeTraversal;
 import com.google.javascript.jscomp.NodeTraversal.Callback;
-import com.google.javascript.jscomp.Scope.Var;
 import com.google.javascript.rhino.Node;
 import com.google.javascript.rhino.Token;
 
@@ -31,7 +30,9 @@ public class TraceCondVisitor implements Callback {
 		String num = safeNameIdSupplier.get();		
 		Node comma = new Node(Token.COMMA);
 		Node cloned = n.cloneTree();
-		tx.replace(n, comma, cloned);
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(cloned, n);
+		tx.replace(n, comma, orgs);
 		
 		String nodeType = Token.name(parent.getType()) +"_"+ Token.name(n.getType());
 		Node enterCond = genCall("__condEnter", nodeType, num);
@@ -69,7 +70,7 @@ public class TraceCondVisitor implements Callback {
 	
 	private static String getFuncName(String num) {
 		if (num==null) {
-			
+			return null;
 		}
 		return "JSCompiler_func_"+ num;
 	}
@@ -108,6 +109,7 @@ public class TraceCondVisitor implements Callback {
 		while (itr.hasNext()) {
 			array.addChildrenToBack(Node.newString(itr.next().getString()));
 		}
+		enterFunc.addChildrenToBack(getRootName(t));
 		Node before[] = {varFunc};
 		tx.insert(target, before, null);
 
@@ -138,7 +140,10 @@ public class TraceCondVisitor implements Callback {
 		thrw.addChildrenToFront(Node.newString(Token.NAME, exceptionName));
 		
 		blck.addChildrenToBack(exitFun2); // exception not thrown here
-		tx.replace(block, blck, cloned);
+		
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(cloned, block);
+		tx.replace(block, blck, orgs);
 		
 		Node assign = new Node(Token.ASSIGN);
 		Node getElem = new Node(Token.GETELEM);
@@ -154,63 +159,22 @@ public class TraceCondVisitor implements Callback {
 		else {
 			Node n2 = n.cloneTree();
 			assign.addChildrenToBack(n2);
-			tx.replace(n, assign, n2);						
+			Map<Node, Node> orgs2 = new HashMap<Node, Node>();
+			orgs.put(n2, n);
+			tx.replace(n, assign, orgs2);						
 		}		
 	}
-	
-	private Map<Var, String> scopeNum = new HashMap<Var, String>();	
-	private void visitPARAM_LIST(NodeTraversal t, Node n, Node parent) {
-		Node root = t.getScopeRoot();
-		if (root != n.getParent()) {
-			return;
-		}
-		String num = getNodeNum(root);
-		Iterator<Var> vars = t.getScope().getVars();
-		while(vars.hasNext()) {
-			Var var = vars.next();
-			scopeNum.put(var, num);
-		}									
-	}
-	
-	private void visitVar(NodeTraversal t, Node n, Node parent) {
-		Node name = n.getFirstChild();
-		Node value = name.getFirstChild();
-		if (value == null) {
-			value = Node.newString(Token.NAME, "undefined");
-			n.addChildrenToFront(value);
-		}
 		
-		Node cloned = value.cloneTree();
-		Node newVar = new Node(Token.CALL);
-		newVar.addChildToFront(Node.newString(Token.NAME, "_VAR"));
+	private Node getRootName(NodeTraversal t) {
 		Node root = t.getScopeRoot();
 		if (root.getType()==Token.FUNCTION) {
-			newVar.addChildrenToBack(Node.newString(Token.NAME, getFuncName(getNodeNum(root))));
+			return Node.newString(Token.NAME, getFuncName(getNodeNum(root)));
 		}
 		else {
-			newVar.addChildrenToBack(new Node(Token.NULL));
-		}
-		newVar.addChildrenToBack(Node.newString(n.getString()));
-		newVar.addChildrenToBack(cloned);
-		tx.replace(value, newVar, cloned);
-	}
-	
-	private void visitName(NodeTraversal t, Node n, Node parent) {
-		/*int ptype = parent.getType();
-		if (ptype==Token.FUNCTION || ptype==Token.PARAM_LIST || ptype==Token.VAR) {
-			return;
-		}
-		Scope scope = t.getScope();
-		String name = n.getString();
-		Node enterName = new Node(Token.CALL);
-		enterName.addChildrenToFront(Node.newString(Token.NAME, "_NAME"));
-		enterName.addChildrenToBack(Node.newString(Token.NAME, getFuncName(scopeNum.get(scope.getSlot(n.getString())))));
-		enterName.addChildrenToBack(Node.newString(name));
-		Node cloned = n.cloneTree();
-		enterName.addChildrenToBack(cloned);*/		
-		//tx.replace(n, enterName, cloned)
-	}
-	
+			return new Node(Token.NULL);
+		}		
+	}	
+		
 	private void visitReturn(NodeTraversal t, Node n, Node parent) {
 		Node target = n.getFirstChild();
 		if (target == null) {
@@ -222,48 +186,140 @@ public class TraceCondVisitor implements Callback {
 			Node cloned = target.cloneTree();
 			Node exitFunc = genCall("__funcExit", Token.name(func.getType()), getNodeNum(func));
 			exitFunc.addChildrenToBack(cloned);
-			tx.replace(target, exitFunc, cloned);
+			Map<Node, Node> orgs = new HashMap<Node, Node>();
+			orgs.put(cloned, target);
+			tx.replace(target, exitFunc, orgs);
 		}
 	}
 	
 	private void visitCall(NodeTraversal t, Node n, Node parent) {
-		Node fname = n.getFirstChild();
+		Node cloned = n.cloneTree();
+		Node fname = cloned.getFirstChild();
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		switch (fname.getType()) {
+		case Token.GETELEM:
+		case Token.GETPROP:
+			cloned.addChildrenToFront(Node.newString(Token.NAME, "_CALLGET"));						
+			Node target = fname.removeFirstChild();
+			Node key = fname.removeFirstChild();
+			cloned.addChildBefore(target, fname);
+			cloned.addChildBefore(key, fname);
+			cloned.removeChild(fname);						
+			Node name = n.getFirstChild();
+			orgs.put(target, name.getFirstChild());
+			orgs.put(key, name.getLastChild());									
+			break;
+		case Token.NAME: 
+			cloned.addChildrenToFront(Node.newString(Token.NAME, "_CALL"));
+			break;
+		}
+		tx.replace(n, cloned, orgs);
+	}
+	
+	private void visitSet(NodeTraversal t, Node n, Node parent) {
+		Node right = parent.getLastChild();
+		
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, "_SET"));
+		
+		//tx.replace(parent, call);
+	}
+	
+	private void visitGet(NodeTraversal t, Node n, Node parent) {
+		int ptype = parent.getType();
+		if (ptype==Token.CALL) {
+			return;			
+		}
+				
+		Node target = n.getFirstChild();
+		Node target_cloned = target.cloneTree();
+				
+		Node key = n.getLastChild();
+		Node key_cloned = key.cloneTree();
+				
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, "_GET"));
+		call.addChildrenToBack(target_cloned);
+		call.addChildrenToBack(key_cloned);
+		
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(target_cloned, target);
+		orgs.put(key_cloned, key);
+		tx.replace(n, call, orgs);
+	}
+	
+	private void visitConst(NodeTraversal t, Node n, Node parent) {
+		Node cloned = n.cloneTree();
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, "_CONST"));
+		call.addChildrenToBack(Node.newString(getLabel(Token.name(n.getType()), safeNameIdSupplier.get())));
+		call.addChildrenToBack(cloned);
+		
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(cloned, n);
+		tx.replace(n,  call, orgs);		
+	}
+	
+	private void visitProto(NodeTraversal t, Node n, Node parent) {
+		Node child = n.getFirstChild();
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, "_PROTO"));
+		Node cloned = child.cloneTree();
+		call.addChildrenToBack(cloned);		
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(cloned, child);
+		tx.replace(child, call, orgs);
 	}
 	
 	@Override
 	public void visit(NodeTraversal t, Node n, Node parent) {
-		System.out.println(n.toStringTree());
 		int ntype = n.getType();
 		int ptype = (parent == null)?Token.NULL:parent.getType();
-		if (ntype == Token.EMPTY || ntype == Token.NULL) {
+		
+		if (ntype == Token.EMPTY) {
 			return;
 		}
 		else if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
 			n.addChildrenToBack(new Node(Token.EMPTY));
 		}
-		
-		boolean cond=false;
-		cond =( ((ptype==Token.IF || ptype==Token.HOOK || ptype==Token.SWITCH) && parent.getFirstChild() == n)
-		//     || ntype==Token.CALL || ntype==Token.NEW
-             || ptype == Token.FOR && parent.getChildAtIndex(1) == n );
-		
-		if (cond) {
-			visitCond(t, n, parent);
+		else if (ntype==Token.STRING_KEY && n.getString().equals("__proto__")) {
+			visitProto(t, n, parent);
 		}
-		else if (ntype==Token.FUNCTION) {
+		
+		if (ntype==Token.FUNCTION) {
 			visitFunc(t, n, parent);
 		}
 		else if (ntype==Token.RETURN) {
 			visitReturn(t, n, parent);
 		}
-		/*else if (ntype==Token.PARAM_LIST) {
-			visitPARAM_LIST(t, n, parent);
-		}*/
-		else if (ntype==Token.VAR) {
-			//visitVar(t, n, parent);
-		}
 		else if (ntype==Token.CALL) {
 			visitCall(t, n, parent);
+		}
+		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
+			if (ptype==Token.ASSIGN && n == parent.getFirstChild()) {
+				visitSet(t, n, parent);
+			}
+			else {
+				visitGet(t, n, parent);
+			}
+		}
+		else if (ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
+			  || ntype==Token.TRUE || ntype==Token.FALSE
+			  || (ntype==Token.NAME && n.getString()=="undefined") ) {
+			if (ntype==Token.STRING && ptype==Token.GETPROP) {				
+				// supposed to be empty
+			}
+			else {
+				visitConst(t, n, parent);
+			}
+		}
+		
+		boolean cond = false;
+		cond =( ((ptype==Token.IF || ptype==Token.HOOK || ptype==Token.SWITCH) && parent.getFirstChild() == n)
+		//     || ntype==Token.CALL || ntype==Token.NEW
+             || ptype == Token.FOR && parent.getChildAtIndex(1) == n );
+		if (cond) {
+			visitCond(t, n, parent);
 		}
 	}
 }

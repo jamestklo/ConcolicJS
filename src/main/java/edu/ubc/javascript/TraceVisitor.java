@@ -127,7 +127,7 @@ public class TraceVisitor implements Callback {
 		call.addChildrenToBack(Node.newNumber(n.getLineno()));					
 		call.addChildrenToBack(cloned);			
 		call.addChildrenToBack(traces);		
-		tx.replace(n, call, cloned);
+		//tx.replace(n, call, cloned);
 
 	}
 

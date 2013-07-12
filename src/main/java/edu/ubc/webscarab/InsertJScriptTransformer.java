@@ -119,6 +119,7 @@ public class InsertJScriptTransformer implements Transformer {
 	  // logging
 	  //srcs.add(host+"tracing/trazing/instrument.js");
 	  srcs.add(host+"tracing/trazing/logAST.js");
+	  srcs.add(host+"tracing/trazing/logCall.js");
 	  srcs.add(host+"tracing/trazing/logCond.js");
 	  srcs.add(host+"tracing/trazing/logDOM.js");
 	  srcs.add(host+"tracing/trazing/logFunc.js");
