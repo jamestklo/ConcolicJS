@@ -82,7 +82,7 @@ public class TraceCondVisitor implements Callback {
 		return call;
 	}
 	
-	private void visitFunc(NodeTraversal t, Node n, Node parent) {		
+	private void visitFunc(NodeTraversal t, Node n, Node parent) {
 		Node block = n.getChildAtIndex(2);
 		Node target = block.getFirstChild();
 		if (target==null) {
@@ -90,14 +90,12 @@ public class TraceCondVisitor implements Callback {
 		}
 
 		String num = getNodeNum(n);
-		String funcname = n.getFirstChild().getString();
-		
+		String funcname = n.getFirstChild().getString();		
 		String nodeType = Token.name(n.getType());
 		
 		Node varFunc	= new Node(Token.VAR);
 		Node nameFunc 	= Node.newString(Token.NAME, getFuncName(num)+"_c");
-		varFunc.addChildrenToFront(nameFunc);
-		
+		varFunc.addChildrenToFront(nameFunc);		
 		Node enterFunc = genCall("__funcEnter", nodeType, num);
 		nameFunc.addChildrenToFront(enterFunc);
 		enterFunc.addChildrenToBack(Node.newString(funcname));
@@ -149,8 +147,7 @@ public class TraceCondVisitor implements Callback {
 		Node getElem = new Node(Token.GETELEM);
 		assign.addChildrenToFront(getElem);
 		getElem.addChildrenToFront(Node.newString(Token.NAME, "__astGlobal"));
-		getElem.addChildrenToBack(Node.newString(getLabel(nodeType, num)));
-		
+		getElem.addChildrenToBack(Node.newString(getLabel(nodeType, num)));		
 		if (NodeUti1.isStatement(n)) {
 			assign.addChildrenToBack(Node.newString(Token.NAME, funcname));
 			Node after[] = {assign};
@@ -159,9 +156,9 @@ public class TraceCondVisitor implements Callback {
 		else {
 			Node n2 = n.cloneTree();
 			assign.addChildrenToBack(n2);
-			Map<Node, Node> orgs2 = new HashMap<Node, Node>();
+			Map<Node, Node> orgs2 = new HashMap<Node, Node>();			
 			orgs.put(n2, n);
-			tx.replace(n, assign, orgs2);						
+			//tx.replace(n, assign, orgs2);
 		}		
 	}
 		
@@ -216,13 +213,26 @@ public class TraceCondVisitor implements Callback {
 		tx.replace(n, cloned, orgs);
 	}
 	
-	private void visitSet(NodeTraversal t, Node n, Node parent) {
-		Node right = parent.getLastChild();
+	private void visitSet(NodeTraversal t, Node n, Node parent) {		
+		Node target = n.getFirstChild();		
+		Node key	= n.getLastChild();
+		Node right = parent.getLastChild();		
+
+		Node target_clone = target.cloneTree();
+		Node key_clone = key.cloneTree();
+		Node right_clone = right.cloneTree();
 		
 		Node call = new Node(Token.CALL);
 		call.addChildrenToFront(Node.newString(Token.NAME, "_SET"));
+		call.addChildrenToBack(target_clone);
+		call.addChildrenToBack(key_clone);
+		call.addChildrenToBack(right_clone);
 		
-		//tx.replace(parent, call);
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(target_clone, target);
+		orgs.put(key_clone, key);
+		orgs.put(right_clone, right);
+		tx.replace(parent, call, orgs);
 	}
 	
 	private void visitGet(NodeTraversal t, Node n, Node parent) {
@@ -270,6 +280,40 @@ public class TraceCondVisitor implements Callback {
 		orgs.put(cloned, child);
 		tx.replace(child, call, orgs);
 	}
+	private void visitOps(NodeTraversal t, Node n, Node parent) {
+		Node n1 = n.getFirstChild();
+		Node n2 = n.getLastChild();		
+		Node c1 = n1.cloneTree();
+		Node c2 = n2.cloneTree();
+		
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType())));
+		call.addChildrenToBack(c1);
+		call.addChildrenToBack(c2);
+		/*
+		Node func = new Node(Token.FUNCTION);
+		call.addChildrenToBack(func);
+		func.addChildrenToFront(Node.newString(Token.NAME, Token.name(n.getType())));
+		Node para = new Node(Token.PARAM_LIST);
+		func.addChildrenToBack(para);
+		para.addChildrenToFront(Node.newString(Token.NAME, "left"));
+		para.addChildrenToBack(Node.newString(Token.NAME, "right"));
+		Node blck = new Node(Token.BLOCK);
+		func.addChildrenToBack(blck);
+		Node expr = new Node(Token.EXPR_RESULT);
+		blck.addChildrenToBack(expr);
+		Node retn = new Node(Token.RETURN);
+		expr.addChildrenToFront(retn);
+		Node opsc = new Node(n.getType());
+		retn.addChildrenToFront(opsc);
+		opsc.addChildrenToFront(Node.newString(Token.NAME, "left"));
+		opsc.addChildrenToBack(Node.newString(Token.NAME, "right"));
+		*/	
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(c1, n1);
+		orgs.put(c2, n2);
+		tx.replace(n, call, orgs);
+	}
 	
 	@Override
 	public void visit(NodeTraversal t, Node n, Node parent) {
@@ -297,11 +341,15 @@ public class TraceCondVisitor implements Callback {
 		}
 		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
 			if (ptype==Token.ASSIGN && n == parent.getFirstChild()) {
-				visitSet(t, n, parent);
+				//visitSet(t, n, parent);
 			}
 			else {
 				visitGet(t, n, parent);
 			}
+		}
+		else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.ASSIGN) {
+		//else if (ntype==Token.ADD || ntype==Token.DIV) {
+			visitOps(t, n, parent);
 		}
 		else if (ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
 			  || ntype==Token.TRUE || ntype==Token.FALSE

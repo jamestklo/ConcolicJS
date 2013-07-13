@@ -16,8 +16,7 @@ public class ReflectiveNodeTransformer {
 	private List<Node[]> befores = new ArrayList<Node[]>();
 	private List<Node[]> afters = new ArrayList<Node[]>();
 	
-	private List<Node> olds = new ArrayList<Node>();
-	private List<Node> curs = new ArrayList<Node>();
+	private List<Node[]> curs = new ArrayList<Node[]>();
 	private List<Map<Node, Node>> orgs = new ArrayList<Map<Node, Node>>();
 	
 	public int commit(boolean newTxMode) {
@@ -32,39 +31,36 @@ public class ReflectiveNodeTransformer {
 		nodes.clear();
 		befores.clear();
 		afters.clear();
-				
-		Map<Node, Node> latest = new HashMap<Node, Node>();
-		Iterator<Node> iold = olds.iterator();
-		Iterator<Node> icur = curs.iterator();
+
+		Map<Node, Node> latest = new HashMap<Node, Node>();	
+		Iterator<Node[]> icur = curs.iterator();
 		Iterator<Map<Node, Node>> iorg = orgs.iterator();
-		while (iold.hasNext()) {
-			Node old = iold.next();
-			Node cur = icur.next();
+		while (icur.hasNext()) {
+			Node ary[] = icur.next();
+			Node old = ary[0];
+			Node cur = ary[1];
 			Map<Node, Node> org = iorg.next();
+
+			Node lat = latest.containsKey(old)?latest.get(old):old;
+			lat.getParent().replaceChild(lat, cur);			
 			
 			Iterator<Node> ktr = org.keySet().iterator();
 			while (ktr.hasNext()) {
 				Node cloned = ktr.next();
 				Node original = org.get(cloned);
-				if (latest.containsKey(original)) {
-					original = latest.get(original);
-				}
-				cloned.getParent().replaceChild(cloned, original.cloneTree());
+				Node lat1 = latest.containsKey(original)?latest.get(original):original;
+				lat1 = lat1.cloneTree();
+				cloned.getParent().replaceChild(cloned, lat1);
+				latest.put(original, lat1);
 			}
-			
-			if (latest.containsKey(old)) {
-			  old = latest.get(old);	
-			}
-			old.getParent().replaceChild(old, cur);
-			latest.put(old, cur);
 		}		
 		return ret;
 	}	
 	
-	public void replace(Node n, Node newNode, Map<Node, Node> originals) {
+	public void replace(Node n, Node newNode, Map<Node, Node> originals) { 
 		if (isTxMode) {
-			olds.add(n);
-			curs.add(newNode);
+			Node ary[] = {n, newNode};
+			curs.add(ary);
 			orgs.add(originals);
 		}
 		else {
@@ -168,6 +164,5 @@ public class ReflectiveNodeTransformer {
 		if (n.getType()==Token.EMPTY) {
 			n.getParent().removeChild(n);
 		}
-
 	}	
 }
