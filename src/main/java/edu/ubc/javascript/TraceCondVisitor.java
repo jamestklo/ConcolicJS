@@ -243,7 +243,7 @@ public class TraceCondVisitor implements Callback {
 	
 	private void visitGet(NodeTraversal t, Node n, Node parent) {
 		int ptype = parent.getType();
-		if (ptype==Token.CALL) {
+		if (ptype==Token.CALL && n==parent.getFirstChild()) {
 			return;			
 		}
 				
@@ -376,7 +376,7 @@ public class TraceCondVisitor implements Callback {
 			  || ntype==Token.TRUE || ntype==Token.FALSE
 			  || (ntype==Token.NAME && n.getString()=="undefined") ) {
 			if (ntype==Token.STRING && ptype==Token.GETPROP) {				
-				// visitGet() handles this case already
+				// the call to visitGet() will handle this case
 			}
 			else {
 				visitConst(t, n, parent);
