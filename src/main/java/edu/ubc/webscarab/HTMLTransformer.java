@@ -34,6 +34,8 @@ public class HTMLTransformer {
 			buffer = new StringBuffer();
 		} 
 		catch(Exception e) {
+			System.out.println(e);
+			e.printStackTrace();
 			System.err.println(buffer);
 			System.err.println("------------------------------------------");
 			output.append(buffer + "</script>");

@@ -32,28 +32,32 @@ public class ReflectiveNodeTransformer {
 		befores.clear();
 		afters.clear();
 
-		Map<Node, Node> latest = new HashMap<Node, Node>();	
+		Map<Node, Node> latest = new HashMap<Node, Node>();		
 		Iterator<Node[]> icur = curs.iterator();
 		Iterator<Map<Node, Node>> iorg = orgs.iterator();
 		while (icur.hasNext()) {
 			Node ary[] = icur.next();
-			Node old = ary[0];
+			Node old = ary[0];			
 			Node cur = ary[1];
+			old = latest.containsKey(old)?latest.get(old):old;
+			old.getParent().replaceChild(old, cur);
 			Map<Node, Node> org = iorg.next();
 
-			Node lat = latest.containsKey(old)?latest.get(old):old;
-			lat.getParent().replaceChild(lat, cur);			
-			
 			Iterator<Node> ktr = org.keySet().iterator();
 			while (ktr.hasNext()) {
 				Node cloned = ktr.next();
 				Node original = org.get(cloned);
 				Node lat1 = latest.containsKey(original)?latest.get(original):original;
-				lat1 = lat1.cloneTree();
+				Node par1 = lat1.getParent(); 
+				if (par1 instanceof Node) {
+					par1.removeChild(lat1);
+				}
 				cloned.getParent().replaceChild(cloned, lat1);
 				latest.put(original, lat1);
 			}
-		}		
+		}
+		curs.clear();
+		orgs.clear();
 		return ret;
 	}	
 	

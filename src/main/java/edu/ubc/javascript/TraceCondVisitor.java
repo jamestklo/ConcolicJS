@@ -157,8 +157,8 @@ public class TraceCondVisitor implements Callback {
 			Node n2 = n.cloneTree();
 			assign.addChildrenToBack(n2);
 			Map<Node, Node> orgs2 = new HashMap<Node, Node>();			
-			orgs.put(n2, n);
-			//tx.replace(n, assign, orgs2);
+			orgs2.put(n2, n);
+			tx.replace(n, assign, orgs2);
 		}		
 	}
 		
@@ -341,14 +341,16 @@ public class TraceCondVisitor implements Callback {
 		}
 		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
 			if (ptype==Token.ASSIGN && n == parent.getFirstChild()) {
-				//visitSet(t, n, parent);
+				visitSet(t, n, parent);
 			}
 			else {
 				visitGet(t, n, parent);
 			}
 		}
-		else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.ASSIGN) {
+		else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
 		//else if (ntype==Token.ADD || ntype==Token.DIV) {
+			System.out.println(n);
+			System.out.println(parent.toStringTree());
 			visitOps(t, n, parent);
 		}
 		else if (ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
