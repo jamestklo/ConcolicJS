@@ -55,6 +55,7 @@ public class ReflectiveNodeTransformer {
 				cloned.getParent().replaceChild(cloned, lat1);
 				latest.put(original, lat1);
 			}
+			latest.put(old, cur);
 		}
 		curs.clear();
 		orgs.clear();

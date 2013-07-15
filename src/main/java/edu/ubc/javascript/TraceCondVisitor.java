@@ -11,7 +11,6 @@ import com.google.javascript.jscomp.NodeTraversal;
 import com.google.javascript.jscomp.NodeTraversal.Callback;
 import com.google.javascript.rhino.Node;
 import com.google.javascript.rhino.Token;
-
 public class TraceCondVisitor implements Callback {
 
 	private final Supplier<String> safeNameIdSupplier;
@@ -82,67 +81,64 @@ public class TraceCondVisitor implements Callback {
 		return call;
 	}
 	
-	private void visitFunc(NodeTraversal t, Node n, Node parent) {
-		Node block = n.getChildAtIndex(2);
-		Node target = block.getFirstChild();
-		if (target==null) {
-			return;
-		}
-
+	private void visitFunc(NodeTraversal t, Node n, Node parent) {			
 		String num = getNodeNum(n);
 		String funcname = n.getFirstChild().getString();		
 		String nodeType = Token.name(n.getType());
 		
-		Node varFunc	= new Node(Token.VAR);
-		Node nameFunc 	= Node.newString(Token.NAME, getFuncName(num)+"_c");
-		varFunc.addChildrenToFront(nameFunc);		
-		Node enterFunc = genCall("__funcEnter", nodeType, num);
-		nameFunc.addChildrenToFront(enterFunc);
-		enterFunc.addChildrenToBack(Node.newString(funcname));
-		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "this"));
-		enterFunc.addChildrenToBack(Node.newString(Token.NAME, "arguments"));
-		Node array = new Node(Token.ARRAYLIT);
-		enterFunc.addChildrenToBack(array);
-		Iterator<Node> itr = n.getChildAtIndex(1).children().iterator();
-		while (itr.hasNext()) {
-			array.addChildrenToBack(Node.newString(itr.next().getString()));
-		}
-		enterFunc.addChildrenToBack(getRootName(t));
-		Node before[] = {varFunc};
-		tx.insert(target, before, null);
+		Node block = n.getChildAtIndex(2);	
+		Node target = block.getFirstChild();
+		if (target!=null) {
+			Node varFunc	= new Node(Token.VAR);
+			Node nameFunc 	= Node.newString(Token.NAME, getFuncName(num)+"_c");
+			varFunc.addChildrenToFront(nameFunc);		
+			Node enterFunc = genCall("__funcEnter", nodeType, num);
+			nameFunc.addChildrenToFront(enterFunc);
+			enterFunc.addChildrenToBack(Node.newString(funcname));
+			enterFunc.addChildrenToBack(Node.newString(Token.NAME, "this"));
+			enterFunc.addChildrenToBack(Node.newString(Token.NAME, "arguments"));
+			Node array = new Node(Token.ARRAYLIT);
+			enterFunc.addChildrenToBack(array);
+			Iterator<Node> itr = n.getChildAtIndex(1).children().iterator();
+			while (itr.hasNext()) {
+				array.addChildrenToBack(Node.newString(itr.next().getString()));
+			}
+			enterFunc.addChildrenToBack(getRootName(t));
+			Node before[] = {varFunc};
+			tx.insert(target, before, null);
 
-		Node blck = new Node(Token.BLOCK);
-		Node tryc = new Node(Token.TRY);
-		blck.addChildrenToFront(tryc);
-		Node cloned = block.cloneTree();
-		tryc.addChildrenToFront(cloned);
+			Node blck = new Node(Token.BLOCK);
+			Node tryc = new Node(Token.TRY);
+			blck.addChildrenToFront(tryc);
+			Node cloned = block.cloneTree();
+			tryc.addChildrenToFront(cloned);
 		
-		String exceptionName = getFuncName(num) +"_e";
-		Node catb = new Node(Token.BLOCK);
-		tryc.addChildrenToBack(catb);
-		Node catc = new Node(Token.CATCH);
-		catb.addChildrenToFront(catc);
-		catc.addChildrenToFront(Node.newString(Token.NAME, exceptionName));
-		catb = new Node(Token.BLOCK);
-		catc.addChildrenToBack(catb);
+			String exceptionName = getFuncName(num) +"_e";
+			Node catb = new Node(Token.BLOCK);
+			tryc.addChildrenToBack(catb);
+			Node catc = new Node(Token.CATCH);
+			catb.addChildrenToFront(catc);
+			catc.addChildrenToFront(Node.newString(Token.NAME, exceptionName));
+			catb = new Node(Token.BLOCK);
+			catc.addChildrenToBack(catb);
 		
-		Node exitExpr = new Node(Token.EXPR_RESULT);
-		catb.addChildrenToBack(exitExpr);
-		Node exitFunc = genCall("__funcExit", nodeType, num);
-		exitExpr.addChildrenToFront(exitFunc);
-		Node exitFun2 = exitFunc.cloneTree();
-		exitFunc.addChildrenToBack(Node.newString(Token.NAME, exceptionName));
+			Node exitExpr = new Node(Token.EXPR_RESULT);
+			catb.addChildrenToBack(exitExpr);
+			Node exitFunc = genCall("__funcExit", nodeType, num);
+			exitExpr.addChildrenToFront(exitFunc);
+			Node exitFun2 = exitFunc.cloneTree();
+			exitFunc.addChildrenToBack(Node.newString(Token.NAME, exceptionName));
 		
-		Node thrw = new Node(Token.THROW);
-		catb.addChildrenToBack(thrw);
-		thrw.addChildrenToFront(Node.newString(Token.NAME, exceptionName));
+			Node thrw = new Node(Token.THROW);
+			catb.addChildrenToBack(thrw);
+			thrw.addChildrenToFront(Node.newString(Token.NAME, exceptionName));
 		
-		blck.addChildrenToBack(exitFun2); // exception not thrown here
+			blck.addChildrenToBack(exitFun2); // exception not thrown here
 		
-		Map<Node, Node> orgs = new HashMap<Node, Node>();
-		orgs.put(cloned, block);
-		tx.replace(block, blck, orgs);
-		
+			Map<Node, Node> orgs = new HashMap<Node, Node>();
+			orgs.put(cloned, block);
+			tx.replace(block, blck, orgs);
+		}
 		Node assign = new Node(Token.ASSIGN);
 		Node getElem = new Node(Token.GETELEM);
 		assign.addChildrenToFront(getElem);
@@ -191,12 +187,21 @@ public class TraceCondVisitor implements Callback {
 	
 	private void visitCall(NodeTraversal t, Node n, Node parent) {
 		Node cloned = n.cloneTree();
+		cloned.setType(Token.CALL);
 		Node fname = cloned.getFirstChild();
 		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		Iterator<Node> itr = n.children().iterator();
+		itr.next();
+		Iterator<Node> ctr = cloned.children().iterator(); 		
+		ctr.next();
+		while (ctr.hasNext() && itr.hasNext()) {
+			orgs.put(ctr.next(), itr.next());
+		}
+		
 		switch (fname.getType()) {
 		case Token.GETELEM:
 		case Token.GETPROP:
-			cloned.addChildrenToFront(Node.newString(Token.NAME, "_CALLGET"));						
+			cloned.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType()) +"GET"));						
 			Node target = fname.removeFirstChild();
 			Node key = fname.removeFirstChild();
 			cloned.addChildBefore(target, fname);
@@ -207,9 +212,10 @@ public class TraceCondVisitor implements Callback {
 			orgs.put(key, name.getLastChild());									
 			break;
 		case Token.NAME: 
-			cloned.addChildrenToFront(Node.newString(Token.NAME, "_CALL"));
+			cloned.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType())));
 			break;
 		}
+						
 		tx.replace(n, cloned, orgs);
 	}
 	
@@ -267,7 +273,7 @@ public class TraceCondVisitor implements Callback {
 		
 		Map<Node, Node> orgs = new HashMap<Node, Node>();
 		orgs.put(cloned, n);
-		tx.replace(n,  call, orgs);		
+		tx.replace(n, call, orgs);		
 	}
 	
 	private void visitProto(NodeTraversal t, Node n, Node parent) {
@@ -281,15 +287,13 @@ public class TraceCondVisitor implements Callback {
 		tx.replace(child, call, orgs);
 	}
 	private void visitOps(NodeTraversal t, Node n, Node parent) {
+		int ntype = n.getType();
 		Node n1 = n.getFirstChild();
-		Node n2 = n.getLastChild();		
 		Node c1 = n1.cloneTree();
-		Node c2 = n2.cloneTree();
 		
 		Node call = new Node(Token.CALL);
 		call.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType())));
 		call.addChildrenToBack(c1);
-		call.addChildrenToBack(c2);
 		/*
 		Node func = new Node(Token.FUNCTION);
 		call.addChildrenToBack(func);
@@ -311,21 +315,34 @@ public class TraceCondVisitor implements Callback {
 		*/	
 		Map<Node, Node> orgs = new HashMap<Node, Node>();
 		orgs.put(c1, n1);
-		orgs.put(c2, n2);
+		
+		if (n.getChildCount() > 1) {
+			Node n2 = n.getLastChild();		
+			Node c2 = n2.cloneTree();
+			call.addChildrenToBack(c2);
+			orgs.put(c2, n2);	
+		}
+		else if ((ntype==Token.INC || ntype==Token.DEC) && n.getBooleanProp(Node.INCRDECR_PROP)) {			
+			call.addChildrenToBack(new Node(Token.TRUE));
+		}
+		
 		tx.replace(n, call, orgs);
 	}
 	
 	@Override
 	public void visit(NodeTraversal t, Node n, Node parent) {
+		if (n.getType()==Token.SCRIPT) {
+			System.out.println(n.toStringTree());
+		}
 		int ntype = n.getType();
 		int ptype = (parent == null)?Token.NULL:parent.getType();
 		
 		if (ntype == Token.EMPTY) {
 			return;
 		}
-		else if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
+		/*else if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
 			n.addChildrenToBack(new Node(Token.EMPTY));
-		}
+		}*/
 		else if (ntype==Token.STRING_KEY && n.getString().equals("__proto__")) {
 			visitProto(t, n, parent);
 		}
@@ -336,7 +353,7 @@ public class TraceCondVisitor implements Callback {
 		else if (ntype==Token.RETURN) {
 			visitReturn(t, n, parent);
 		}
-		else if (ntype==Token.CALL) {
+		else if (ntype==Token.CALL || ntype==Token.NEW) {
 			visitCall(t, n, parent);
 		}
 		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
@@ -347,17 +364,19 @@ public class TraceCondVisitor implements Callback {
 				visitGet(t, n, parent);
 			}
 		}
-		else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
-		//else if (ntype==Token.ADD || ntype==Token.DIV) {
-			System.out.println(n);
-			System.out.println(parent.toStringTree());
+		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
+		else if (ntype==Token.ADD || ntype==Token.SUB || ntype==Token.MUL || ntype==Token.DIV // + - * /
+			  || ntype==Token.NOT || ntype==Token.AND || ntype==Token.OR	// ! && ||
+			  || ntype==Token.SHEQ || ntype==Token.EQ || ntype==Token.GT || ntype==Token.GE || ntype==Token.LT || ntype==Token.LE // === == > >= < <=
+			  || ntype==Token.INC || ntype==Token.DEC
+				) {
 			visitOps(t, n, parent);
 		}
 		else if (ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
 			  || ntype==Token.TRUE || ntype==Token.FALSE
 			  || (ntype==Token.NAME && n.getString()=="undefined") ) {
 			if (ntype==Token.STRING && ptype==Token.GETPROP) {				
-				// supposed to be empty
+				// visitGet() handles this case already
 			}
 			else {
 				visitConst(t, n, parent);
