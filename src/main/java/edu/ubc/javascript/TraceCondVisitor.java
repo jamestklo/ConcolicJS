@@ -357,18 +357,22 @@ public class TraceCondVisitor implements Callback {
 			visitCall(t, n, parent);
 		}
 		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
-			if (ptype==Token.ASSIGN && n == parent.getFirstChild()) {
+			if ((ptype==Token.ASSIGN || ptype==Token.ASSIGN_ADD || ptype==Token.ASSIGN_SUB) 
+			 && n == parent.getFirstChild()) {
 				visitSet(t, n, parent);
 			}
 			else {
 				visitGet(t, n, parent);
 			}
 		}
+		else if (ntype==Token.ASSIGN_ADD || ntype==Token.ASSIGN_SUB) {
+			//visitAssign_Op(t, n, parent);
+		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
 		else if (ntype==Token.ADD || ntype==Token.SUB || ntype==Token.MUL || ntype==Token.DIV // + - * /
 			  || ntype==Token.NOT || ntype==Token.AND || ntype==Token.OR	// ! && ||
 			  || ntype==Token.SHEQ || ntype==Token.EQ || ntype==Token.GT || ntype==Token.GE || ntype==Token.LT || ntype==Token.LE // === == > >= < <=
-			  || ntype==Token.INC || ntype==Token.DEC
+			  || ntype==Token.INC || ntype==Token.DEC || ntype==Token.POS || ntype==Token.NEG
 				) {
 			visitOps(t, n, parent);
 		}
