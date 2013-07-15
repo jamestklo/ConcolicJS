@@ -336,7 +336,8 @@ public class TraceCondVisitor implements Callback {
 		}
 		int ntype = n.getType();
 		int ptype = (parent == null)?Token.NULL:parent.getType();
-		
+		String nname = Token.name(ntype);
+		String pname = Token.name(ptype);
 		if (ntype == Token.EMPTY) {
 			return;
 		}
@@ -356,16 +357,17 @@ public class TraceCondVisitor implements Callback {
 		else if (ntype==Token.CALL || ntype==Token.NEW) {
 			visitCall(t, n, parent);
 		}
-		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
-			if ((ptype==Token.ASSIGN || ptype==Token.ASSIGN_ADD || ptype==Token.ASSIGN_SUB) 
-			 && n == parent.getFirstChild()) {
+		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {			
+			if (pname.length() > 5 && pname.substring(0, 6).equals("ASSIGN") && n==parent.getFirstChild()) {
+				System.out.println(Token.name(ptype));
 				visitSet(t, n, parent);
 			}
 			else {
 				visitGet(t, n, parent);
 			}
 		}
-		else if (ntype==Token.ASSIGN_ADD || ntype==Token.ASSIGN_SUB) {
+		else if (nname.length() > 7 && nname.substring(0, 7).equals("ASSIGN_")) {
+			System.out.println(Token.name(ntype));
 			//visitAssign_Op(t, n, parent);
 		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
