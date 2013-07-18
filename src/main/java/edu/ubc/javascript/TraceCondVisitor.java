@@ -222,7 +222,7 @@ public class TraceCondVisitor implements Callback {
 	private void visitSet(NodeTraversal t, Node n, Node parent) {
 		Node target = n.getFirstChild();		
 		Node key	= n.getLastChild();
-		Node right = parent.getLastChild();		
+		Node right = parent.getLastChild();
 
 		Node target_clone = target.cloneTree();
 		Node key_clone = key.cloneTree();
@@ -244,9 +244,6 @@ public class TraceCondVisitor implements Callback {
 	
 	private void visitGet(NodeTraversal t, Node n, Node parent) {
 		int ptype = parent.getType();
-		if ((ptype==Token.CALL || ptype==Token.NEW) && n==parent.getFirstChild()) {
-			return;			
-		}
 				
 		Node target = n.getFirstChild();
 		Node target_cloned = target.cloneTree();
@@ -288,32 +285,12 @@ public class TraceCondVisitor implements Callback {
 		tx.replace(child, call, orgs);
 	}
 	private void visitOps(NodeTraversal t, Node n, Node parent) {
-		int ntype = n.getType();
 		Node n1 = n.getFirstChild();
 		Node c1 = n1.cloneTree();
 		
 		Node call = new Node(Token.CALL);
 		call.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType())));
 		call.addChildrenToBack(c1);
-		/*
-		Node func = new Node(Token.FUNCTION);
-		call.addChildrenToBack(func);
-		func.addChildrenToFront(Node.newString(Token.NAME, Token.name(n.getType())));
-		Node para = new Node(Token.PARAM_LIST);
-		func.addChildrenToBack(para);
-		para.addChildrenToFront(Node.newString(Token.NAME, "left"));
-		para.addChildrenToBack(Node.newString(Token.NAME, "right"));
-		Node blck = new Node(Token.BLOCK);
-		func.addChildrenToBack(blck);
-		Node expr = new Node(Token.EXPR_RESULT);
-		blck.addChildrenToBack(expr);
-		Node retn = new Node(Token.RETURN);
-		expr.addChildrenToFront(retn);
-		Node opsc = new Node(n.getType());
-		retn.addChildrenToFront(opsc);
-		opsc.addChildrenToFront(Node.newString(Token.NAME, "left"));
-		opsc.addChildrenToBack(Node.newString(Token.NAME, "right"));
-		*/	
 		Map<Node, Node> orgs = new HashMap<Node, Node>();
 		orgs.put(c1, n1);
 		
@@ -322,22 +299,80 @@ public class TraceCondVisitor implements Callback {
 			Node c2 = n2.cloneTree();
 			call.addChildrenToBack(c2);
 			orgs.put(c2, n2);	
-		}
-		else if ((ntype==Token.INC || ntype==Token.DEC) && n.getBooleanProp(Node.INCRDECR_PROP)) {			
-			call.addChildrenToBack(new Node(Token.TRUE));
-		}
-		
+		}		
 		tx.replace(n, call, orgs);
 	}
+	private void visitInc(NodeTraversal t, Node n, Node parent) {
+		int ntype = n.getType();
+		Boolean incrdecr = (ntype==Token.INC || ntype==Token.DEC)?n.getBooleanProp(Node.INCRDECR_PROP):null;
+
+		Node left = n.getFirstChild();
+		int ltype = left.getType();
+		Node cloned = left.cloneTree();
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(cloned, left);
+		
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, "_"+Token.name(ntype)));		
+		call.addChildrenToBack(cloned);
+		if (n.getChildCount() > 1) {
+			Node right = n.getLastChild();
+			Node clonedR = right.cloneTree();
+			orgs.put(clonedR, right);
+			call.addChildrenToBack(clonedR);
+		}
+		
+		if (ltype==Token.NAME) {
+			Node assign = new Node(Token.ASSIGN);
+			assign.addChildrenToFront(cloned.cloneTree());
+			assign.addChildrenToBack(call);
+			
+			int ptype = parent.getType();
+			if (incrdecr!= null && incrdecr==true 
+			 && ptype!=Token.EXPR_RESULT && NodeUti1.isStatement(n)!=true 
+			 && (ptype!=Token.FOR || n!=parent.getChildAtIndex(2)) ) {
+				
+				Node comma = new Node(Token.COMMA);
+				comma.addChildrenToBack(Node.newString(Token.NAME, "__t"));
+				
+				Node comma1 = new Node(Token.COMMA);
+				comma.addChildrenToFront(comma1);				
+				comma1.addChildrenToBack(assign);
+								
+				Node assign1 = new Node(Token.ASSIGN);
+				comma1.addChildrenToFront(assign1);
+				assign1.addChildrenToFront(Node.newString(Token.NAME, "__t"));
+				assign1.addChildrenToBack(cloned.cloneTree());
+				
+				tx.replace(n, comma, orgs);
+			}
+			else {
+				tx.replace(n, assign, orgs);
+			}
+		}
+		else if (ltype==Token.GETELEM || ltype==Token.GETPROP) {
+			if (incrdecr == null) {
+				call.addChildrenToBack(Node.newNumber(1));
+			}
+			else {
+				call.addChildrenToBack(new Node(incrdecr?Token.TRUE:Token.FALSE));
+			}
+			tx.replace(n, call, orgs);
+		}									
+	}
+
 	
 	@Override
-	public void visit(NodeTraversal t, Node n, Node parent) {
+	public void visit(NodeTraversal t, Node n, Node parent) {	
 		int ntype = n.getType();
 		int ptype = (parent == null)?Token.NULL:parent.getType();
 		String nname = Token.name(ntype);
 		String pname = Token.name(ptype);
 		if (ntype == Token.EMPTY) {
 			return;
+		}
+		else if (ntype == Token.SCRIPT) {
+			System.out.println(n.toStringTree());
 		}
 		/*else if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
 			n.addChildrenToBack(new Node(Token.EMPTY));
@@ -356,25 +391,23 @@ public class TraceCondVisitor implements Callback {
 			visitCall(t, n, parent);
 		}
 		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
-			if (pname.length() > 5 && pname.substring(0, 6).equals("ASSIGN") && n==parent.getFirstChild()) {
+			if (ptype==Token.ASSIGN && n==parent.getFirstChild()) {
 				visitSet(t, n, parent);
+			}
+			else if ((ptype==Token.CALL || ptype==Token.NEW) && n==parent.getFirstChild()) {				
 			}
 			else {
 				visitGet(t, n, parent);
 			}
 		}
-		else if (nname.length() > 7 && nname.substring(0, 7).equals("ASSIGN_")) {
-			int ctype = n.getFirstChild().getType();
-			if (ctype!=Token.GETELEM && ctype!=Token.GETPROP) {
-				visitOps(t, n, parent);
-			}
+		else if (ntype==Token.INC || ntype==Token.DEC || (nname.length() > 7 && nname.substring(0, 7).equals("ASSIGN_")) ) {
+			visitInc(t, n, parent);
 		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
 		else if (ntype==Token.ADD || ntype==Token.SUB || ntype==Token.MUL || ntype==Token.DIV // + - * /
 			  || ntype==Token.NOT || ntype==Token.AND || ntype==Token.OR	// ! && ||
 			  || ntype==Token.SHEQ || ntype==Token.EQ || ntype==Token.GT || ntype==Token.GE || ntype==Token.LT || ntype==Token.LE // === == > >= < <=
-			  || ntype==Token.INC || ntype==Token.DEC || ntype==Token.POS || ntype==Token.NEG
-				) {
+			  || ntype==Token.POS || ntype==Token.NEG) {
 			visitOps(t, n, parent);
 		}
 		else if (ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
