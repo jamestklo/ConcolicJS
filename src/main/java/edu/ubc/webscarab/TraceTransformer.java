@@ -53,7 +53,6 @@ public class TraceTransformer implements Transformer {
 		NodeTraversal traversal  = null;
 		ReflectiveNodeTransformer rnt = new ReflectiveNodeTransformer();
 
-		// to be merged with TraceVisitor(), to increase efficiency		
 		traversal = new NodeTraversal(compiler, new TraceCondVisitor(compiler, rnt));			
 		traversal.traverse(node);
 

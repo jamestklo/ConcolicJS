@@ -191,9 +191,11 @@ public class TraceCondVisitor implements Callback {
 		Node fname = cloned.getFirstChild();
 		Map<Node, Node> orgs = new HashMap<Node, Node>();
 		Iterator<Node> itr = n.children().iterator();
-		itr.next();
-		Iterator<Node> ctr = cloned.children().iterator(); 		
-		ctr.next();
+		Iterator<Node> ctr = cloned.children().iterator();
+		if (fname.getType()!=Token.FUNCTION) {
+			itr.next();
+			ctr.next();
+		}
 		while (ctr.hasNext() && itr.hasNext()) {
 			orgs.put(ctr.next(), itr.next());
 		}
@@ -211,7 +213,7 @@ public class TraceCondVisitor implements Callback {
 			orgs.put(target, name.getFirstChild());
 			orgs.put(key, name.getLastChild());									
 			break;
-		case Token.NAME: 
+		default:
 			cloned.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType())));
 			break;
 		}
@@ -314,7 +316,6 @@ public class TraceCondVisitor implements Callback {
 		
 		String callname = Token.name(ntype);
 		if (callname.contains("ASSIGN_")) {
-			System.out.println(callname);
 			callname = callname.substring(7);
 		}
 		Node call = new Node(Token.CALL);
@@ -368,7 +369,8 @@ public class TraceCondVisitor implements Callback {
 
 	
 	@Override
-	public void visit(NodeTraversal t, Node n, Node parent) {	
+	public void visit(NodeTraversal t, Node n, Node parent) {
+		boolean isJustPretty = false;
 		int ntype = n.getType();
 		int ptype = (parent == null)?Token.NULL:parent.getType();
 		String nname = Token.name(ntype);
@@ -376,12 +378,16 @@ public class TraceCondVisitor implements Callback {
 		if (ntype == Token.EMPTY) {
 			return;
 		}
-		else if (ntype == Token.SCRIPT) {
+		/*else if (ntype == Token.SCRIPT) {
 			System.out.println(n.toStringTree());
-		}
-		/*else if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
-			n.addChildrenToBack(new Node(Token.EMPTY));
 		}*/
+		
+		if (isJustPretty) {
+			if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
+				n.addChildrenToBack(new Node(Token.EMPTY));
+			}
+			return;
+		}
 		else if (ntype==Token.STRING_KEY && n.getString().equals("__proto__")) {
 			visitProto(t, n, parent);
 		}
@@ -417,8 +423,9 @@ public class TraceCondVisitor implements Callback {
 		}
 		else if (ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
 			  || ntype==Token.TRUE || ntype==Token.FALSE
+			  || ntype==Token.REGEXP
 			  || (ntype==Token.NAME && n.getString()=="undefined") ) {
-			if (ntype==Token.STRING && ptype==Token.GETPROP) {				
+			if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP)) {				
 				// the call to visitGet() will handle this case
 			}
 			else {
