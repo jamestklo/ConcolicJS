@@ -312,8 +312,13 @@ public class TraceCondVisitor implements Callback {
 		Map<Node, Node> orgs = new HashMap<Node, Node>();
 		orgs.put(cloned, left);
 		
+		String callname = Token.name(ntype);
+		if (callname.contains("ASSIGN_")) {
+			System.out.println(callname);
+			callname = callname.substring(7);
+		}
 		Node call = new Node(Token.CALL);
-		call.addChildrenToFront(Node.newString(Token.NAME, "_"+Token.name(ntype)));		
+		call.addChildrenToFront(Node.newString(Token.NAME, "_"+callname));		
 		call.addChildrenToBack(cloned);
 		if (n.getChildCount() > 1) {
 			Node right = n.getLastChild();
@@ -400,11 +405,11 @@ public class TraceCondVisitor implements Callback {
 				visitGet(t, n, parent);
 			}
 		}
-		else if (ntype==Token.INC || ntype==Token.DEC || (nname.length() > 7 && nname.substring(0, 7).equals("ASSIGN_")) ) {
+		else if (ntype==Token.INC || ntype==Token.DEC || (nname.contains("ASSIGN_")) ) {
 			visitInc(t, n, parent);
 		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
-		else if (ntype==Token.ADD || ntype==Token.SUB || ntype==Token.MUL || ntype==Token.DIV // + - * /
+		else if (ntype==Token.ADD || ntype==Token.SUB || ntype==Token.MUL || ntype==Token.DIV || ntype==Token.MOD // + - * /
 			  || ntype==Token.NOT || ntype==Token.AND || ntype==Token.OR	// ! && ||
 			  || ntype==Token.SHEQ || ntype==Token.EQ || ntype==Token.GT || ntype==Token.GE || ntype==Token.LT || ntype==Token.LE // === == > >= < <=
 			  || ntype==Token.POS || ntype==Token.NEG) {
