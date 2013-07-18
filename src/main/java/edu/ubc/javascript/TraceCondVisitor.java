@@ -219,7 +219,7 @@ public class TraceCondVisitor implements Callback {
 		tx.replace(n, cloned, orgs);
 	}
 	
-	private void visitSet(NodeTraversal t, Node n, Node parent) {		
+	private void visitSet(NodeTraversal t, Node n, Node parent) {
 		Node target = n.getFirstChild();		
 		Node key	= n.getLastChild();
 		Node right = parent.getLastChild();		
@@ -228,8 +228,9 @@ public class TraceCondVisitor implements Callback {
 		Node key_clone = key.cloneTree();
 		Node right_clone = right.cloneTree();
 		
+		String callname = Token.name(parent.getType()).replace("ASSIGN", "SET");
 		Node call = new Node(Token.CALL);
-		call.addChildrenToFront(Node.newString(Token.NAME, "_SET"));
+		call.addChildrenToFront(Node.newString(Token.NAME, "_"+callname));
 		call.addChildrenToBack(target_clone);
 		call.addChildrenToBack(key_clone);
 		call.addChildrenToBack(right_clone);
@@ -243,7 +244,7 @@ public class TraceCondVisitor implements Callback {
 	
 	private void visitGet(NodeTraversal t, Node n, Node parent) {
 		int ptype = parent.getType();
-		if (ptype==Token.CALL && n==parent.getFirstChild()) {
+		if ((ptype==Token.CALL || ptype==Token.NEW) && n==parent.getFirstChild()) {
 			return;			
 		}
 				
@@ -331,9 +332,6 @@ public class TraceCondVisitor implements Callback {
 	
 	@Override
 	public void visit(NodeTraversal t, Node n, Node parent) {
-		if (n.getType()==Token.SCRIPT) {
-			System.out.println(n.toStringTree());
-		}
 		int ntype = n.getType();
 		int ptype = (parent == null)?Token.NULL:parent.getType();
 		String nname = Token.name(ntype);
@@ -357,9 +355,8 @@ public class TraceCondVisitor implements Callback {
 		else if (ntype==Token.CALL || ntype==Token.NEW) {
 			visitCall(t, n, parent);
 		}
-		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {			
+		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
 			if (pname.length() > 5 && pname.substring(0, 6).equals("ASSIGN") && n==parent.getFirstChild()) {
-				System.out.println(Token.name(ptype));
 				visitSet(t, n, parent);
 			}
 			else {
@@ -367,8 +364,10 @@ public class TraceCondVisitor implements Callback {
 			}
 		}
 		else if (nname.length() > 7 && nname.substring(0, 7).equals("ASSIGN_")) {
-			System.out.println(Token.name(ntype));
-			//visitAssign_Op(t, n, parent);
+			int ctype = n.getFirstChild().getType();
+			if (ctype!=Token.GETELEM && ctype!=Token.GETPROP) {
+				visitOps(t, n, parent);
+			}
 		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
 		else if (ntype==Token.ADD || ntype==Token.SUB || ntype==Token.MUL || ntype==Token.DIV // + - * /
