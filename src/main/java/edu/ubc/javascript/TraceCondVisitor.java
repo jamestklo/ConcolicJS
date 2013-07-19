@@ -380,9 +380,9 @@ public class TraceCondVisitor implements Callback {
 		if (ntype == Token.EMPTY) {
 			return;
 		}
-		else if (ntype == Token.SCRIPT) {
+		/*else if (ntype == Token.SCRIPT) {
 			System.out.println(n.toStringTree());
-		}
+		}*/
 		
 		if (isJustPretty) {
 			if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
