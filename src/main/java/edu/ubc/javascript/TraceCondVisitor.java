@@ -276,10 +276,10 @@ public class TraceCondVisitor implements Callback {
 		tx.replace(n, call, orgs);		
 	}
 	
-	private void visitProto(NodeTraversal t, Node n, Node parent) {
+	private void visitValue(NodeTraversal t, Node n, Node parent) {
 		Node child = n.getFirstChild();
 		Node call = new Node(Token.CALL);
-		call.addChildrenToFront(Node.newString(Token.NAME, "_PROTO"));
+		call.addChildrenToFront(Node.newString(Token.NAME, "_VALUE"));
 		Node cloned = child.cloneTree();
 		call.addChildrenToBack(cloned);		
 		Map<Node, Node> orgs = new HashMap<Node, Node>();
@@ -356,31 +356,33 @@ public class TraceCondVisitor implements Callback {
 				tx.replace(n, assign, orgs);
 			}
 		}
-		else if (ltype==Token.GETELEM || ltype==Token.GETPROP) {
-			if (incrdecr == null) {
-				call.addChildrenToBack(Node.newNumber(1));
+		else {
+			if (ltype==Token.GETELEM || ltype==Token.GETPROP) {
+				if (incrdecr == null || incrdecr==false) {
+					call.addChildrenToBack(Node.newNumber(1));
+				}
+				else {
+					call.addChildrenToBack(new Node(Token.TRUE));
+				}
 			}
 			else {
-				call.addChildrenToBack(new Node(incrdecr?Token.TRUE:Token.FALSE));
+				System.out.println(n.toStringTree());
 			}
 			tx.replace(n, call, orgs);
-		}									
+		}
 	}
-
 	
 	@Override
 	public void visit(NodeTraversal t, Node n, Node parent) {
 		boolean isJustPretty = false;
 		int ntype = n.getType();
 		int ptype = (parent == null)?Token.NULL:parent.getType();
-		String nname = Token.name(ntype);
-		String pname = Token.name(ptype);
 		if (ntype == Token.EMPTY) {
 			return;
 		}
-		/*else if (ntype == Token.SCRIPT) {
+		else if (ntype == Token.SCRIPT) {
 			System.out.println(n.toStringTree());
-		}*/
+		}
 		
 		if (isJustPretty) {
 			if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
@@ -388,10 +390,10 @@ public class TraceCondVisitor implements Callback {
 			}
 			return;
 		}
-		else if (ntype==Token.STRING_KEY && n.getString().equals("__proto__")) {
-			visitProto(t, n, parent);
+		else if ( (ntype==Token.STRING_KEY && n.getString().equals("__proto__"))
+			   || (ntype==Token.CASE && NodeUti1.isConst(n.getFirstChild())==false) ) {
+			visitValue(t, n, parent);
 		}
-		
 		if (ntype==Token.FUNCTION) {
 			visitFunc(t, n, parent);
 		}
@@ -411,7 +413,7 @@ public class TraceCondVisitor implements Callback {
 				visitGet(t, n, parent);
 			}
 		}
-		else if (ntype==Token.INC || ntype==Token.DEC || (nname.contains("ASSIGN_")) ) {
+		else if (ntype==Token.INC || ntype==Token.DEC || (Token.name(ntype).contains("ASSIGN_")) ) {
 			visitInc(t, n, parent);
 		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
@@ -421,12 +423,11 @@ public class TraceCondVisitor implements Callback {
 			  || ntype==Token.POS || ntype==Token.NEG) {
 			visitOps(t, n, parent);
 		}
-		else if (ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
-			  || ntype==Token.TRUE || ntype==Token.FALSE
-			  || ntype==Token.REGEXP
-			  || (ntype==Token.NAME && n.getString()=="undefined") ) {
+		else if (NodeUti1.isConst(n)) {
 			if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP)) {				
 				// the call to visitGet() will handle this case
+			}
+			else if (ptype==Token.CASE && n==parent.getFirstChild()) {	
 			}
 			else {
 				visitConst(t, n, parent);

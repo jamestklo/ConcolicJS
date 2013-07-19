@@ -17,7 +17,7 @@ public final class NodeUti1 {
 		scriptCount.set(0);
 	}	
 	
-	public static Node detectAncestor(Node n, int[] types) {
+	static Node detectAncestor(Node n, int[] types) {
 		Node detected = null;
 		Iterator<Node> itr = n.getAncestors().iterator();
 		while (itr.hasNext() && detected == null) {
@@ -37,7 +37,7 @@ public final class NodeUti1 {
 		}
 		return detected;
 	}
-	public static boolean isAncestor(Node n, Node ancestor) {
+	static boolean isAncestor(Node n, Node ancestor) {
 		if (n.equals(ancestor)) {
 			return true;
 		}		
@@ -49,6 +49,15 @@ public final class NodeUti1 {
 		}
 		return false;
 	}
+	static boolean isConst(Node n) {
+		int ntype = n.getType();
+		return ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
+				  || ntype==Token.TRUE || ntype==Token.FALSE
+				  || ntype==Token.REGEXP
+				  || (ntype==Token.NAME && n.getString()=="undefined"); 
+	}
+
+	
 	
 	/**
 	  * @return Whether the node is used as a statement.
