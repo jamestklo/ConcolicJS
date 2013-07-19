@@ -413,7 +413,7 @@ public class TraceCondVisitor implements Callback {
 				visitGet(t, n, parent);
 			}
 		}
-		else if (ntype==Token.INC || ntype==Token.DEC || (Token.name(ntype).contains("ASSIGN_")) ) {
+		else if (ntype==Token.INC || ntype==Token.DEC || Token.name(ntype).contains("ASSIGN_") ) {
 			visitInc(t, n, parent);
 		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
