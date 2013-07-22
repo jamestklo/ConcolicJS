@@ -424,10 +424,10 @@ public class TraceCondVisitor implements Callback {
 			visitOps(t, n, parent);
 		}
 		else if (NodeUti1.isConst(n)) {
-			if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP)) {				
+			if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP)) {
 				// the call to visitGet() will handle this case
 			}
-			else if (ptype==Token.CASE && n==parent.getFirstChild()) {	
+			else if (ptype==Token.CASE && n==parent.getFirstChild()) {				
 			}
 			else {
 				visitConst(t, n, parent);
