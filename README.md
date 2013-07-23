@@ -1,4 +1,4 @@
 ConcolicJS
 ==========
 
-TODO: Write a nce readme!
+TODO: Write a nice readme!
