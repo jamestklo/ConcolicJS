@@ -2,4 +2,5 @@
 .classpath
 .keystore
 .project
-.settings/
+/.settings
+*.log
