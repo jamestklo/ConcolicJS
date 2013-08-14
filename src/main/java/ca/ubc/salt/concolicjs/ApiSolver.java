@@ -74,11 +74,15 @@ public class ApiSolver {
 		return "child::"+ domL +"[not(following-sibling::*)]";		
 	}
 	public static String childlen(String dom, int len) {
-		String str = dom;
-		for (int i=len; i-- > 0;) {
-			select("dom[child::*]");
+		String left="", right="*]";		
+		// children=1 select("dom[child::*]")
+		// childlen=2 select("dom[child::*[preceding-sibling::*]]")
+		// childlen=3 select("dom[child::*[preceding-sibling::*[preceding-sibling::*]]]")
+		for (int i=len; i-- > 1;) {
+			left 	+= "*[preceding-sibling::";
+			right	+= "]";
 		}
-		return str;
+		return dom+"[child::"+ left + right;
 	}
 	public static String select(String xpath) {
 		return "select(\""+ xpath +"\")";
@@ -100,6 +104,8 @@ public class ApiSolver {
 		}
 		als.add("dom0["+ firstChild("domC") +"] | dom1["+ lastChild("domC") +"]");
 		als.add("dom0[parent::domC] | dom1[parent::domC]");
+		als.add(childlen("dom0", 3));
+		als.add(childlen("dom1", 2));
 		
 		String ary[] = als.toArray(new String[0]);		
 		for (int i=ary.length; i-- > 0;) {
