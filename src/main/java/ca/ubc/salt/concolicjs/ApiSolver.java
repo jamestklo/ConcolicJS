@@ -1,8 +1,11 @@
 package ca.ubc.salt.concolicjs;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.base.Joiner;
 
 // point lmusolver.jar to build-path
 import fr.inrialpes.wam.treelogic.BottomUpSolver.FiniteTreeSolver;
@@ -12,75 +15,107 @@ public class ApiSolver {
 
 	/*
 	 * how to make solver to generate valid HTML?
-	 * how to generate elements with attributes?  attriutes or text that satsify constraints: HAMPI/Kaluzza
+	 * how to generate elements with attributes?  attributes or text that satsify constraints: HAMPI/Kaluzza
 	 */
 	public static String[] test1() {
 		//http://www.w3schools.com/xpath/xpath_syntax.asp
-		String ary[] = new String[64];
-		int i=0;
+		ArrayList<String> ary = new ArrayList<String>();		
 		/*
-		ary[i++] = "nodename";
-		ary[i++] = "/";
-		ary[i++] = "//";
-		ary[i++] = ".";
-		ary[i++] = "..";
-		ary[i++] = "@";
+		ary.add("nodename");
+		ary.add("/");
+		ary.add("//");
+		ary.add(".");
+		ary.add("..");
+		ary.add("@");
 		
-		ary[i++] = "bookstore";
-		ary[i++] = "/bookstore";
-		ary[i++] = "bookstore/book";
-		ary[i++] = "//book";
-		ary[i++] = "bookstore//book";
-		ary[i++] = "//@lang";
+		ary.add("bookstore");
+		ary.add("/bookstore");
+		ary.add("bookstore/book");
+		ary.add("//book");
+		ary.add("bookstore//book");
+		ary.add("//@lang");
 		
-		ary[i++] = "/bookstore/book[1]";
-		ary[i++] = "/bookstore/book[last()]";
-		ary[i++] = "/bookstore/book[last()-1]";
-		ary[i++] = "/bookstore/book[position()<3]";
-		ary[i++] = "//title[@lang]";
-		ary[i++] = "//title[@lang='eng']";
-		
-		ary[i++] = "/bookstore/book[price=35.00]";
-		ary[i++] = "/bookstore/book[price=35.00]/title";
-		ary[i++] = "/bookstore/book[@price=35.00]/title";
-		
-		ary[i++] = "*";
-		ary[i++] = "@*";
-		ary[i++] = "node()";
-		
-		ary[i++] = "/bookstore/*";
-		ary[i++] = "//*";
-		ary[i++] = "//title[@*]";
+		ary.add("/bookstore/book[1]");
+		ary.add("/bookstore/book[last()]");
+		ary.add("/bookstore/book[last()-1]");
+		ary.add("/bookstore/book[position()<3]");
+		ary.add("//title[@lang]");
+		ary.add("//title[@lang='eng']");
 		*/
-		ary[i++] = "//book/title | //book/price";
-		ary[i++] = "//title | //price";
-		ary[i++] = "/bookstore/book/title | //price";
-		return ary;
+		//ary.add("/bookstore/book[./price=\"35.00\"]");
+		//ary.add("/bookstore/book[./price=35.00]/title");
+		//ary.add("/bookstore/book[@__0=1][@price][@innerHTML][@title]/title");
+		//ary.add("nt[preceding-sibling::a[preceding-sibling::b]]");
+		//ary.add("/node[parent::p]/*[following-sibling::*[following-sibling::*[following-sibling::*]]]");
+		ary.add("a[@id=\"1\"]");
+		/*
+		ary.add("*");
+		ary.add("@*");
+		ary.add("node()");
+		
+		ary.add("/bookstore/*");
+		ary.add("//*");
+		ary.add("//title[@*]");
+		
+		ary.add("//book/title | //book/price");
+		ary.add("//title | //price");
+		ary.add("/bookstore/book/title | //price");
+		*/
+		return ary.toArray(new String[0]);
 	}
 	
+	public static String count1(String nt) {		
+		return nt +"[not(following::"+ nt +") and not(preceding::"+ nt +") and not(ancestor::"+ nt +") and not(descendant::"+ nt +")]";
+	}
+	public static String firstChild(String domF) {		
+		return "child::"+ domF +"[not(preceding-sibling::*)]";
+	}
+	public static String lastChild(String domL) {		
+		return "child::"+ domL +"[not(following-sibling::*)]";		
+	}
+	public static String childlen(String dom, int len) {
+		String str = dom;
+		for (int i=len; i-- > 0;) {
+			select("dom[child::*]");
+		}
+		return str;
+	}
+	public static String select(String xpath) {
+		return "select(\""+ xpath +"\")";
+	}	
+	public static String html(String xpath, String[] nodes) {
+		String query=xpath;		
+		for (int i=nodes.length; i-- > 0;) {
+			String node = nodes[i];
+			query = query.replace(node+"[", "descendant::"+node+"[").replace("::descendant::", "::");
+		}
+		return "/html["+ query +"\t]";		
+	}
 	
 	public static void main(String[] args) {
-		//String str = "select(\"a/b[following-sibling::c/parent::a]\")";
-		String ary[] = test1();
-		String str="";
-		Map<String, String> ans = new HashMap<String, String>();
-		int i=0, l=ary.length;
-		for (i=0; i < l; i++) {
-			try {
-				str = "select(\""+ ary[i]+ "\")";
-				ans.put(str, api_solve(str));				
-			}
-			catch (Exception e) {
-				System.out.println("test "+ i +" failed: "+ str);
-			}
+		ArrayList<String> als = new ArrayList<String>();
+		String dom[] = {"dom0", "dom1", "domC"};
+		for (int i=dom.length; i-- > 0;) {
+			als.add(count1(dom[i]));
 		}
+		als.add("dom0["+ firstChild("domC") +"] | dom1["+ lastChild("domC") +"]");
+		als.add("dom0[parent::domC] | dom1[parent::domC]");
+		
+		String ary[] = als.toArray(new String[0]);		
+		for (int i=ary.length; i-- > 0;) {
+			ary[i] = select(html(ary[i], dom));
+		}
+		
+		String a = Joiner.on(" &\n").join(ary);
+		System.out.println(a);
+		api_solve(a);		
 	}
 	
 	/*
 	 * returns null string if formula is unsatisfiable
 	 */
 	private static String api_solve(String str) {
-		boolean is_attributes = true;
+		boolean is_attributes = false;
 		boolean is_printtypes = false;
 		boolean is_stats = false;
 		boolean is_printFormula = false;

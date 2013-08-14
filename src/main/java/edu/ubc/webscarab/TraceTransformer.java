@@ -13,13 +13,10 @@ import com.google.javascript.jscomp.Compiler;
 import com.google.javascript.jscomp.CompilerOptions;
 import com.google.javascript.jscomp.NodeTraversal;
 import com.google.javascript.jscomp.SourceFile;
+import com.google.javascript.jscomp.TraceCondVisitor;
 import com.google.javascript.rhino.Node;
 
-import edu.ubc.javascript.ClosureCheck;
 import edu.ubc.javascript.ReflectiveNodeTransformer;
-import edu.ubc.javascript.ScopeVisitor;
-import edu.ubc.javascript.TraceCondVisitor;
-import edu.ubc.javascript.TraceVisitor;
 
 public class TraceTransformer implements Transformer {
 

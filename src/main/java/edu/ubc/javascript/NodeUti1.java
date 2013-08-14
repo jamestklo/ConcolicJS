@@ -49,7 +49,7 @@ public final class NodeUti1 {
 		}
 		return false;
 	}
-	static boolean isConst(Node n) {
+	public static boolean isConst(Node n) {
 		int ntype = n.getType();
 		return ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
 				  || ntype==Token.TRUE || ntype==Token.FALSE
@@ -62,7 +62,7 @@ public final class NodeUti1 {
 	/**
 	  * @return Whether the node is used as a statement.
 	  */
-	static boolean isStatement(Node n) {
+	public static boolean isStatement(Node n) {
 	    Node parent = n.getParent();
 	    // It is not possible to determine definitely if a node is a statement
 	    // or not if it is not part of the AST.  A FUNCTION node can be

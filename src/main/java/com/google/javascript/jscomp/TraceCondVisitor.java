@@ -1,4 +1,4 @@
-package edu.ubc.javascript;
+package com.google.javascript.jscomp;
 
 
 import java.util.HashMap;
@@ -11,6 +11,9 @@ import com.google.javascript.jscomp.NodeTraversal;
 import com.google.javascript.jscomp.NodeTraversal.Callback;
 import com.google.javascript.rhino.Node;
 import com.google.javascript.rhino.Token;
+
+import edu.ubc.javascript.NodeUti1;
+import edu.ubc.javascript.ReflectiveNodeTransformer;
 public class TraceCondVisitor implements Callback {
 
 	private final Supplier<String> safeNameIdSupplier;
@@ -244,9 +247,7 @@ public class TraceCondVisitor implements Callback {
 		tx.replace(parent, call, orgs);
 	}
 	
-	private void visitGet(NodeTraversal t, Node n, Node parent) {
-		int ptype = parent.getType();
-				
+	private void visitGet(NodeTraversal t, Node n, Node parent) {				
 		Node target = n.getFirstChild();
 		Node target_cloned = target.cloneTree();
 				

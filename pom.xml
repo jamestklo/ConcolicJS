@@ -4,6 +4,11 @@
   <artifactId>ConcolicJS</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <dependencies>
+    <dependency>
+   		<groupId>com.google.guava</groupId>
+    	<artifactId>guava</artifactId>
+    	<version>14.0.1</version>    
+    </dependency>
   	<dependency>
         <groupId>com.google.javascript</groupId>
         <artifactId>closure-compiler</artifactId>
