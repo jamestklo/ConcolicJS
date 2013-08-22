@@ -381,9 +381,9 @@ public class TraceCondVisitor implements Callback {
 		if (ntype == Token.EMPTY) {
 			return;
 		}
-		/*else if (ntype == Token.SCRIPT) {
+		else if (ntype == Token.SCRIPT) {
 			System.out.println(n.toStringTree());
-		}*/
+		}
 		
 		if (isJustPretty) {
 			if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
@@ -418,10 +418,11 @@ public class TraceCondVisitor implements Callback {
 			visitInc(t, n, parent);
 		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
-		else if (ntype==Token.ADD || ntype==Token.SUB || ntype==Token.MUL || ntype==Token.DIV || ntype==Token.MOD // + - * /
-			  || ntype==Token.NOT || ntype==Token.AND || ntype==Token.OR	// ! && ||
-			  || ntype==Token.SHEQ || ntype==Token.EQ || ntype==Token.GT || ntype==Token.GE || ntype==Token.LT || ntype==Token.LE // === == > >= < <=
-			  || ntype==Token.POS || ntype==Token.NEG) {
+		else if (ntype==Token.ADD	|| ntype==Token.SUB	|| ntype==Token.MUL || ntype==Token.DIV || ntype==Token.MOD // + - * /
+			  || ntype==Token.NOT	|| ntype==Token.AND || ntype==Token.OR	// ! && ||
+			  || ntype==Token.SHEQ	|| ntype==Token.SHNE || ntype==Token.EQ || ntype==Token.NE // === !== == != 
+			  || ntype==Token.GT	|| ntype==Token.GE	|| ntype==Token.LT || ntype==Token.LE // > >= < <=
+			  || ntype==Token.POS	|| ntype==Token.NEG) {
 			visitOps(t, n, parent);
 		}
 		else if (NodeUti1.isConst(n)) {

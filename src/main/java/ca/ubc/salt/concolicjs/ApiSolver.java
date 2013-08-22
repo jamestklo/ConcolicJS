@@ -107,7 +107,7 @@ public class ApiSolver {
 		als.add(childlen("dom0", 3));
 		als.add(childlen("dom1", 2));
 		
-		String ary[] = als.toArray(new String[0]);		
+		String ary[] = als.toArray(new String[0]);
 		for (int i=ary.length; i-- > 0;) {
 			ary[i] = select(html(ary[i], dom));
 		}
