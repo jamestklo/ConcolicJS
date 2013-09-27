@@ -97,6 +97,7 @@ public class ApiSolver {
 	}
 	
 	public static void main(String[] args) {
+		/*
 		ArrayList<String> als = new ArrayList<String>();
 		String dom[] = {"dom0", "dom1", "domC"};
 		for (int i=dom.length; i-- > 0;) {
@@ -115,6 +116,15 @@ public class ApiSolver {
 		String a = Joiner.on(" &\n").join(ary);
 		System.out.println(a);
 		api_solve(a);		
+		*/
+		String str = "select(\"/html[descendant::dom1[child::domC[not(following-sibling::*)]]]\") &"
+		+"select(\"/html[descendant::dom1[following-sibling::*[parent::dom2 and not(following-sibling::*)]]]\") &"
+		+"select(\"/html[descendant::dom0[parent::domC] | descendant::dom1[parent::domC]]\") &"
+		+"select(\"/html[descendant::dom2[not(following::dom2) and not(preceding::dom2) and not(ancestor::dom2) and not(descendant::dom2)]]\") &"
+		+"select(\"/html[descendant::domC[not(following::domC) and not(preceding::domC) and not(ancestor::domC) and not(descendant::domC)]]\") &"
+		+"select(\"/html[descendant::dom1[not(following::dom1) and not(preceding::dom1) and not(ancestor::dom1) and not(descendant::dom1)]]\") &"
+		+"select(\"/html[descendant::dom0[not(following::dom0) and not(preceding::dom0) and not(ancestor::dom0) and not(descendant::dom0)]]\")";
+		api_solve(str);
 	}
 	
 	/*
