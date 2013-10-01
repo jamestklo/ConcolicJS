@@ -37,11 +37,12 @@ public class XMLgenerator {
 		return ret; 
 	}
 	
-	CVCnode setParent(String child, String parent) {
+	CVCnode setParent(String child, String parent) {		
 		CVCnode childNode = getAlias(child);
 		CVCnode parentNode = childNode.parent;
 		if (nameToNode.get(parent) == null && parentNode != null) {
 			parentNode.addName(parent);
+			nameToNode.put(parent, parentNode);
 			return childNode;
 		}
 		return setParent(child, getAlias(parent));
@@ -55,7 +56,6 @@ public class XMLgenerator {
 	
 	void parseLogs(String filepath) {		
 		try {
-						
 			BufferedReader br = new BufferedReader(new FileReader(filepath));
 			String line;
 
@@ -73,12 +73,6 @@ public class XMLgenerator {
 						String[] ary = p0.split(relation);
 						System.out.println(i++ +" "+ relation +" "+ ary.length);
 						if (ary.length > 4) {
-							if (ary.length > 5) {
-								System.out.println(ary[0] +" "+ ary[1] + " "+ ary[3] +" "+ ary[5]);
-							}
-							else {
-								System.out.println(ary[0] +" "+ ary[1] + " "+ ary[3]);
-							}
 							CVCnode childNode;
 							switch(ary[0]) {
 							case("parent"):
@@ -94,7 +88,7 @@ public class XMLgenerator {
 								break;
 							case("lastChild"):
 								childNode = setParent(ary[1], ary[3]);
-								childNode.order = -1;						
+								childNode.order = -1;					
 								break;
 							case ("preceding_sibling"):
 							case ("following_sibling"):

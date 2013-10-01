@@ -1,12 +1,11 @@
 package ca.ubc.salt.concolicjs;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -17,13 +16,13 @@ public class CVCnode {
 	
 	CVCnode parent;
 	int order;
-	Set<CVCnode> children;
+	Set<CVCnode> children;	
 		
 	public CVCnode(Map<String, CVCnode> nameToNode) {
 		this.nameToNode = nameToNode;
-		this.aliases = new HashSet<String>();
-		this.children = new HashSet<CVCnode>();
-		this.order = -2;
+		this.aliases	= new HashSet<String>();
+		this.children 	= new HashSet<CVCnode>();
+		this.order 		= -2;
 	}
 	
 	public void addName(String name) {
@@ -48,14 +47,15 @@ public class CVCnode {
 		this.order = order;
 	}
 	
-	public void merge(CVCnode node) {	
+	public void merge(CVCnode node) {		
 		if (this.equals(node)) {
 			return;
-		}
+		}				
 		Set<String> aliases = node.aliases;
 		Iterator<String> itr_str = aliases.iterator();
 		while (itr_str.hasNext()) {
-			nameToNode.put(itr_str.next(), this);
+			String name = itr_str.next();
+			nameToNode.put(name, this);
 		}
 		this.aliases.addAll(aliases);
 		
@@ -66,16 +66,24 @@ public class CVCnode {
 		}
 		this.children.addAll(children);
 		
+		node.parent.children.remove(node);
+		node.parent.children.add(this);		
 		this.setParent(node.parent);
+		
+		if (this.order == -2) {
+			this.order = node.order;
+		}
+		else if (this.order > 0 && node.order > 0 && this.order != node.order) {
+			System.out.println("order conflict when merging: "+ this.order +"("+ this.aliases.toString() +")  vs. "+ node.order +"("+ aliases.toString() +")");
+		}
 	}
 
 	public Element toDOM(Document document) {				
 		String[] ary = this.aliases.toArray(new String[this.aliases.size()]);
-		Element elem = document.createElement(ary[0]);			
-		Set<CVCnode> children = this.children;
-		Iterator<CVCnode> itr_cvc = children.iterator();
-		while (itr_cvc.hasNext()) {
-			elem.appendChild(itr_cvc.next().toDOM(document));				
+		Element elem = document.createElement(ary[0]);					
+		Iterator<CVCnode> itr_cvc = this.children.iterator();
+		while (itr_cvc.hasNext()) {			
+			elem.appendChild(itr_cvc.next().toDOM(document));
 		}
 		return elem;
 	}	
