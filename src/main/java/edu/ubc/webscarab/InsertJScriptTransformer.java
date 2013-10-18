@@ -111,8 +111,7 @@ public class InsertJScriptTransformer implements Transformer {
 	  return script.toString();
 	}
 	
-	private static String[] getSources(String host) {
-		
+	private static String[] getSources(String host) {		
 	  // Future: read srcs from a file, hard-coding for now
 	  ArrayList<String> srcs = new ArrayList<String>();	  
 
@@ -120,7 +119,8 @@ public class InsertJScriptTransformer implements Transformer {
 	  //srcs.add(host+"tracing/trazing/instrument.js");
 	  srcs.add(host+"tracing/trazing/logCall.js");
 	  srcs.add(host+"tracing/trazing/anaCall.js");
-	  srcs.add(host+"tracing/trazing/xmlCall.js");
+	  //srcs.add(host+"tracing/trazing/xmlCall.js");
+	  srcs.add(host+"tracing/trazing/cvcCall.js");
 	  
 	  srcs.add(host+"tracing/trazing/logAST.js");
 	  srcs.add(host+"tracing/trazing/logCond.js");

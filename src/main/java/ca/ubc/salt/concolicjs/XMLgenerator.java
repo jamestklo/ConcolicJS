@@ -19,42 +19,99 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
-
-public class XMLgenerator {
-	
+/*
+ *  remains to be done
+ *  	1) ordering of children
+ *  	2) extending XMLgenerator.java to cover attributes, tag names, etc.
+ *  	3) handling conflicts
+ */
+public class XMLgenerator {	
 	Map<String, CVCnode> nameToNode = new HashMap<String, CVCnode>();
 	public XMLgenerator(String filepath) {
-		parseLogs(filepath);
+		parseSolverOutput(filepath);
 	}
 	
-	CVCnode getAlias(String name) {
+	CVCnode put(String key, CVCnode value) {
+		return nameToNode.put(key, value);
+	}
+	
+	boolean childIndexEQ(String nodeName, int index) {
+		System.out.println("QUERY childIndex("+ nodeName +") ="+ index);
+		return false;
+	}
+
+	boolean childIndexGT(String nodeName, int index) {
+		System.out.println("QUERY childIndex("+ nodeName +") >"+ index);
+		return false;
+	}
+	
+	CVCnode getNode(String name) {
 		CVCnode ret = nameToNode.get(name);
 		if (ret == null) {
-		  ret = new CVCnode(nameToNode);
+		  ret = new CVCnode(this);
 		  ret.addName(name);
 		  nameToNode.put(name, ret);
 		}
 		return ret; 
 	}
-	
-	CVCnode setParent(String child, String parent) {		
-		CVCnode childNode = getAlias(child);
+		
+	CVCnode setParent(String child, String parent, int at) {		
+		CVCnode childNode = getNode(child);
 		CVCnode parentNode = childNode.parent;
 		if (nameToNode.get(parent) == null && parentNode != null) {
 			parentNode.addName(parent);
 			nameToNode.put(parent, parentNode);
+			childNode.setPosition(at);
 			return childNode;
 		}
-		return setParent(child, getAlias(parent));
+		return setParent(child, getNode(parent), at);
 	}
 	
-	CVCnode setParent(String child, CVCnode parent) {
-		CVCnode childNode = getAlias(child);
+	CVCnode setParent(String child, CVCnode parent, int at) {
+		CVCnode childNode = getNode(child);
 		childNode.setParent(parent);
+		childNode.setPosition(at);
 		return childNode;
 	}
 	
-	void parseLogs(String filepath) {		
+	Set<CVCnode> getNodeSet() {
+		Set<CVCnode> set = new HashSet<CVCnode>();
+		Iterator<String> itr_str = nameToNode.keySet().iterator();
+		while (itr_str.hasNext()) {
+			set.add(nameToNode.get(itr_str.next()));
+		}
+		return set;
+	}
+	
+	void setSibling(String prev, String next) {
+		CVCnode prevNode = nameToNode.get(prev);
+		CVCnode nextNode = nameToNode.get(next);
+		if (prevNode instanceof CVCnode) {
+			if (nextNode == null) {
+		  		nextNode = setParent(next, prevNode.getParent(), -2);
+		  	}
+		}
+		else if (nextNode instanceof CVCnode) {
+			prevNode = setParent(prev, nextNode.getParent(), -2);	
+		}
+		else {
+			CVCnode parent = new CVCnode(this);
+			prevNode = setParent(prev, parent, -2);
+			nextNode = setParent(next, parent, -2);	            
+		}
+		
+		if (prevNode.position >= 0) {
+			nextNode.setPosition(prevNode.position+1);				  
+		}
+		if (nextNode.position > 0) {
+			prevNode.setPosition(nextNode.position-1);				  
+		}
+
+		//prevNode.setNext(nextNode);
+		//nextNode.setPrev(prevNode);
+	}
+	
+	void parseSolverOutput(String filepath) {		
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(filepath));
 			String line;
@@ -73,29 +130,25 @@ public class XMLgenerator {
 						String[] ary = p0.split(relation);
 						System.out.println(i++ +" "+ relation +" "+ ary.length);
 						if (ary.length > 4) {
-							CVCnode childNode;
 							switch(ary[0]) {
 							case("parent"):
-								setParent(ary[3], ary[1]);
+								setParent(ary[3], ary[1], -2);
 								break;
 							case("children"):
-								childNode = setParent(ary[1], ary[3]);
-								childNode.order = new Integer(ary[5]);
+								setParent(ary[1], ary[3], new Integer(ary[5]));
 								break;
 							case("firstChild"):
-								childNode = setParent(ary[1], ary[3]);
-								childNode.order = 0;						
+								setParent(ary[1], ary[3], 0);
 								break;
 							case("lastChild"):
-								childNode = setParent(ary[1], ary[3]);
-								childNode.order = -1;					
+								setParent(ary[1], ary[3], -1);
 								break;
-							case ("preceding_sibling"):
 							case ("following_sibling"):
-								CVCnode p = new CVCnode(nameToNode);
-								setParent(ary[1], p);
-								setParent(ary[3], p);								
-								break;								
+								setSibling(ary[3], ary[1]);
+								break;																
+							case ("preceding_sibling"):
+								setSibling(ary[1], ary[3]);
+								break;
 							}													
 						}
 					}
@@ -152,7 +205,14 @@ public class XMLgenerator {
 	}	
 	
 	public static void main(String[] args) {
-		XMLgenerator xmlg = new XMLgenerator("Z:/cvc4/cvc3-output20130913.txt");
+		XMLgenerator xmlg = new XMLgenerator("Z:/cvc4/cvc3-output20131010.txt");
 		outXML(xmlg.toDOM(null), System.out);
+		
+		System.out.println("\n");
+		Set<CVCnode> set = xmlg.getNodeSet();
+		Iterator<CVCnode> itr_cvc = set.iterator();
+		while (itr_cvc.hasNext()) {
+			System.out.println(itr_cvc.next().getAliases().toString());
+		}
 	}
 }
