@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,19 +20,26 @@ public class CVCsolver {
 	Thread inputThread;
 	Thread errorThread;	
 	protected boolean isRunning = true;
-	protected boolean isReady = false;
+	protected int state = 0;
 	public CVCsolver(String command) {
 		try {
+			
 			//process = Runtime.getRuntime().exec( "Z:/cvc4/cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive" );
-			process = Runtime.getRuntime().exec(command);
-			outputThread = new OutputStreamCleaner(this, process.getOutputStream());			
+            ProcessBuilder builder = new ProcessBuilder("cmd");
+            builder.redirectErrorStream(true);                        
+            builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
+            builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+			process = builder.start();
+			/*
+			outputThread = new OutputStreamCleaner(this, process.getOutputStream());
 			inputThread  = new InputStreamCleaner(this, process.getInputStream());
 			errorThread  = new InputStreamCleaner(this, process.getErrorStream());
 			
 			outputThread.start();
 			inputThread.start();
 			errorThread.start();
-			//process.waitFor();
+			*/
+			process.waitFor();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -63,12 +71,18 @@ public class CVCsolver {
 			this.input = input;
 		}
 		public void run() {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-			while (process.isRunning) {
-				try {										
-					String line = reader.readLine();
-					System.out.println(counter +" "+ input.available() +" "+ line.length() +" "+ line);
-					process.isReady = true;
+			BufferedReader reader = new BufferedReader(new InputStreamReader(input));			
+			while (process.isRunning) {				
+				try {
+					String line = reader.readLine();					
+					System.out.println(process.state +" "+ counter +" "+ input.available() +" "+ line);
+					if (input.available() > 0) {
+						process.state = 1;
+					}
+					else {
+						process.state = 2;
+					}
+					
 				}
 				catch (IOException e) {
 					e.printStackTrace();
@@ -87,16 +101,16 @@ public class CVCsolver {
 			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(output));
 			while (process.isRunning) {
 				try {
-					if (process.isReady) {
+					if (process.state == 0) {
+						writer.write("WHERE;\r");
+					}
+					else if (process.state == 2) {
 						String variable = "a"+counter;
 						writer.write(variable +":INT;\n");
 						writer.write("ASSERT "+ variable +" = "+ counter +";\n");
-						//writer.write("QUERY "+ variable +" > 500;\r");
-						writer.write("WHERE;\r");
+						writer.write("QUERY "+ variable +" > 500;\r");
+						//writer.write("WHERE;\r");
 						++counter;
-					}
-					else {
-						writer.write("a:INT;\r");
 					}
 					output.flush();
 				}
