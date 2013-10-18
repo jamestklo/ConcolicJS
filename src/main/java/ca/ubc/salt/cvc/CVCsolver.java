@@ -27,10 +27,10 @@ public class CVCsolver {
 			//process = Runtime.getRuntime().exec( "Z:/cvc4/cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive" );
             ProcessBuilder builder = new ProcessBuilder("cmd");
             builder.redirectErrorStream(true);                        
-            builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
-            builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            //builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
+            //builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
 			process = builder.start();
-			/*
+			
 			outputThread = new OutputStreamCleaner(this, process.getOutputStream());
 			inputThread  = new InputStreamCleaner(this, process.getInputStream());
 			errorThread  = new InputStreamCleaner(this, process.getErrorStream());
@@ -38,7 +38,7 @@ public class CVCsolver {
 			outputThread.start();
 			inputThread.start();
 			errorThread.start();
-			*/
+			
 			process.waitFor();
 		}
 		catch (Exception e) {
@@ -75,14 +75,16 @@ public class CVCsolver {
 			while (process.isRunning) {				
 				try {
 					String line = reader.readLine();					
+					if (line == null) {
+						continue;
+					}
 					System.out.println(process.state +" "+ counter +" "+ input.available() +" "+ line);
 					if (input.available() > 0) {
 						process.state = 1;
 					}
 					else {
 						process.state = 2;
-					}
-					
+					}					
 				}
 				catch (IOException e) {
 					e.printStackTrace();
@@ -101,9 +103,13 @@ public class CVCsolver {
 			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(output));
 			while (process.isRunning) {
 				try {
-					if (process.state == 0) {
-						writer.write("WHERE;\r");
+					switch (process.state) {
+					
 					}
+					if (process.state == 0) {
+						writer.write("cd ./\r");
+						process.state = 1;
+					}					
 					else if (process.state == 2) {
 						String variable = "a"+counter;
 						writer.write(variable +":INT;\n");
