@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,19 +30,21 @@ import org.w3c.dom.Document;
 public class XMLgenerator {	
 	protected Map<String, CVCnode> nameToNode = new HashMap<String, CVCnode>();
 	protected CVCsolverDOM cvc;
+	protected Document document;
 	public XMLgenerator(CVCsolverDOM cvc, BufferedReader reader) {
 		this.cvc = cvc;
 		parseSolverOutput(reader);
+		this.document = toDOM(null);
 	}
-	
 	protected CVCsolverDOM getCVC() {
 		return cvc;
+	}	
+	protected Document getDocument() {
+		return document;
 	}
-	
 	protected CVCnode put(String key, CVCnode value) {
 		return nameToNode.put(key, value);
-	}
-		
+	}	
 	protected CVCnode getNode(String name) {
 		CVCnode ret = nameToNode.get(name);
 		if (ret == null) {
@@ -50,8 +53,7 @@ public class XMLgenerator {
 		  nameToNode.put(name, ret);
 		}
 		return ret; 
-	}
-		
+	}		
 	protected CVCnode setParent(String child, String parent, int at) {		
 		CVCnode childNode = getNode(child);
 		CVCnode parentNode = childNode.parent;
@@ -62,24 +64,13 @@ public class XMLgenerator {
 			return childNode;
 		}
 		return setParent(child, getNode(parent), at);
-	}
-	
+	}	
 	protected CVCnode setParent(String child, CVCnode parent, int at) {
 		CVCnode childNode = getNode(child);
 		childNode.setParent(parent);
 		childNode.setPosition(at);
 		return childNode;
-	}
-	
-	protected Set<CVCnode> getNodeSet() {
-		Set<CVCnode> set = new HashSet<CVCnode>();
-		Iterator<String> itr_str = nameToNode.keySet().iterator();
-		while (itr_str.hasNext()) {
-			set.add(nameToNode.get(itr_str.next()));
-		}
-		return set;
-	}
-	
+	}		
 	protected void setSibling(String prev, String next) {
 		CVCnode prevNode = nameToNode.get(prev);
 		CVCnode nextNode = nameToNode.get(next);
@@ -107,8 +98,7 @@ public class XMLgenerator {
 		//prevNode.setNext(nextNode);
 		//nextNode.setPrev(prevNode);
 	}
-	
-	protected void parseSolverOutput(BufferedReader br) {					
+	private void parseSolverOutput(BufferedReader br) {					
 		String regex0 = "(parent|children|firstChild|lastChild|following_sibling|preceding_sibling).*";
 		Pattern p0 = Pattern.compile("[\\(,\\s\\)]");
 
@@ -157,9 +147,8 @@ public class XMLgenerator {
 		catch (IOException e) {
 			e.printStackTrace();
 		}		
-	}
-	
-	public Document toDOM(Document document) {							
+	}	
+	private Document toDOM(Document document) {							
 		try {
 			if (document == null) {
 				document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
@@ -173,7 +162,6 @@ public class XMLgenerator {
 					roots.add(node);
 				}
 			}
-			System.out.println(roots.size());
 			itr_cvc = roots.iterator();		
 			while (itr_cvc.hasNext()) {			
 				document.appendChild(itr_cvc.next().toDOM(document));
@@ -181,12 +169,10 @@ public class XMLgenerator {
 		}
 		catch (ParserConfigurationException e) {
 			e.printStackTrace();
-		}
-			
+		}			
 		return document;		
-	}
-	
-	public static void outXML(Document document, PrintStream out) {
+	}	
+	public static void outXML(Document document, OutputStream out) {
 		try {
 			//XML specific representation output (exact details not relevant)
 			TransformerFactory tf = TransformerFactory.newInstance();
@@ -197,6 +183,14 @@ public class XMLgenerator {
 			throw new RuntimeException(e);
 		}
 	}	
+	protected Set<CVCnode> getNodeSet() {
+		Set<CVCnode> set = new HashSet<CVCnode>();
+		Iterator<String> itr_str = nameToNode.keySet().iterator();
+		while (itr_str.hasNext()) {
+			set.add(nameToNode.get(itr_str.next()));
+		}
+		return set;
+	}
 	
 	public static void main(String[] args) {
 		CVCsolverDOM csd = null;

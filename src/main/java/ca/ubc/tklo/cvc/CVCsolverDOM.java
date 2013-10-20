@@ -2,6 +2,8 @@ package ca.ubc.tklo.cvc;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -52,15 +54,17 @@ public class CVCsolverDOM {
     	String sespath = prefix+ "cvc3-example1.cvc";
     	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
     	String output = csd.solve();
-
+    	System.out.println(output);
+/*    	
     	// parse output of CVC, generate XML
-		XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
-		XMLgenerator.outXML(xmlg.toDOM(null), System.out);
-		System.out.println("\n");
-    	
-		Iterator<CVCnode> itr_cvc = xmlg.getNodeSet().iterator();
-		while (itr_cvc.hasNext()) {
-			System.out.println(itr_cvc.next().getAliases().toString());
+    	String xmlpath = prefix+ "cvc3-example1.xml";
+		XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );		
+		try {
+			XMLgenerator.outXML(xmlg.getDocument(), new FileOutputStream(xmlpath));
 		}
+		catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}    	
+*/		
     }
 }
