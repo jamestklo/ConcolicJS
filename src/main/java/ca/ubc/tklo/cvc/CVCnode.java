@@ -189,10 +189,10 @@ public class CVCnode {
 		int m=0, l=0, h=this.parent.children.size()-1;
 	    while (l < h) {
 			m = l + (h-l)/2;
-			if (xmlg.childIndexEQ(this.getName(), m)) {
+			if (xmlg.getCVC().childIndexEQ(this.getName(), m)) {
 				return m;
 			}
-			else if (xmlg.childIndexGT(this.getName(), m)) {
+			else if (xmlg.getCVC().childIndexGT(this.getName(), m)) {
 				l = m + 1;
 			}
 			else {

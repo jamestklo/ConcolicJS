@@ -18,7 +18,7 @@ public abstract class WindowsProcessEmulator  {
 			out.newLine();
 			out.flush();
     		String line = "";
-    		while((line = input.readLine()) != null && this.isAlive(line)) {
+    		while((line = input.readLine()) != null && this.isAlive(str, line)) {
         		pipe.append(line);
         		pipe.append("\n");
         	}
@@ -30,10 +30,17 @@ public abstract class WindowsProcessEmulator  {
 		return null;
     }
     public void quit() {
+    	try {
+			out.close();
+	    	input.close();
+		} 
+    	catch (IOException e) {
+			e.printStackTrace();
+		}
     	process.destroy();
     }
     
-    abstract protected boolean isAlive(String line);
+    abstract protected boolean isAlive(String str, String line);
     
     public WindowsProcessEmulator(String command) {
     	Runtime re = Runtime.getRuntime();
