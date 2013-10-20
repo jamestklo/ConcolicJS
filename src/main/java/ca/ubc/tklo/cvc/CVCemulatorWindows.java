@@ -7,21 +7,26 @@ import com.google.common.base.Joiner;
 
 import ca.ubc.salt.concolicjs.WindowsProcessEmulator;
 
-public class CVCemulatorWindows extends WindowsProcessEmulator {
+public class CVCemulatorWindows extends WindowsProcessEmulator implements CVCsolver {
 
 	public CVCemulatorWindows(String command) {
 		super(command);
 	}
 
 	@Override
+	public String solve(String str) {
+		return super.process(str).substring(5);
+	}	
+
+	@Override
 	protected boolean isAlive(String line) {
 		return (! line.equals("Valid."));
-	}
+	}	
+	
     /**
      * @param args
      */
     public static void main(String[] args) {
-    	
     	String prefix = "C:/Temp";    	
     	WindowsProcessEmulator tcc = new CVCemulatorWindows(prefix+ "/cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive");
     	int counter = 0;    	
@@ -54,5 +59,5 @@ public class CVCemulatorWindows extends WindowsProcessEmulator {
     	str = Joiner.on("\r").join(input);
     	System.out.println(counter++ +" "+ str);
     	System.out.println(tcc.process(str));
-    }	
+    }
 }

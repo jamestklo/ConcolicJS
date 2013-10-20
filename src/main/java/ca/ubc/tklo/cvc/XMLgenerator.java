@@ -25,13 +25,20 @@ import org.w3c.dom.Document;
  *  	2) extending XMLgenerator.java to cover attributes, tag names, etc.
  *  	3) handling conflicts
  */
+// 1) read preset assertions
+// 2) read runtime-specific backward slice
+// 3) combine 1 & 2
+// 4) calculate children of each node
+// 5) output XML
 public class XMLgenerator {	
-	Map<String, CVCnode> nameToNode = new HashMap<String, CVCnode>();
+	protected Map<String, CVCnode> nameToNode = new HashMap<String, CVCnode>();
+	protected CVCsolver cvc;
 	public XMLgenerator(String filepath) {
+		//this.cvc = cvc;
 		parseSolverOutput(filepath);
 	}
 	
-	CVCnode put(String key, CVCnode value) {
+	protected CVCnode put(String key, CVCnode value) {
 		return nameToNode.put(key, value);
 	}
 	
