@@ -128,7 +128,8 @@ public class WebScarab {
                 }
             }
 
-            if (true) {
+            boolean cond = 1 > 0;
+            if (cond) {
                 final UIFramework uif = new UIFramework(framework);
                 ExceptionHandler.setParentComponent(uif);
                 loadAllPlugins(framework, uif);

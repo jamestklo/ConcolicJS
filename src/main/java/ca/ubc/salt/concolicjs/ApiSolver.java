@@ -8,8 +8,8 @@ import java.util.Map;
 import com.google.common.base.Joiner;
 
 // point lmusolver.jar to build-path
-import fr.inrialpes.wam.treelogic.BottomUpSolver.FiniteTreeSolver;
-import fr.inrialpes.wam.treelogic.BottomUpSolver.FormulaSolver;
+//import fr.inrialpes.wam.treelogic.BottomUpSolver.FiniteTreeSolver;
+//import fr.inrialpes.wam.treelogic.BottomUpSolver.FormulaSolver;
 
 public class ApiSolver {
 
@@ -139,8 +139,11 @@ public class ApiSolver {
 		boolean is_compressNames = false;
 
 		PrintStream out = System.out;
+		/*
 		FormulaSolver formulaSolver = new FormulaSolver();
 		FiniteTreeSolver solver = formulaSolver.solve_formula(str, is_attributes, is_printtypes, is_stats, is_printFormula, is_printLean, is_compressNames, out);
 		return solver.getsatisfyingexample();
+		*/
+		return null;
 	}
 }

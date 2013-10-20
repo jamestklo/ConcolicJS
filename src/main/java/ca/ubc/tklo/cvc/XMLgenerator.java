@@ -1,4 +1,4 @@
-package ca.ubc.salt.concolicjs;
+package ca.ubc.tklo.cvc;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
