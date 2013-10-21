@@ -1,10 +1,11 @@
-package ca.ubc.salt.concolicjs;
+package ca.ubc.tklo.cvc;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.List;
 
 public abstract class WindowsProcessEmulator  {
     protected Process process;
@@ -13,14 +14,15 @@ public abstract class WindowsProcessEmulator  {
     
     public String process(String str) {    	
 		try {
-			StringBuffer pipe = new StringBuffer();
 			out.write(str);
 			out.newLine();
 			out.flush();
-    		String line = "";
+			
+    		String line;
+			StringBuffer pipe = new StringBuffer();
     		while((line = input.readLine()) != null && this.isAlive(str, line)) {
         		pipe.append(line);
-        		pipe.append("\n");
+        		pipe.append(System.lineSeparator());
         	}
 			return pipe.toString();
 		} 
@@ -41,16 +43,26 @@ public abstract class WindowsProcessEmulator  {
     }
     
     abstract protected boolean isAlive(String str, String line);
-    
-    public WindowsProcessEmulator(String command) {
-    	Runtime re = Runtime.getRuntime();
-    	try {	
-    		process = re.exec(command);
-    		out = new BufferedWriter (new OutputStreamWriter(process.getOutputStream()));
-    		input =  new BufferedReader (new InputStreamReader(process.getInputStream()));
-    	}
-    	catch (IOException ioe){		
-    		ioe.printStackTrace();		
-    	}    	
-    }            
+    public WindowsProcessEmulator (String command) {
+    	try {
+			process = Runtime.getRuntime().exec(command);
+			initialize();
+		} 
+    	catch (IOException e) {
+			e.printStackTrace();
+		}    	
+    }
+    public WindowsProcessEmulator(List<String> commands) {
+    	try {
+			process = (new ProcessBuilder(commands)).start();
+			initialize();
+		} 
+    	catch (IOException e) {
+			e.printStackTrace();
+		}    	
+    }
+    private void initialize() {
+		out = new BufferedWriter (new OutputStreamWriter(process.getOutputStream()));
+		input =  new BufferedReader (new InputStreamReader(process.getInputStream()));
+    }    
 }

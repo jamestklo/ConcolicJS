@@ -5,16 +5,17 @@ import java.util.List;
 
 import com.google.common.base.Joiner;
 
-import ca.ubc.salt.concolicjs.WindowsProcessEmulator;
-
 public class CVCemulatorWindows extends WindowsProcessEmulator {
 
 	public CVCemulatorWindows(String cvcpath) {
 		super(cvcpath);
 	}
+	public CVCemulatorWindows(List<String> cvccmds) {
+		super(cvccmds);
+	}
 
 	@Override
-	public String process(String str) {		
+	public String process(String str) {
 		return super.process(str+"\rQUERY TRUE;").substring(5);
 	}
 	
@@ -27,7 +28,7 @@ public class CVCemulatorWindows extends WindowsProcessEmulator {
      * @param args
      */
     public static void main(String[] args) {
-    	String prefix = "C:/Temp";    	
+    	String prefix = "C:/Temp/tklo/cvc4"; 
     	CVCemulatorWindows tcc = new CVCemulatorWindows(prefix+ "/cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive");
     	int counter = 0;    	
     	String str;

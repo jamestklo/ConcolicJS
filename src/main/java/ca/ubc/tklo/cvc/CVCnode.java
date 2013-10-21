@@ -1,9 +1,12 @@
 package ca.ubc.tklo.cvc;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.w3c.dom.Document;
@@ -23,10 +26,7 @@ public class CVCnode {
 		this.xmlg 		= xmlg;
 		this.aliases	= new HashSet<String>();
 		this.children 	= new HashSet<CVCnode>();
-
 		this.position 	= -2;
-		//this.prev		= null;
-		//this.next		= null;
 	}
 	
 	public void addName(String name) {
@@ -53,30 +53,6 @@ public class CVCnode {
 		return oldPosition;		
 	}
 	
-	/*public void setPrev(CVCnode prev) {		
-		if (prev instanceof CVCnode) {
-		  if (this.prev instanceof CVCnode) {
-		    this.prev.merge(prev);			
-		  }
-		  else {
-		    this.prev= prev;
-		  }
-		  prev.setNext(this);
-		}		
-	}	
-	public void setNext(CVCnode next) {
-		if (next instanceof CVCnode) {
-		  if (this.next instanceof CVCnode) {		  
-		    this.next.merge(next);
-		  }
-		  else {
-		    this.next= next;
-		  }
-		  next.setPrev(this);
-		}		
-	}*/	
-
-	
 	public Set<String> getAliases() {
 		return aliases;
 	}
@@ -99,11 +75,10 @@ public class CVCnode {
 		return this.parent;
 	}
 			
-	public void merge(CVCnode node) {		
+	public void merge(CVCnode node) {
 		if (this.equals(node)) {
 			return;
-		}
-		
+		}		
 		Set<String> aliases = node.aliases;
 		Iterator<String> itr_str = aliases.iterator();
 		while (itr_str.hasNext()) {
@@ -125,55 +100,54 @@ public class CVCnode {
 		}
 		
 		this.setPosition(node.position);
-		
-		/*CVCnode prev = node.prev;		
-		if (prev instanceof CVCnode) {
-			prev.next = null;
-			this.setPrev(prev);
-		}
-		
-		CVCnode next = node.next;
-		if (next instanceof CVCnode) {
-			next.prev = null;
-			this.setNext(next);	
-		}*/
 	}
 
-	public ArrayList<CVCnode> orderChildren() {
-		ArrayList<CVCnode> ordered = new ArrayList<CVCnode>();
+	protected List<CVCnode> orderChildren() {
+		int max = -1;
+		Map<Integer, CVCnode> map = new HashMap<Integer, CVCnode>();
 		Set<CVCnode> remaining = new HashSet<CVCnode>();
 		Iterator<CVCnode> itr_cvc = this.children.iterator();
 		while (itr_cvc.hasNext()) {
 			CVCnode iterated = itr_cvc.next();
 			int position = iterated.position;			
-			if (position < 0) {
+			if (position < 0) {				
 				remaining.add(iterated);
 			}
 			else {
-				CVCnode node = ordered.get(position);
+				if (position > max) {
+					max = position;
+				}
+				CVCnode node = map.get(position);
 				if (node instanceof CVCnode) {
 					node.merge(iterated);					
-				}
+				}					
 				else {
-					ordered.set(position, iterated);
-				}
+					map.put(position, iterated);
+				}				
 			}
 		}
-		
 		itr_cvc = remaining.iterator();
 		while (itr_cvc.hasNext()) {
 			CVCnode iterated = itr_cvc.next();
 			int position = iterated.calPosition();
+			if (position > max) {
+				max = position;
+			}
 			iterated.setPosition(position);
-			CVCnode node = ordered.get(position);
+			CVCnode node = map.get(position);
 			if (node instanceof CVCnode) {
 				node.merge(iterated);					
 			}
 			else {
-				ordered.set(position, iterated);
+				map.put(position, iterated);
 			}			
 		}
 		
+		List<CVCnode> ordered = new ArrayList<CVCnode>();
+		
+		for (int i=0; i <= max; i++) {
+			ordered.add(map.get(i));
+		}
 		return ordered;
 	}
 	
@@ -202,81 +176,12 @@ public class CVCnode {
 		return m;
 	}
 	
-	/*private static void extend(CVCnode iterated, ArrayList<CVCnode> ordering, Set<CVCnode> remaining) {
-		int position = iterated.position + 1;
-		CVCnode sibling = iterated.next;
-		while ((sibling instanceof CVCnode) && remaining.contains(sibling)) {
-		  remaining.remove(sibling);
-		  CVCnode ordered = ordering.get(position);
-		  if (ordered instanceof CVCnode) {
-		    ordered.merge(sibling);
-		  }
-		  else {
-		    ordering.set(position, sibling);
-		  }
-		  ++position;
-		  sibling = sibling.next;
-		}
-		position = iterated.position - 1;
-		sibling = iterated.prev;
-		while ((sibling instanceof CVCnode) && remaining.contains(sibling)) {
-		  remaining.remove(sibling);			
-		  CVCnode ordered = ordering.get(position);			  
-		  if (ordered instanceof CVCnode) {
-		    ordered.merge(sibling);
-		  }
-		  else {
-		    ordering.set(position, sibling);
-		  }
-		  --position;
-		  sibling = sibling.prev;
-		}	
-	}*/
-	
-	/*ArrayList<CVCnode> orderChildren() {		
-		ArrayList<CVCnode> ordering = new ArrayList<CVCnode>();
-		Set<CVCnode> remaining = new HashSet<CVCnode>();
-		
-		Iterator<CVCnode> itr_cvc = this.children.iterator();
-		while (itr_cvc.hasNext()) {
-			CVCnode iterated = itr_cvc.next();
-			int position = iterated.position;			
-			if (position == -2) {
-				remaining.add(iterated);
-			}
-			else {
-				CVCnode ordered = ordering.get(position);
-				if (ordered instanceof CVCnode) {
-					ordered.merge(iterated);					
-				}
-				else {
-					ordering.set(position, iterated);
-				}
-			}
-		}
-		
-		ListIterator<CVCnode> lst_cvc = ordering.listIterator();
-		List<CVCnode> lst = new LinkedList<CVCnode>();
-		while (lst_cvc.hasNext()) {
-			lst.add(lst_cvc.next());
-		}
-		lst_cvc = lst.listIterator();
-		while (lst_cvc.hasNext() && remaining.isEmpty()==false) {
-			extend(lst_cvc.next(), ordering, remaining);
-		}
-		return ordering;
-	}*/
-	
 	public Element toDOM(Document document) {												
-		Element elem = document.createElement(this.getName());		
-		ListIterator<CVCnode> itr_cvc = this.orderChildren().listIterator();
-		while (itr_cvc.hasNext()) {
-			elem.appendChild(itr_cvc.next().toDOM(document));
+		Element elem = document.createElement(this.getName());
+		ListIterator<CVCnode> itr = this.orderChildren().listIterator(); 
+		while (itr.hasNext()) {
+			elem.appendChild(itr.next().toDOM(document));
 		}
 		return elem;
 	}	
-	
-	public static void main(String[] args) {
-		
-	}
 }

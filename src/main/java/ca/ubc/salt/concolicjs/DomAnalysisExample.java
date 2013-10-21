@@ -58,11 +58,11 @@ public final class DomAnalysisExample {
 		}
 
 		//builder.addPlugin(new DomAnalysisPlugin());
-		builder.addPlugin(new CrawlOverview(outFolder));
+		//builder.addPlugin(new CrawlOverview(outFolder));
 
 		 System.setProperty("webdriver.chrome.driver", "C:/Temp/eclipse-jee-juno-SR1-win32-x86_64/chromedriver.exe");
 		// We want to use two browsers simultaneously.
-		builder.setBrowserConfig(new BrowserConfiguration(BrowserType.chrome, 1));
+		builder.setBrowserConfig(new BrowserConfiguration(BrowserType.CHROME, 1));
 
 		CrawljaxRunner crawljax = new CrawljaxRunner(builder.build());
 		crawljax.call();
