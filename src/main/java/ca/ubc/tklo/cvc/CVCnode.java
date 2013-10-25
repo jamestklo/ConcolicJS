@@ -14,25 +14,35 @@ import org.w3c.dom.Element;
 
 public class CVCnode {
 	XMLgenerator xmlg;
+	
 	Set<String> aliases;
 	CVCnode parent;
 	Set<CVCnode> children;
 	
+	String tag;
+	Map<String, String> attributes;
+	
 	int position;
-	//CVCnode prev;
-	//CVCnode next;
 		
 	public CVCnode(XMLgenerator xmlg) {
 		this.xmlg 		= xmlg;
 		this.aliases	= new HashSet<String>();
 		this.children 	= new HashSet<CVCnode>();
 		this.position 	= -2;
+		this.attributes = new HashMap<String, String>();
 	}
 	
 	public void addName(String name) {
 		aliases.add(name);
 	}
-	
+	public String setTag(String tag) {
+		String old = this.tag;
+		this.tag = tag;
+		return old;
+	}
+	public String setAttribute(String key, String value) {
+		return attributes.put(key, value);
+	}
 	public void setParent(CVCnode parent) {
 		if (parent instanceof CVCnode) {
 			if (this.parent instanceof CVCnode) {
@@ -53,15 +63,29 @@ public class CVCnode {
 		return oldPosition;		
 	}
 	
-	public Set<String> getAliases() {
+	Set<String> getAliases() {
 		return aliases;
 	}
 	
-	public String getName() {
-		return this.getName(0);
+	public String getTag() {
+		if (this.tag == null) {
+			return xmlg.getDefaultTag();
+		}
+		return this.tag;
 	}
 	
-	public String getName(int index) {  
+	public String getName() {
+		String nodeID = this.attributes.get("id");
+		if (nodeID != null) {
+			return nodeID;
+		}
+		return this.getAlias(0);
+	}
+	
+	public String getAlias(int index) {
+		if (index < 0) {
+			return this.attributes.get("id");
+		}
 		Set<String> aliases = this.aliases;
 		int size = aliases.size();
 		if (size == 0) {
@@ -76,30 +100,40 @@ public class CVCnode {
 	}
 			
 	public void merge(CVCnode node) {
-		if (this.equals(node)) {
+		if (this.equals(node) || node.position==-3) {
 			return;
 		}		
-		Set<String> aliases = node.aliases;
-		Iterator<String> itr_str = aliases.iterator();
+		Iterator<String> itr_str = node.aliases.iterator();
 		while (itr_str.hasNext()) {
 			xmlg.put(itr_str.next(), this);
 		}
-		this.aliases.addAll(aliases);
+		aliases.addAll(node.aliases);
 		
-		Set<CVCnode> children = node.children;
-		Iterator<CVCnode> itr_cvc = children.iterator();
+		Iterator<CVCnode> itr_cvc = node.children.iterator();
 		while (itr_cvc.hasNext()) {
 			itr_cvc.next().parent = this;
 		}
-		this.children.addAll(children);
+		children.addAll(node.children);
 		
-		CVCnode parent = node.parent;
-		if (parent instanceof CVCnode) {
-		  parent.children.remove(node);
-		  this.setParent(parent);
+		if (node.parent instanceof CVCnode) {
+		  node.parent.children.remove(node);
+		  this.setParent(node.parent);
 		}
 		
 		this.setPosition(node.position);
+		node.position = -3;
+		
+		if (this.tag == null) {
+			this.tag = node.tag;
+		}
+		
+		itr_str = node.attributes.keySet().iterator();
+		while(itr_str.hasNext()) {
+			String key = itr_str.next();
+			if (! attributes.containsKey(key)) {
+				attributes.put(key, node.attributes.get(key));
+			}
+		}
 	}
 
 	protected List<CVCnode> orderChildren() {
@@ -107,7 +141,12 @@ public class CVCnode {
 		Map<Integer, CVCnode> map = new HashMap<Integer, CVCnode>();
 		Set<CVCnode> remaining = new HashSet<CVCnode>();
 		Iterator<CVCnode> itr_cvc = this.children.iterator();
+		Set<CVCnode> set2 = new HashSet<CVCnode>();
 		while (itr_cvc.hasNext()) {
+			set2.add(itr_cvc.next());
+		}
+		itr_cvc = set2.iterator();
+		while (itr_cvc.hasNext()) {	
 			CVCnode iterated = itr_cvc.next();
 			int position = iterated.position;			
 			if (position < 0) {				
@@ -143,10 +182,18 @@ public class CVCnode {
 			}			
 		}
 		
-		List<CVCnode> ordered = new ArrayList<CVCnode>();
-		
+		List<CVCnode> ordered = new ArrayList<CVCnode>();		
 		for (int i=0; i <= max; i++) {
-			ordered.add(map.get(i));
+			CVCnode node = map.get(i);
+			if (node instanceof CVCnode) {
+				ordered.add(map.get(i));
+			}
+			// fillers
+			else {
+				node = new CVCnode(this.xmlg);
+				node.parent = this;
+				node.position = i;
+			}			
 		}
 		return ordered;
 	}
@@ -176,8 +223,19 @@ public class CVCnode {
 		return m;
 	}
 	
-	public Element toDOM(Document document) {												
-		Element elem = document.createElement(this.getName());
+	public Element toDOM(Document document) {	
+		Element elem = document.createElement(this.getTag());
+		Iterator<String> itr_str = attributes.keySet().iterator();
+		while (itr_str.hasNext()) {
+			String key = itr_str.next();
+			elem.setAttribute(key, attributes.get(key));
+		}
+		
+		String id = elem.getAttribute("id"); 
+		if (id == null || id.length() == 0) {
+			elem.setAttribute(xmlg.getCVC().getSessionID(), getName());			
+		}
+
 		ListIterator<CVCnode> itr = this.orderChildren().listIterator(); 
 		while (itr.hasNext()) {
 			elem.appendChild(itr.next().toDOM(document));

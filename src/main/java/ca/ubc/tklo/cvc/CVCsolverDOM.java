@@ -7,20 +7,41 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CVCsolverDOM {
 	protected CVCemulatorWindows emulator;
-	String cvc_dom; // assume it's ok to keep this in memory
-	String cvc_slice;
-	String output;
+	protected String cvc_dom; // assume it's ok to keep this in memory
+	protected String cvc_slice;
+	protected String output;
+	protected Set<String> nodeIDs;
+	protected String sessionID;
 	public CVCsolverDOM(CVCemulatorWindows emulator, String cvc_dom, String cvc_slice) {    	
     	this.emulator = emulator;
     	this.cvc_dom = cvc_dom;
     	this.cvc_slice = cvc_slice;
-	}
+	}	
 	protected String solve() {
 		if (output == null) {
 			StringBuffer input = new StringBuffer(cvc_dom);
+			BufferedReader buf = new BufferedReader(new StringReader(cvc_slice));
+			try {
+				nodeIDs = new HashSet<String>();
+				String[] line = buf.readLine().split("[,\\s:]");
+				sessionID = line[0];			
+				for (int i=1; i < line.length; ++i) {
+					String token = line[i];
+					if (token.length() > 0) {
+						if (! (token.length() > 5 && token.substring(0, 6).equals(sessionID)) ) {
+							nodeIDs.add(token);
+						}
+					}
+				}
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}			
 			input.append(cvc_slice);
 			input.append("\rCHECKSAT;");
 			input.append("\rWHERE;");		
@@ -30,8 +51,20 @@ public class CVCsolverDOM {
 		}
 		return output;		
 	}
+	protected Set<String> getNodeIDs() {
+		return nodeIDs;
+	}
+	protected String getSessionID() {
+		return sessionID;
+	}
 	protected void quit() {
 		this.emulator.quit();
+	}
+	protected boolean childIndexEQ(String nodeName, int index) {
+		return (emulator.process("QUERY childIndex("+ nodeName +") ="+ index +";").equals("Valid.\n"));
+	}
+	protected boolean childIndexGT(String nodeName, int index) {
+		return (emulator.process("QUERY childIndex("+ nodeName +") >"+ index +";").equals("Valid.\n"));
 	}
 	protected static String readWholeFile(String filepath) {
 		File file = new File(filepath);
@@ -52,17 +85,11 @@ public class CVCsolverDOM {
 			}
 		}		
 		return null;
-	}
-	protected boolean childIndexEQ(String nodeName, int index) {
-		return (emulator.process("QUERY childIndex("+ nodeName +") ="+ index +";").equals("Valid.\n"));
-	}
-	protected boolean childIndexGT(String nodeName, int index) {
-		return (emulator.process("QUERY childIndex("+ nodeName +") >"+ index +";").equals("Valid.\n"));
-	}
+	}	
     public static void main(String[] args) {
     	String prefix = "C:/Temp/tklo/cvc4/";
     	String cvcpath = prefix+ "cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive"; 
-    	String dompath = prefix+ "cvc3-DOMemulation1.cvc";
+    	String dompath = prefix+ "cvc3-DOM1.cvc";
     	String sespath = prefix+ "cvc3-example1.cvc";
     	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
     	String output = csd.solve();
@@ -77,6 +104,6 @@ public class CVCsolverDOM {
 		}
 		catch (FileNotFoundException e) {
 			e.printStackTrace();
-		} 		
+		} 			
     }
 }

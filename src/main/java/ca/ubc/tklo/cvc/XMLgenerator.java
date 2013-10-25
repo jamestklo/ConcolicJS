@@ -31,6 +31,17 @@ public class XMLgenerator {
 	public XMLgenerator(CVCsolverDOM cvc, BufferedReader reader) {
 		this.cvc = cvc;
 		parseSolverOutput(reader);
+		Iterator<String> itr = cvc.getNodeIDs().iterator();
+		while (itr.hasNext()) {
+			String nodeID = itr.next();
+			CVCnode node = nameToNode.get(nodeID);			
+			if (node instanceof CVCnode) {
+				node.setAttribute("id", nodeID);
+			}
+		}
+	}
+	public String getDefaultTag() {
+		return "span";
 	}
 	protected CVCsolverDOM getCVC() {
 		return cvc;
@@ -110,7 +121,7 @@ public class XMLgenerator {
 					String relation = line.substring(7);
 					if (relation.matches(regex0)) {
 						String[] ary = p0.split(relation);
-						System.out.println(i++ +" "+ relation +" "+ ary.length);
+						//System.out.println(i++ +" "+ relation +" "+ ary.length);
 						if (ary.length > 4) {
 							switch(ary[0]) {
 							case("parent"):
@@ -159,7 +170,7 @@ public class XMLgenerator {
 			Iterator<CVCnode> itr_cvc = nameToNode.values().iterator();
 			while (itr_cvc.hasNext()) {
 				CVCnode node = itr_cvc.next();
-				if (node.getParent() == null) {
+				if (node.getParent() == null) {					
 					roots.add(node);
 				}
 			}
