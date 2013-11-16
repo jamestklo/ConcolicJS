@@ -16,6 +16,7 @@ public class CVCsolverDOM {
 	protected String cvc_slice;
 	protected String output;
 	protected Set<String> nodeIDs;
+	protected Set<String> tempIDs;
 	protected String sessionID;
 	public CVCsolverDOM(CVCemulatorWindows emulator, String cvc_dom, String cvc_slice) {    	
     	this.emulator = emulator;
@@ -29,11 +30,15 @@ public class CVCsolverDOM {
 			try {
 				nodeIDs = new HashSet<String>();
 				String[] line = buf.readLine().split("[,\\s:]");
-				sessionID = line[0];			
+				sessionID = line[0];
+				int sessionID_length = sessionID.length();				
 				for (int i=1; i < line.length; ++i) {
 					String token = line[i];
 					if (token.length() > 0) {
-						if (! (token.length() > 5 && token.substring(0, 6).equals(sessionID)) ) {
+						if (token.length() >= sessionID_length && token.substring(0, sessionID_length).equals(sessionID)) {
+							tempIDs.add(token);
+						}
+						else {
 							nodeIDs.add(token);
 						}
 					}
@@ -53,6 +58,9 @@ public class CVCsolverDOM {
 	}
 	protected Set<String> getNodeIDs() {
 		return nodeIDs;
+	}
+	protected Set<String> getTempIDs() {
+		return tempIDs;
 	}
 	protected String getSessionID() {
 		return sessionID;

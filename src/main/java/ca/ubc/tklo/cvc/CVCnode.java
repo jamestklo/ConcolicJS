@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -231,9 +232,13 @@ public class CVCnode {
 			elem.setAttribute(key, attributes.get(key));
 		}
 		
-		String id = elem.getAttribute("id"); 
+		String id = elem.getAttribute("id");
 		if (id == null || id.length() == 0) {
-			elem.setAttribute(xmlg.getCVC().getSessionID(), getName());			
+			String sessionID = xmlg.getCVC().getSessionID();
+			id = elem.getAttribute(sessionID);
+			if (id == null || id.length() == 0) {
+				elem.setAttribute(sessionID, getName());	
+			}					
 		}
 
 		ListIterator<CVCnode> itr = this.orderChildren().listIterator(); 
@@ -241,5 +246,21 @@ public class CVCnode {
 			elem.appendChild(itr.next().toDOM(document));
 		}
 		return elem;
-	}	
+	}
+	public static void main (String[] args) {
+		int x = -1;
+		int one = 1;
+		
+		int copy = x;
+		Stack<Integer> stack = new Stack<Integer>();
+		StringBuffer sb = new StringBuffer();
+		for (int i=0; i < 32; i++) {
+			stack.push(copy & one);
+			copy = copy>>1;
+		}
+		while (! stack.empty()) {
+			sb.append(stack.pop());
+		}
+		System.out.println(sb.toString());		
+	}
 }

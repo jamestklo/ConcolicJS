@@ -367,7 +367,7 @@ public class TraceCondVisitor implements Callback {
 				}
 			}
 			else {
-				System.out.println(n.toStringTree());
+				//System.out.println(n.toStringTree());
 			}
 			tx.replace(n, call, orgs);
 		}
@@ -382,7 +382,7 @@ public class TraceCondVisitor implements Callback {
 			return;
 		}
 		else if (ntype == Token.SCRIPT) {
-			System.out.println(n.toStringTree());
+			//System.out.println(n.toStringTree());
 		}
 		
 		if (isJustPretty) {

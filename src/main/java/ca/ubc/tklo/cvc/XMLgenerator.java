@@ -37,8 +37,18 @@ public class XMLgenerator {
 			CVCnode node = nameToNode.get(nodeID);			
 			if (node instanceof CVCnode) {
 				node.setAttribute("id", nodeID);
-			}
+			}			
 		}
+		itr = cvc.getTempIDs().iterator();
+		String sessionID = cvc.getSessionID();
+		while (itr.hasNext()) {
+			String tempID = itr.next();
+			CVCnode node = nameToNode.get(tempID);		
+			if (node instanceof CVCnode) {
+				node.setAttribute(sessionID, tempID);
+			}			
+		}
+		
 	}
 	public String getDefaultTag() {
 		return "span";
@@ -177,7 +187,7 @@ public class XMLgenerator {
 			itr_cvc = roots.iterator();		
 			while (itr_cvc.hasNext()) {
 				document.appendChild(itr_cvc.next().toDOM(document));
-			}						
+			}
 		}
 		catch (ParserConfigurationException e) {
 			e.printStackTrace();
