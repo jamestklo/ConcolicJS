@@ -287,6 +287,49 @@ public class TraceCondVisitor implements Callback {
 		orgs.put(cloned, child);
 		tx.replace(child, call, orgs);
 	}
+	
+	private void visitAndOr(NodeTraversal t, Node n, Node parent) {
+		int ntype = n.getType();
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		
+		Node n1 = n.getFirstChild();
+		Node c1 = n1.cloneTree();
+		orgs.put(c1, n1);
+
+		Node comma = new Node(Token.COMMA);
+		Node equal = new Node(Token.ASSIGN);
+		comma.addChildrenToFront(equal);
+		Node temp1 = Node.newString(Token.NAME, "JSCompiler_"+ Token.name(ntype) +"_"+ safeNameIdSupplier.get());
+		comma.addChildrenToBack(temp1);	
+		equal.addChildrenToFront(temp1.cloneTree());
+		equal.addChildrenToBack(c1);
+
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(ntype)));
+		call.addChildrenToBack(comma);
+		
+		Node andor = new Node(Token.AND);
+		call.addChildrenToBack(andor);
+		Node call1 = new Node(Token.CALL);		
+		call1.addChildrenToFront(Node.newString(Token.NAME, "__getValue"));
+		call1.addChildrenToBack(temp1.cloneTree());
+		if (ntype==Token.OR) {
+			Node not = new Node(Token.NOT);
+			andor.addChildrenToFront(not);
+			not.addChildrenToFront(call1);
+		}
+		else {
+			andor.addChildrenToFront(call1);
+		}
+		
+		Node n2 = n.getLastChild();		
+		Node c2 = n2.cloneTree();
+		orgs.put(c2, n2);		
+		andor.addChildrenToBack(c2);	
+				
+		tx.replace(n, call, orgs);
+	}
+	
 	private void visitOps(NodeTraversal t, Node n, Node parent) {
 		Node n1 = n.getFirstChild();
 		Node c1 = n1.cloneTree();
@@ -382,7 +425,7 @@ public class TraceCondVisitor implements Callback {
 			return;
 		}
 		else if (ntype == Token.SCRIPT) {
-			//System.out.println(n.toStringTree());
+			System.out.println(n.toStringTree());
 		}
 		
 		if (isJustPretty) {
@@ -417,12 +460,15 @@ public class TraceCondVisitor implements Callback {
 		else if (ntype==Token.INC || ntype==Token.DEC || Token.name(ntype).contains("ASSIGN_") ) {
 			visitInc(t, n, parent);
 		}
+		else if (ntype==Token.AND || ntype==Token.OR) {
+			visitAndOr(t, n, parent);
+		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
 		else if (ntype==Token.ADD	|| ntype==Token.SUB	|| ntype==Token.MUL || ntype==Token.DIV || ntype==Token.MOD // + - * /
-			  || ntype==Token.NOT	|| ntype==Token.AND || ntype==Token.OR	// ! && ||
-			  || ntype==Token.SHEQ	|| ntype==Token.SHNE || ntype==Token.EQ || ntype==Token.NE // === !== == != 
+			  || ntype==Token.NOT	|| ntype==Token.SHEQ	|| ntype==Token.SHNE || ntype==Token.EQ || ntype==Token.NE // === !== == != 
 			  || ntype==Token.GT	|| ntype==Token.GE	|| ntype==Token.LT || ntype==Token.LE // > >= < <=
-			  || ntype==Token.POS	|| ntype==Token.NEG) {
+			  || ntype==Token.POS	|| ntype==Token.NEG
+			  || ntype==Token.TYPEOF || ntype==Token.INSTANCEOF) {
 			visitOps(t, n, parent);
 		}
 		else if (NodeUti1.isConst(n)) {
