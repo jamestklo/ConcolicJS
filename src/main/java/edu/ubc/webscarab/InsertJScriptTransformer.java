@@ -74,16 +74,11 @@ public class InsertJScriptTransformer implements Transformer {
 		if (skip.get() || allHTML.contains("QWERTY")) {
 			outputstr = allHTML;
 		}
-		else {
-			StringBuffer output = new StringBuffer();			
-			HTMLTransformer tx = new HTMLTransformer(new StringReader(allHTML), output, tf);
-			try {
-				tx.run();
-			} 
-			catch (Exception e) {
-				throw new RuntimeException(e);
-			}		  
-			outputstr = output.toString();
+		else {			
+			HTMLTransformer tx = new HTMLTransformer(tf);
+			outputstr = tx.transform(new StringReader(allHTML));						
+			AttrTransformer ax = new AttrTransformer(tf);
+			outputstr = ax.transform(new StringReader(outputstr));
 		}
 
 		// temporary removes the mysterious ? that appears at the end of page

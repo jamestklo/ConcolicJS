@@ -164,7 +164,7 @@ public class TraceCondVisitor implements Callback {
 	private Node getRootName(NodeTraversal t) {
 		Node root = t.getScopeRoot();
 		if (root.getType()==Token.FUNCTION) {
-			return Node.newString(Token.NAME, getFuncName(getNodeNum(root)));
+			return Node.newString(Token.NAME, getFuncName(getNodeNum(root))+"_c");
 		}
 		else {
 			return new Node(Token.NULL);
@@ -425,7 +425,7 @@ public class TraceCondVisitor implements Callback {
 			return;
 		}
 		else if (ntype == Token.SCRIPT) {
-			System.out.println(n.toStringTree());
+			//System.out.println(n.toStringTree());
 		}
 		
 		if (isJustPretty) {

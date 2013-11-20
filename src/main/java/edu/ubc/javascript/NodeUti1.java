@@ -54,6 +54,7 @@ public final class NodeUti1 {
 		return ntype==Token.STRING || ntype==Token.NUMBER || ntype==Token.NULL 
 				  || ntype==Token.TRUE || ntype==Token.FALSE
 				  || ntype==Token.REGEXP
+				  || ntype==Token.OBJECTLIT || ntype==Token.ARRAYLIT				  
 				  || (ntype==Token.NAME && n.getString()=="undefined"); 
 	}
 

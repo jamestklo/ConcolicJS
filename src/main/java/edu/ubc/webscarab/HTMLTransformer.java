@@ -1,6 +1,5 @@
 package edu.ubc.webscarab;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.Reader;
@@ -15,9 +14,7 @@ public class HTMLTransformer {
 	private Transformer transformer;
 	private int scriptCount = 0;
 	
-	public HTMLTransformer(Reader input, StringBuffer output, Transformer rtb) throws FileNotFoundException {
-		this.input = input;
-		this.output = output;
+	public HTMLTransformer(Transformer rtb) {
 		this.transformer = rtb;
 	}
 	
@@ -208,6 +205,18 @@ public class HTMLTransformer {
 		}
 		NodeUti1.scriptCount.set(0);
 	}
-
+	public String transform(Reader input) {
+		this.input = input;
+		this.output = new StringBuffer();
+		try {
+			this.run();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		this.input = null;
+		String outputstr = output.toString();
+		this.output = null; 
+		return outputstr;
+	}
 }
-
