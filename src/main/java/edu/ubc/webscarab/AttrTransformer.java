@@ -33,10 +33,18 @@ public class AttrTransformer {
 		}
 		Document doc = Jsoup.parse(sb.toString());
 		visit(doc);
+		
 		return doc.html();
 	}
-
-	private void visit(Node node) {
+	private void visit(Node node) {						
+		process(node);
+		Iterator<Node> itr_node = node.childNodes().listIterator();
+		while (itr_node.hasNext()) {
+			visit(itr_node.next());
+		}		
+	}
+	
+	private void process(Node node) {
 		Iterator<Attribute> itr_attr = node.attributes().iterator();
 		while (itr_attr.hasNext()) {
 			Attribute attr = itr_attr.next();
@@ -45,22 +53,38 @@ public class AttrTransformer {
 			String val = attr.getValue();
 			int vlen = val.length();
 			try {
-				if (klen > 2 && key.substring(0, 2).equals("on") && val.length() > 0) {					
-					val = transformer.transform(new StringReader(val));
-					attr.setValue(val.substring(0, val.length()-1));					
+				if (klen > 2 && key.substring(0, 2).equals("on") && vlen > 0) {
+					if (val.contains("return")) {
+						String[] stmts = val.split(";");
+						StringBuffer sb = new StringBuffer();
+						int l = stmts.length;
+						for (int i=0; i < l; ++i) {
+							String stmt = stmts[i];
+							if (stmt.contains("return")) {
+								sb.append(stmt+"; ");
+							}
+							else {
+								sb.append(transformer.transform(new StringReader(stmt)));
+							}
+						}
+						val = sb.toString();						
+					}
+					else {
+						val = transformer.transform(new StringReader(val));
+					}
+					attr.setValue(val.replace("\n", " "));
 				}
 				else if (vlen > 11 && val.substring(0, 11).equals("javascript:")) {
-					val = transformer.transform(new StringReader(val.substring(11)));
-					attr.setValue("javascript:"+ val.substring(0, val.length()-1));
+					attr.setValue( "javascript:"+ transformer.transform(new StringReader(val.substring(11))).replace("\n", " ") );
 				}
 			}
-			catch (IOException e) {
+			catch (IOException e) {				
 				e.printStackTrace();
 			}
 		}
-		Iterator<Node> itr_node = node.childNodes().listIterator();
-		while (itr_node.hasNext()) {
-			visit(itr_node.next());
+		if (node.nodeName().equals("script")) {
+			System.out.println(node.attr("text"));
+			System.out.println(node.outerHtml());
 		}
 	}
 }
