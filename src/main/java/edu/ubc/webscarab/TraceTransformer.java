@@ -4,10 +4,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
-
 
 import com.google.javascript.jscomp.Compiler;
 import com.google.javascript.jscomp.CompilerOptions;
@@ -23,7 +21,6 @@ public class TraceTransformer implements Transformer {
 	public static void main(String[] args) throws Exception {
 		TraceTransformer main = new TraceTransformer();
 		main.transformAll(new String[] {"U:/public_html/nbpAFZyrx5o/tracing/domtris/tetris.js"});
-		//main.transformAll(new String[] {"test/test.js"});
 	}
 	
 	public void transformAll(String[] args) throws Exception {
@@ -40,7 +37,8 @@ public class TraceTransformer implements Transformer {
 		List<SourceFile> externs = new ArrayList<SourceFile>();
 		List<SourceFile> inputs = new ArrayList<SourceFile>();
 		CompilerOptions options = new CompilerOptions();
-		options.prettyPrint = true;
+		
+		options.setPrettyPrint(true);
 		
 		inputs.add(input);
 		Compiler compiler = new Compiler(System.out);
@@ -58,7 +56,7 @@ public class TraceTransformer implements Transformer {
 		return compiler.toSource();
 	}
 	
-	public String transform(Reader r) throws IOException  {
-		return transform(SourceFile.fromReader("(?)", r));
+	public String transform(String filename, String code) throws IOException {
+		return transform(SourceFile.fromCode(filename, code));
 	}
 }

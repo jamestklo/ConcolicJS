@@ -1,11 +1,7 @@
 package edu.ubc.webscarab;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.ArrayList;
-
-import com.google.javascript.jscomp.NodeTraversal.Callback;
 
 // ec2-23-20-34-25.compute-1.amazonaws.com
 public class InsertJScriptTransformer implements Transformer {
@@ -25,25 +21,18 @@ public class InsertJScriptTransformer implements Transformer {
 	protected static Transformer tf = new TraceTransformer(); // new ClosureTransformer();	
 	
 	//@Override // r is response-body
-	public String transform(Reader r) throws IOException {		
-		// read the html file
-		char[] buffer = new char[262144]; 
-		int n = r.read(buffer);
-		StringBuffer buf = new StringBuffer();
-		while(n != -1) {
-		  buf.append(buffer, 0, n);
-		  n = r.read(buffer);
+	public String transform(String href, String html) throws IOException {
+		if (! (skip.get() || html.contains("QWERTY"))) {
+			Transformer tx = new AttrTransformer(tf);
+			html = tx.transform(href, html);
 		}
 		
-		// allHTML is html_source of the webpage
-		// parse & modify html file, insert scripts after <head>, 
-		// may have to append-after <body> as back-up
-		String allHTML = buf.toString();					
 		//allHTML = allHTML.replaceAll("<html manifest=\"offline.appcache\">", "<html>");
 		//allHTML = allHTML.replaceAll("http://72182.hittail.com/mlt.js", "http://www.ugrad.cs.ubc.ca/~k5r4/domtris/mlt.js");
-		allHTML = allHTML.replaceAll("https://", "http://").replaceAll("jquery.min.js", "jquery.js");
+		html = html.replaceAll("https://", "http://").replaceAll("jquery.min.js", "jquery.js");
+		html = html.replaceAll("https://", "http://").replaceAll("jquery-1.6.2.min.js", "jquery-1.6.2.js");
 		
-		String lowerCase = allHTML.toLowerCase();
+		String lowerCase = html.toLowerCase();
 
 		// at first, try appending scripts just before </head>
 		String pattern = "<head>";		
@@ -58,35 +47,23 @@ public class InsertJScriptTransformer implements Transformer {
 
 		// web_page has neither <head> or <body>
 		if (index0 < 0) {
-		  index0 = allHTML.toLowerCase().indexOf("</html>");		  
+		  index0 = html.toLowerCase().indexOf("</html>");		  
 		}
 
-		if (index0 >= 0) {
+		/*if (index0 >= 0) {
 			index0 += pattern.length();
-			String front = allHTML.substring(0, index0);
-			String ending = allHTML.substring(index0);			
+			String front = html.substring(0, index0);
+			String ending = html.substring(index0);			
 			String fnCounter = "";//"<script type='text/javascript'>if(! __xhr) { try {var __xhr = new XMLHttpRequest(); __xhr.open('GET', window.location.origin+'/notarealwebsiteurl', false); __xhr.send();} catch(e) {} }</script>";			
-			allHTML = front +"\n"+ fnCounter +"\n"+ insertedJs +"\n"+ ending;
-		}
+			html = front +"\n"+ fnCounter +"\n"+ insertedJs +"\n"+ ending;
+		}*/
 		
-		//return allHTML;
-		String outputstr = null;
-		if (skip.get() || allHTML.contains("QWERTY")) {
-			outputstr = allHTML;
-		}
-		else {			
-			HTMLTransformer tx = new HTMLTransformer(tf);
-			outputstr = tx.transform(new StringReader(allHTML));						
-			AttrTransformer ax = new AttrTransformer(tf);
-			outputstr = ax.transform(new StringReader(outputstr));
-		}
-
 		// temporary removes the mysterious ? that appears at the end of page
 		// needs more in-depth investigation into HTMLTransformer.java
-		while ( outputstr.length() > 0 && ((int) outputstr.charAt(outputstr.length()-1)) == 65535) {
-		  outputstr = outputstr.substring(0, outputstr.length()-1);		  
+		while ( html.length() > 0 && ((int) html.charAt(html.length()-1)) == 65535) {
+			html = html.substring(0, html.length()-1);		  
 		}
-		return outputstr;		
+		return html;		
 	}
 
 	private static String generateInsertedJs(String host) {		
@@ -121,6 +98,8 @@ public class InsertJScriptTransformer implements Transformer {
 	  srcs.add(host+"tracing/trazing/logCond.js");
 	  //srcs.add(host+"tracing/trazing/logDOM.js");
 	  srcs.add(host+"tracing/trazing/logFunc.js");
+	  
+	  srcs.add(host+"tracing/trazing/logString.js");
 	  
 	  srcs.add(host+"tracing/trazing/tagNative.js");		  	 
 	  return srcs.toArray(new String[srcs.size()]);

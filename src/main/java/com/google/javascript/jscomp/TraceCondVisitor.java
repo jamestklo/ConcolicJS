@@ -17,9 +17,11 @@ import edu.ubc.javascript.ReflectiveNodeTransformer;
 public class TraceCondVisitor implements Callback {
 
 	private final Supplier<String> safeNameIdSupplier;
+	private final String temp;
 	private final ReflectiveNodeTransformer tx;
 	public TraceCondVisitor(Compiler c, ReflectiveNodeTransformer tx) {
 		safeNameIdSupplier = c.getUniqueNameIdSupplier();
+		temp = "__t";
 		this.tx = tx;
 	}
 	
@@ -203,24 +205,24 @@ public class TraceCondVisitor implements Callback {
 			orgs.put(ctr.next(), itr.next());
 		}
 		
+		Node name = n.getFirstChild();
 		switch (fname.getType()) {
 		case Token.GETELEM:
-		case Token.GETPROP:
+		case Token.GETPROP:									
 			cloned.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType()) +"GET"));						
 			Node target = fname.removeFirstChild();
-			Node key = fname.removeFirstChild();
+			Node key = fname.removeFirstChild();				
 			cloned.addChildBefore(target, fname);
 			cloned.addChildBefore(key, fname);
-			cloned.removeChild(fname);						
-			Node name = n.getFirstChild();
+			cloned.removeChild(fname);			
 			orgs.put(target, name.getFirstChild());
-			orgs.put(key, name.getLastChild());									
+			orgs.put(key, name.getLastChild());
 			break;
 		default:
 			cloned.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType())));
+			orgs.put(fname, name);
 			break;
-		}
-						
+		}					
 		tx.replace(n, cloned, orgs);
 	}
 	
@@ -299,7 +301,8 @@ public class TraceCondVisitor implements Callback {
 		Node comma = new Node(Token.COMMA);
 		Node equal = new Node(Token.ASSIGN);
 		comma.addChildrenToFront(equal);
-		Node temp1 = Node.newString(Token.NAME, "JSCompiler_"+ Token.name(ntype) +"_"+ safeNameIdSupplier.get());
+		//Node temp1 = Node.newString(Token.NAME, "JSCompiler_"+ Token.name(ntype) +"_"+ safeNameIdSupplier.get());
+		Node temp1 = Node.newString(Token.NAME, temp);
 		comma.addChildrenToBack(temp1);	
 		equal.addChildrenToFront(temp1.cloneTree());
 		equal.addChildrenToBack(c1);
@@ -360,7 +363,7 @@ public class TraceCondVisitor implements Callback {
 		
 		String callname = Token.name(ntype);
 		if (callname.contains("ASSIGN_")) {
-			callname = callname.substring(7);
+			callname = callname.substring(7);			
 		}
 		Node call = new Node(Token.CALL);
 		call.addChildrenToFront(Node.newString(Token.NAME, "_"+callname));		
@@ -383,7 +386,7 @@ public class TraceCondVisitor implements Callback {
 			 && (ptype!=Token.FOR || n!=parent.getChildAtIndex(2)) ) {
 				
 				Node comma = new Node(Token.COMMA);
-				comma.addChildrenToBack(Node.newString(Token.NAME, "__t"));
+				comma.addChildrenToBack(Node.newString(Token.NAME, temp));
 				
 				Node comma1 = new Node(Token.COMMA);
 				comma.addChildrenToFront(comma1);				
@@ -391,7 +394,7 @@ public class TraceCondVisitor implements Callback {
 								
 				Node assign1 = new Node(Token.ASSIGN);
 				comma1.addChildrenToFront(assign1);
-				assign1.addChildrenToFront(Node.newString(Token.NAME, "__t"));
+				assign1.addChildrenToFront(Node.newString(Token.NAME, temp));
 				assign1.addChildrenToBack(cloned.cloneTree());
 				
 				tx.replace(n, comma, orgs);
@@ -402,6 +405,18 @@ public class TraceCondVisitor implements Callback {
 		}
 		else {
 			if (ltype==Token.GETELEM || ltype==Token.GETPROP) {
+				orgs.remove(cloned);				
+				Node target = cloned.removeFirstChild();
+				Node key = cloned.removeFirstChild();
+				Node gett = new Node(Token.CALL);
+				gett.addChildrenToFront(Node.newString(Token.NAME, "_GET"));
+				gett.addChildrenToBack(target);
+				gett.addChildrenToBack(key);
+				gett.addChildrenToBack(Node.newNumber(1));
+				orgs.put(target, left.getFirstChild());
+				orgs.put(key, left.getLastChild());
+				call.replaceChild(cloned, gett);
+
 				if (incrdecr == null || incrdecr==false) {
 					call.addChildrenToBack(Node.newNumber(1));
 				}
@@ -417,7 +432,7 @@ public class TraceCondVisitor implements Callback {
 	}
 	
 	@Override
-	public void visit(NodeTraversal t, Node n, Node parent) {
+	public void visit(NodeTraversal t, Node n, Node parent) {		
 		boolean isJustPretty = false;
 		int ntype = n.getType();
 		int ptype = (parent == null)?Token.NULL:parent.getType();
@@ -465,14 +480,17 @@ public class TraceCondVisitor implements Callback {
 		}
 		//else if (n.getChildCount()==2 && ntype!=Token.BLOCK && ntype!=Token.SCRIPT && ntype!=Token.ASSIGN) {
 		else if (ntype==Token.ADD	|| ntype==Token.SUB	|| ntype==Token.MUL || ntype==Token.DIV || ntype==Token.MOD // + - * /
-			  || ntype==Token.NOT	|| ntype==Token.SHEQ	|| ntype==Token.SHNE || ntype==Token.EQ || ntype==Token.NE // === !== == != 
+			  || ntype==Token.NOT	|| ntype==Token.SHEQ|| ntype==Token.SHNE || ntype==Token.EQ || ntype==Token.NE // === !== == != 
 			  || ntype==Token.GT	|| ntype==Token.GE	|| ntype==Token.LT || ntype==Token.LE // > >= < <=
 			  || ntype==Token.POS	|| ntype==Token.NEG
 			  || ntype==Token.TYPEOF || ntype==Token.INSTANCEOF) {
 			visitOps(t, n, parent);
 		}
 		else if (NodeUti1.isConst(n)) {
-			if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP)) {
+			if (ptype==Token.GETPROP && parent.getFirstChild().equals(n)) {
+				visitConst(t, n, parent);
+			}
+			else if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP)) {
 				// the call to visitGet() will handle this case
 			}
 			else if (ptype==Token.CASE && n==parent.getFirstChild()) {				

@@ -6,7 +6,6 @@ package edu.ubc.webscarab;
  */
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,7 +47,6 @@ public class MyProxyPlugin extends ProxyPlugin {
 		}
 		
 		//@Override 
-		@SuppressWarnings("unchecked")
 		public Response fetchResponse(Request request) throws IOException {
 			HttpUrl url = request.getURL();			
 			String href = "";
@@ -56,9 +54,6 @@ public class MyProxyPlugin extends ProxyPlugin {
 				href = url.toString();
 				NodeUti1.setURL(href);
 				href = href.toLowerCase();				
-			}
-			else {
-				//System.out.println(request);
 			}
 			
 			long startFetch = System.currentTimeMillis();
@@ -132,8 +127,9 @@ public class MyProxyPlugin extends ProxyPlugin {
 			data = data.replaceAll(",\\s+}", "}");							
 			data = data.replaceAll("https://", "http://");
 			data = data.replaceAll(",\\s+]", "]");
-			
-			String output = tx.transform(new StringReader(data)).replaceAll("0.0 === self.FileError", "void 0 === self.FileError");			
+						
+			String output = tx.transform(href, data).replaceAll("0.0 === self.FileError", "void 0 === self.FileError");
+			//String output = tx.transform(new StringReader(data)).replaceAll("0.0 === self.FileError", "void 0 === self.FileError");			
 			response.setContent( output.getBytes(charset) );
 			InsertJScriptTransformer.skip.set(false);
 

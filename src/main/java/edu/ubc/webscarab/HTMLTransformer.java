@@ -6,8 +6,9 @@ import java.io.Reader;
 
 import edu.ubc.javascript.NodeUti1;
 
-public class HTMLTransformer {
+public class HTMLTransformer implements Transformer {
 	private Reader input;
+	private String href;
 	private StringBuffer output;
 	private boolean inScript = false;
 	private StringBuffer buffer = new StringBuffer();
@@ -25,7 +26,7 @@ public class HTMLTransformer {
 			String script = buffer.toString();
 			if (script.length() > 0) {
 				NodeUti1.scriptCount.set(++scriptCount);
-				script = this.transformer.transform(new StringReader(script));
+				script = this.transformer.transform(href, script);
 			}					
 			output.append(script + "</script>");
 			buffer = new StringBuffer();
@@ -205,8 +206,9 @@ public class HTMLTransformer {
 		}
 		NodeUti1.scriptCount.set(0);
 	}
-	public String transform(Reader input) {
-		this.input = input;
+	public String transform(String href, String input) {
+		this.href = href;
+		this.input = new StringReader(input);
 		this.output = new StringBuffer();
 		try {
 			this.run();
