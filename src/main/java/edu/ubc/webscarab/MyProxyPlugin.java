@@ -84,14 +84,12 @@ public class MyProxyPlugin extends ProxyPlugin {
 							if (href.contains("zzv2") || href.contains("firebug-lite") || href.contains("fbug.googlecode.com")) {
 								return response;
 							}							
-							//modifyResponse(href, response, charset, ( (Class<Transformer>) Class.forName(Props.getProperty("TransformerClassJs")) ).newInstance());
 							modifyResponse(href, response, charset, transformers.get("Trace"));
 						} 
 						else if (cType.contains("html")) {							
 							if (href.contains("zzv2") && href.contains("openZZ")) {
 							    return response;
-							}									
-							//modifyResponse(href, response, charset, ( (Class<Transformer>) Class.forName(Props.getProperty("TransformerClassHTML")) ).newInstance());
+							}
 							modifyResponse(href, response, charset, transformers.get("InsertJScript"));
 						}
 					} 
@@ -104,35 +102,10 @@ public class MyProxyPlugin extends ProxyPlugin {
 		}
 		
 		private void modifyResponse(String href, Response response, String charset, Transformer tx) throws IOException {
-
 			long duration = System.currentTimeMillis();
-			//response.setContent( tx.transform(new InputStreamReader(new ByteArrayInputStream(response.getContent()), charset)).getBytes(charset) );
-			String data = new String(response.getContent(), charset);
-
-			if (href.indexOf("genoverse")>=0) {
-				if (data.contains("// Specify container element with css/jquery selector style")) {
-					InsertJScriptTransformer.skip.set(true);
-				}
-				data = data.replaceAll("char\\s+", "char2");
-				data = data.replaceAll("char;", "char2;");
-				
-				data = data.replaceAll("\\.new", ".new2");
-				data = data.replaceAll("new\\s+:", "new2 :");
-		
-				data = data.replaceAll("\\.default;"	, ".default2;");
-				data = data.replaceAll("\\.default\\."	, ".default2.");
-				data = data.replaceAll("\\.default\\s+"	, ".default2");
-			}
-			
-			data = data.replaceAll(",\\s+}", "}");							
-			data = data.replaceAll("https://", "http://");
-			data = data.replaceAll(",\\s+]", "]");
-						
-			String output = tx.transform(href, data).replaceAll("0.0 === self.FileError", "void 0 === self.FileError");
-			//String output = tx.transform(new StringReader(data)).replaceAll("0.0 === self.FileError", "void 0 === self.FileError");			
+			String data = new String(response.getContent(), charset);						
+			String output = tx.transform(href, data);			
 			response.setContent( output.getBytes(charset) );
-			InsertJScriptTransformer.skip.set(false);
-
 			if (PROFILE) {
               System.out.println("Transfrom: "+ (System.currentTimeMillis()-duration));
 			}

@@ -12,25 +12,22 @@ public class InsertJScriptTransformer implements Transformer {
 
 	// insert our own scripts
 	protected static String insertedJs = generateInsertedJs(host);
-	public static ThreadLocal<Boolean> skip = new ThreadLocal<Boolean>() {
-		public Boolean initialValue() {
-			return false;
-		}
-	};
 	
 	protected static Transformer tf = new TraceTransformer(); // new ClosureTransformer();	
 	
 	//@Override // r is response-body
 	public String transform(String href, String html) throws IOException {
-		if (! (skip.get() || html.contains("QWERTY"))) {
+		if ((href.indexOf("genoverse") >= 0 && html.contains("// Specify container element with css/jquery selector style")) 
+		 || html.contains("QWERTY")) {			
+		}
+		else {
 			Transformer tx = new AttrTransformer(tf);
 			html = tx.transform(href, html);
 		}
 		
-		//allHTML = allHTML.replaceAll("<html manifest=\"offline.appcache\">", "<html>");
-		//allHTML = allHTML.replaceAll("http://72182.hittail.com/mlt.js", "http://www.ugrad.cs.ubc.ca/~k5r4/domtris/mlt.js");
-		html = html.replaceAll("https://", "http://").replaceAll("jquery.min.js", "jquery.js");
-		html = html.replaceAll("https://", "http://").replaceAll("jquery-1.6.2.min.js", "jquery-1.6.2.js");
+		html = html.replaceAll("<html manifest=\"offline.appcache\">", "<html>");
+		html = html.replaceAll("http://72182.hittail.com/mlt.js", "http://www.ugrad.cs.ubc.ca/~k5r4/domtris/mlt.js");
+		html = html.replaceAll("https://", "http://").replaceAll("jquery.min.js", "jquery.js").replaceAll("jquery-1.6.2.min.js", "jquery-1.6.2.js");
 		
 		String lowerCase = html.toLowerCase();
 
@@ -50,13 +47,13 @@ public class InsertJScriptTransformer implements Transformer {
 		  index0 = html.toLowerCase().indexOf("</html>");		  
 		}
 
-		/*if (index0 >= 0) {
+		if (index0 >= 0) {
 			index0 += pattern.length();
 			String front = html.substring(0, index0);
 			String ending = html.substring(index0);			
 			String fnCounter = "";//"<script type='text/javascript'>if(! __xhr) { try {var __xhr = new XMLHttpRequest(); __xhr.open('GET', window.location.origin+'/notarealwebsiteurl', false); __xhr.send();} catch(e) {} }</script>";			
 			html = front +"\n"+ fnCounter +"\n"+ insertedJs +"\n"+ ending;
-		}*/
+		}
 		
 		// temporary removes the mysterious ? that appears at the end of page
 		// needs more in-depth investigation into HTMLTransformer.java

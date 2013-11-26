@@ -57,6 +57,16 @@ public class TraceTransformer implements Transformer {
 	}
 	
 	public String transform(String filename, String code) throws IOException {
-		return transform(SourceFile.fromCode(filename, code));
+		if (filename.indexOf("genoverse")>=0) {
+			code = code.replaceAll("char\\s+", "char2");
+			code = code.replaceAll("char;", "char2;");			
+			code = code.replaceAll("\\.new", ".new2");
+			code = code.replaceAll("new\\s+:", "new2 :");	
+			code = code.replaceAll("\\.default;"	, ".default2;");
+			code = code.replaceAll("\\.default\\."	, ".default2.");
+			code = code.replaceAll("\\.default\\s+"	, ".default2");
+		}
+		code = code.replaceAll(",\\s+}", "}").replaceAll(",\\s+]", "]");
+		return transform(SourceFile.fromCode(filename, code)).replaceAll("0.0 === self.FileError", "void 0 === self.FileError");
 	}
 }
