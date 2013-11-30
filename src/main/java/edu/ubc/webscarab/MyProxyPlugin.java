@@ -21,6 +21,7 @@ public class MyProxyPlugin extends ProxyPlugin {
 
 	public static boolean PROFILE = false;
 	private final Map<String, Transformer> transformers = new HashMap<String, Transformer>();
+	private static final String charset = "UTF-8";//(cType.toLowerCase().contains("utf-8")) ? "UTF-8" : "ISO-8859-1";
 	
 	public MyProxyPlugin() {
 		super();
@@ -35,15 +36,15 @@ public class MyProxyPlugin extends ProxyPlugin {
 
 	@Override
 	public HTTPClient getProxyPlugin(HTTPClient in) {
-		return new Plugin(in);
+		return new Plugin(in, transformers);
 	}
     
-	private class Plugin implements HTTPClient {
-
+	private static class Plugin implements HTTPClient {
 		private HTTPClient in;
-		
-		public Plugin(HTTPClient in) {
+		private final Map<String, Transformer> transformers;
+		public Plugin(HTTPClient in, Map<String, Transformer> transformers) {
 			this.in = in;
+			this.transformers = transformers;
 		}
 		
 		//@Override 
@@ -55,10 +56,18 @@ public class MyProxyPlugin extends ProxyPlugin {
 				NodeUti1.setURL(href);
 				href = href.toLowerCase();				
 			}
+			Response response = null;
 			
-			long startFetch = System.currentTimeMillis();
+			String txmode = request.getHeader("Content-Type");
+			if (txmode != null && txmode.equals("application/__txcode")) {				
+				response = new Response();
+				response.setContent(request.getContent());
+				modifyResponse(href, response, "UTF-8", transformers.get("Trace"));
+				return response;
+			}
 			
-			Response response = in.fetchResponse(request);
+			long startFetch = System.currentTimeMillis();			
+			response = in.fetchResponse(request);
 			long stopFetch = System.currentTimeMillis();
 			if(PROFILE) {
 				System.out.println("Fetch: " + (stopFetch - startFetch) + ": " + href);
@@ -78,12 +87,11 @@ public class MyProxyPlugin extends ProxyPlugin {
 					if (cType.contains("audio/")) {
 						return response;
 					}
-					String charset = "UTF-8";//(cType.toLowerCase().contains("utf-8")) ? "UTF-8" : "ISO-8859-1";
 					try {
 						if (cType.contains("javascript") || cType.contains("text/x-js")) {
 							if (href.contains("zzv2") || href.contains("firebug-lite") || href.contains("fbug.googlecode.com")) {
 								return response;
-							}							
+							}
 							modifyResponse(href, response, charset, transformers.get("Trace"));
 						} 
 						else if (cType.contains("html")) {							
@@ -101,15 +109,15 @@ public class MyProxyPlugin extends ProxyPlugin {
 			return response;
 		}
 		
-		private void modifyResponse(String href, Response response, String charset, Transformer tx) throws IOException {
+		private Response modifyResponse(String href, Response response, String charset, Transformer tx) throws IOException {
 			long duration = System.currentTimeMillis();
 			String data = new String(response.getContent(), charset);						
-			String output = tx.transform(href, data);			
+			String output = tx.transform(href, data);
 			response.setContent( output.getBytes(charset) );
 			if (PROFILE) {
               System.out.println("Transfrom: "+ (System.currentTimeMillis()-duration));
 			}
-            return;			
+            return response;			
 		}
 	}
 }

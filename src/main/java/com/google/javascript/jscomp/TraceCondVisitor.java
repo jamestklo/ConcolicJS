@@ -29,7 +29,7 @@ public class TraceCondVisitor implements Callback {
 	public boolean shouldTraverse(NodeTraversal nodeTraversal, Node n, Node parent) {
 		return true;
 	}
-
+	
 	private void visitCond(NodeTraversal t, Node n, Node parent) {
 		String num = safeNameIdSupplier.get();		
 		Node comma = new Node(Token.COMMA);
@@ -336,12 +336,12 @@ public class TraceCondVisitor implements Callback {
 	private void visitOps(NodeTraversal t, Node n, Node parent) {
 		Node n1 = n.getFirstChild();
 		Node c1 = n1.cloneTree();
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(c1, n1);
 		
 		Node call = new Node(Token.CALL);
 		call.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType())));
 		call.addChildrenToBack(c1);
-		Map<Node, Node> orgs = new HashMap<Node, Node>();
-		orgs.put(c1, n1);
 		
 		if (n.getChildCount() > 1) {
 			Node n2 = n.getLastChild();		
@@ -350,6 +350,34 @@ public class TraceCondVisitor implements Callback {
 			orgs.put(c2, n2);	
 		}		
 		tx.replace(n, call, orgs);
+	}
+	private void visitTypeof(NodeTraversal t, Node n, Node parent) {
+		Node n1 = n.getFirstChild();
+		Node c1 = n1.cloneTree();
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(c1, n1);
+
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(n.getType())));
+		if (n1.getType()==Token.NAME){
+			Node hook = new Node(Token.HOOK);
+			call.addChildrenToBack(hook);
+		
+			Node sheq = new Node(Token.SHEQ);
+			hook.addChildrenToFront(sheq);
+		
+			Node tyof = new Node(Token.TYPEOF);
+			sheq.addChildrenToFront(tyof);
+			tyof.addChildrenToFront(c1);				
+			sheq.addChildrenToBack(Node.newString("undefined"));
+		
+			hook.addChildrenToBack(Node.newString(Token.NAME, "undefined"));
+			hook.addChildrenToBack(c1.cloneTree());		
+		}
+		else {
+			call.addChildrenToBack(c1);
+		}
+		tx.replace(n, call, orgs);		
 	}
 	private void visitInc(NodeTraversal t, Node n, Node parent) {
 		int ntype = n.getType();
@@ -430,6 +458,32 @@ public class TraceCondVisitor implements Callback {
 			tx.replace(n, call, orgs);
 		}
 	}
+	protected void wrapFunction(Node n, String funcname) {
+		Node cloned = n.cloneTree();				
+		Node call = new Node(Token.CALL);
+		call.addChildrenToFront(Node.newString(Token.NAME, funcname));
+		call.addChildrenToBack(cloned);
+		
+		Map<Node, Node> orgs = new HashMap<Node, Node>();
+		orgs.put(cloned, n);
+		tx.replace(n, call, orgs);
+	}
+	private void visitForIn(NodeTraversal t, Node n, Node parent) {
+		wrapFunction(n.getChildAtIndex(1), "__getValue");
+	}
+	private void visitThrow(NodeTraversal t, Node n, Node parent) {
+		Node child0 = n.getFirstChild();
+		if (child0.getType() == Token.STRING) {
+			return;
+		}
+		wrapFunction(child0, "__getValue");
+	}
+	private void visitEval(NodeTraversal t, Node n, Node parent) {
+		wrapFunction(n.getChildAtIndex(1), "__txCode");
+		Node child0 = n.getFirstChild();
+		
+		n.getFirstChild().setString("__evalNative");
+	}
 	
 	@Override
 	public void visit(NodeTraversal t, Node n, Node parent) {		
@@ -442,7 +496,6 @@ public class TraceCondVisitor implements Callback {
 		else if (ntype == Token.SCRIPT) {
 			//System.out.println(n.toStringTree());
 		}
-		
 		if (isJustPretty) {
 			if (ntype==Token.NEW && n.getFirstChild().getNext()==null) {
 				n.addChildrenToBack(new Node(Token.EMPTY));
@@ -460,7 +513,14 @@ public class TraceCondVisitor implements Callback {
 			visitReturn(t, n, parent);
 		}
 		else if (ntype==Token.CALL || ntype==Token.NEW) {
-			visitCall(t, n, parent);
+			Node child0 = n.getFirstChild();
+			if ( (child0.getType() == Token.NAME && child0.getString().equals("eval"))
+			  || ( (child0.getType()==Token.GETELEM || child0.getType()==Token.GETPROP)&& child0.getLastChild().getString().equals("eval")) ) {
+				visitEval(t, n, parent);
+			}
+			else {
+				visitCall(t, n, parent);
+			}
 		}
 		else if (ntype==Token.GETELEM || ntype==Token.GETPROP) {
 			if (ptype==Token.ASSIGN && n==parent.getFirstChild()) {
@@ -483,14 +543,17 @@ public class TraceCondVisitor implements Callback {
 			  || ntype==Token.NOT	|| ntype==Token.SHEQ|| ntype==Token.SHNE || ntype==Token.EQ || ntype==Token.NE // === !== == != 
 			  || ntype==Token.GT	|| ntype==Token.GE	|| ntype==Token.LT || ntype==Token.LE // > >= < <=
 			  || ntype==Token.POS	|| ntype==Token.NEG
-			  || ntype==Token.TYPEOF || ntype==Token.INSTANCEOF) {
+			  || ntype==Token.INSTANCEOF) {
 			visitOps(t, n, parent);
+		}
+		else if (ntype==Token.TYPEOF) {
+			visitTypeof(t, n, parent);
 		}
 		else if (NodeUti1.isConst(n)) {
 			if (ptype==Token.GETPROP && parent.getFirstChild().equals(n)) {
 				visitConst(t, n, parent);
 			}
-			else if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP)) {
+			else if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP || ptype==Token.THROW)) {
 				// the call to visitGet() will handle this case
 			}
 			else if (ptype==Token.CASE && n==parent.getFirstChild()) {				
@@ -499,11 +562,22 @@ public class TraceCondVisitor implements Callback {
 				visitConst(t, n, parent);
 			}
 		}
+		else if (ntype==Token.FOR) {
+			if (n.getChildAtIndex(2).getType() == Token.BLOCK) {
+				visitForIn(t, n, parent);
+			}
+			else if (n.getChildAtIndex(1).getType() != Token.EMPTY) {
+				visitCond(t, n.getChildAtIndex(1), n);
+			}
+		}
+		else if (ntype==Token.THROW) {
+			visitThrow(t, n, parent);
+		}
 		
 		boolean cond = false;
 		cond =( ((ptype==Token.IF || ptype==Token.HOOK || ptype==Token.SWITCH) && parent.getFirstChild() == n)
 		//     || ntype==Token.CALL || ntype==Token.NEW
-             || ptype == Token.FOR && parent.getChildAtIndex(1) == n );
+			  );
 		if (cond) {
 			visitCond(t, n, parent);
 		}

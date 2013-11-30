@@ -16,12 +16,7 @@ import com.google.javascript.rhino.Node;
 
 import edu.ubc.javascript.ReflectiveNodeTransformer;
 
-public class TraceTransformer implements Transformer {
-
-	public static void main(String[] args) throws Exception {
-		TraceTransformer main = new TraceTransformer();
-		main.transformAll(new String[] {"U:/public_html/nbpAFZyrx5o/tracing/domtris/tetris.js"});
-	}
+public class TraceTransformer implements Transformer {	
 	
 	public void transformAll(String[] args) throws Exception {
 		for(String fileName : args) {			
@@ -43,16 +38,16 @@ public class TraceTransformer implements Transformer {
 		inputs.add(input);
 		Compiler compiler = new Compiler(System.out);
 		compiler.compile(externs, inputs, options);
-		
-		Node node = compiler.getRoot().getLastChild();		
-		NodeTraversal traversal  = null;
-		ReflectiveNodeTransformer rnt = new ReflectiveNodeTransformer();
 
+		Node node = compiler.getRoot().getLastChild();		
+		NodeTraversal traversal  = null;		
+		ReflectiveNodeTransformer rnt = new ReflectiveNodeTransformer();
+				
 		traversal = new NodeTraversal(compiler, new TraceCondVisitor(compiler, rnt));			
 		traversal.traverse(node);
 
 		rnt.commit(false);
-		
+
 		return compiler.toSource();
 	}
 	
@@ -66,7 +61,43 @@ public class TraceTransformer implements Transformer {
 			code = code.replaceAll("\\.default\\."	, ".default2.");
 			code = code.replaceAll("\\.default\\s+"	, ".default2");
 		}
-		code = code.replaceAll(",\\s+}", "}").replaceAll(",\\s+]", "]");
-		return transform(SourceFile.fromCode(filename, code)).replaceAll("0.0 === self.FileError", "void 0 === self.FileError");
+		
+		// temp fix for Tudu
+		String dwr=null, dwrInsert=null, dwrReply=null;
+		code = code.replaceAll("throw 'allowScriptTagRemoting is false.';", "");
+		if (code.contains("//#DWR")) {
+			dwr = "//#DWR";			
+		}
+		if (code.contains("//#DWR-INSERT")) {
+			dwrInsert = "//#DWR-INSERT";
+		}
+		if (code.contains("//#DWR-REPLY")) {
+			dwrReply = "//#DWR-REPLY";
+		}
+			
+		code = code.replaceAll(",\\s+}", "}").replaceAll(",\\s+]", "]");						
+		String output = transform(SourceFile.fromCode(filename, code)).replaceAll("0.0 === self.FileError", "void 0 === self.FileError");
+		
+		if (dwr != null) {
+			output = dwr +"\n"+ output;
+		}
+		if (dwrInsert != null) {
+			output = dwrInsert +"\n"+ output;
+		}
+		if (dwrReply != null) {
+			output = dwrReply +"\n"+ output;
+		}
+		
+		return output + "\n/*TraceTransformer:"+ filename +"*/\n";
+	}
+	
+	public static void main (String[] args) {
+		String code = new String("start_code();\n"
+					+"/* First comment */\n"
+					+"more_code();\n" 
+					+"/* Second comment */\n"
+					+"end_code();\n");
+		System.out.println(code.replaceAll("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)",""));
+		System.out.println("\n");
 	}
 }
