@@ -479,10 +479,30 @@ public class TraceCondVisitor implements Callback {
 		wrapFunction(child0, "__getValue");
 	}
 	private void visitEval(NodeTraversal t, Node n, Node parent) {
-		wrapFunction(n.getChildAtIndex(1), "__txCode");
+		wrapFunction(n.getChildAtIndex(1), "__txCode");		
+		/*Node child0 = n.getFirstChild();		
+		int c0type = child0.getType();
+		if (c0type == Token.NAME) {
+			child0.setString("__evalNative");
+		}*/		
+	}
+	
+	private boolean isEval(Node n) {
 		Node child0 = n.getFirstChild();
-		
-		n.getFirstChild().setString("__evalNative");
+		int c0type = child0.getType();
+		if (c0type == Token.NAME && child0.getString().equals("eval")) {
+			return true;
+		}
+		else if (c0type == Token.GETPROP || c0type == Token.GETELEM) {
+			Node child00 = child0.getFirstChild();
+			if (child00.getType() == Token.NAME && child00.getString().equals("window")) {
+				Node child01 = child0.getLastChild();
+				if (child01.getType() == Token.STRING && child01.getString().equals("eval")) {
+					return true;
+				}
+			}
+		}		
+		return false;
 	}
 	
 	@Override
@@ -513,10 +533,8 @@ public class TraceCondVisitor implements Callback {
 			visitReturn(t, n, parent);
 		}
 		else if (ntype==Token.CALL || ntype==Token.NEW) {
-			Node child0 = n.getFirstChild();
-			if ( (child0.getType() == Token.NAME && child0.getString().equals("eval"))
-			  || ( (child0.getType()==Token.GETELEM || child0.getType()==Token.GETPROP)&& child0.getLastChild().getString().equals("eval")) ) {
-				visitEval(t, n, parent);
+			if (isEval(n)==true) {
+				visitEval(t, n, parent);			
 			}
 			else {
 				visitCall(t, n, parent);
@@ -526,7 +544,8 @@ public class TraceCondVisitor implements Callback {
 			if (ptype==Token.ASSIGN && n==parent.getFirstChild()) {
 				visitSet(t, n, parent);
 			}
-			else if ((ptype==Token.CALL || ptype==Token.NEW) && n==parent.getFirstChild()) {				
+			else if ((ptype==Token.CALL || ptype==Token.NEW) && n==parent.getFirstChild()) {
+				// visitCall() will handle this
 			}
 			else {
 				visitGet(t, n, parent);
@@ -550,10 +569,10 @@ public class TraceCondVisitor implements Callback {
 			visitTypeof(t, n, parent);
 		}
 		else if (NodeUti1.isConst(n)) {
-			if (ptype==Token.GETPROP && parent.getFirstChild().equals(n)) {
+			if ((ptype==Token.GETPROP || ptype==Token.GETELEM) && parent.getFirstChild().equals(n)) {
 				visitConst(t, n, parent);
 			}
-			else if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.REGEXP || ptype==Token.THROW)) {
+			else if (ntype==Token.STRING && (ptype==Token.GETPROP || ptype==Token.GETELEM || ptype==Token.REGEXP || ptype==Token.THROW)) {
 				// the call to visitGet() will handle this case
 			}
 			else if (ptype==Token.CASE && n==parent.getFirstChild()) {				
