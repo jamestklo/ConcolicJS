@@ -42,10 +42,10 @@ public class TraceTransformer implements Transformer {
 		Node node = compiler.getRoot().getLastChild();		
 		NodeTraversal traversal  = null;		
 		ReflectiveNodeTransformer rnt = new ReflectiveNodeTransformer();
-				
+/*				
 		traversal = new NodeTraversal(compiler, new TraceCondVisitor(compiler, rnt));			
 		traversal.traverse(node);
-
+*/
 		rnt.commit(false);
 
 		return compiler.toSource();
@@ -87,7 +87,6 @@ public class TraceTransformer implements Transformer {
 		if (dwrReply != null) {
 			output = dwrReply +"\n"+ output;
 		}
-		
 		return output + "\n/*TraceTransformer:"+ filename +"*/\n";
 	}
 	
