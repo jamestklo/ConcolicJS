@@ -1,1 +1,27 @@
 \section{Introduction}
+Random testing, concolic testing... many prior work focus on generating inputs. 
+However, the problem is that just having the inputs to a function is not sufficient.  
+For example, DOMtris is a very simple Web implementation of Tetris, almost all functions don't have any input arguments.  
+Yet, all these functions both depend on and mutate the state of the app.  
+In the case of DOMtris, an example use case is to increase score and clean up the game pieces when the gamer has fully filled one or more rows.  
+The DOM makes up a big part of a Web's app state.  
+Thus in this paper we focus on the DOM.  
+Indeed, DOM operations make up a majority of an app's execution and defects, according to a study by Frolin.  
+
+A naive approach is to do just in time generation of the DOM.  
+For example, if the statement is document.getElementById(), we can just return or create an element with "id".  
+Yet there are 2 subtle issues.
+
+First, there are multiple possible outputs.  
+
+Second, dependencies in Wikipedia.  
+
+Using a solver is easier and protects us from more complicated cases.
+
+Our approach also supports concolic testing of DOM operations.
+
+
+
+The new perspective is distinct from our previous motivation, which was using our tool to define test cases and drive run time execution of the program.  
+
+Inputs can be defined for a test case in different ways: manually by test engineers writing test cases or automatically through concolic or random testing
