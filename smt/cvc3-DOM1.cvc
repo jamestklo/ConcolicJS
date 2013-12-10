@@ -1,0 +1,96 @@
+OPTION "incremental";
+OPTION "produce-models";
+OPTION "interactive-mode";
+
+null: TYPE;
+undefined: TYPE;
+
+Node: TYPE;
+root: 			(Node) -> BOOLEAN;			
+parent:			(Node, Node) -> BOOLEAN;	
+child: 			(Node, Node) -> BOOLEAN;	
+children: 		(Node, Node, INT) -> BOOLEAN;
+childIndex:		(Node) -> INT;
+childrenLength:		(Node)	 	 -> INT;
+
+following_sibling: 	(Node, Node) -> BOOLEAN;
+preceding_sibling: 	(Node, Node) -> BOOLEAN;
+
+descendant:		(Node, Node) -> BOOLEAN;
+ancestor:		(Node, Node) -> BOOLEAN;
+
+firstChild:		(Node, Node) -> BOOLEAN;	
+lastChild:		(Node, Node) -> BOOLEAN;
+
+nextSibling:		(Node, Node) -> BOOLEAN;
+previousSibling:	(Node, Node) -> BOOLEAN;
+
+ASSERT FORALL (x, y: Node):	
+	(root(y) AND DISTINCT(x,y)) => descendant(x,y);	
+
+ASSERT FORALL (x: Node):	
+	NOT(child(x,x));
+
+ASSERT FORALL (x, y: Node):
+	child(x,y) => NOT(child(y,x));
+
+ASSERT FORALL (x, y, z: Node):
+	(child(x,y) AND DISTINCT(y,z)) => NOT(child(x,z));
+		
+ASSERT FORALL (x, y: Node):
+	descendant(x, y) <=> child(x, y) OR ( EXISTS (z: Node): descendant(x, z) AND child(z, y) );
+
+ASSERT FORALL (x,y:Node, j:INT):
+	children(x, y, j) => child(x, y) AND j >= 0;
+	
+ASSERT FORALL (x:Node, j:INT):
+	(childIndex(x) = j)	<=> EXISTS (y: Node): ( children(x, y, j) );
+
+ASSERT FORALL (y:Node, j:INT):
+	childrenLength(y) = j <=> EXISTS(x:Node): lastChild(x, y) AND children(x, y, j);
+		
+ASSERT FORALL (x, y:Node):
+	firstChild(x, y) <=> children(x, y, 0);
+
+ASSERT FORALL (x, y:Node): 	
+	lastChild(x, y) => EXISTS(j:INT): ( j >= 0 AND children(x, y, j) AND (NOT(EXISTS (z: Node, k:INT): children(z, y, k) AND k > j)) );
+
+ASSERT FORALL (x: Node):
+	NOT(following_sibling(x, x));
+	
+ASSERT FORALL (x, z: Node): 
+	following_sibling(x, z) <=> EXISTS (y: Node, i, j:INT): (children(x, y, i) AND children(z, y, j) AND i > j);
+
+ASSERT FORALL (x: Node):
+	NOT(nextSibling(x, x));
+	
+ASSERT FORALL (x, z: Node): 
+	nextSibling(x, z) <=> EXISTS (y: Node, i, j:INT): (children(x, y, i) AND children(z, y, j) AND i=j+1);
+	
+
+
+ASSERT FORALL (x, y: Node):
+	parent(x, y) <=> child(y, x);
+
+ASSERT FORALL (x, y: Node):
+	parent(x, y) => NOT(parent(y, x));
+
+ASSERT FORALL (x, y: Node):
+	ancestor(x, y) <=> descendant(y, x);
+
+ASSERT FORALL (x, y: Node):
+	ancestor(x, y) => NOT(ancestor(y, x));
+		
+ASSERT FORALL (x, z: Node):
+	preceding_sibling(x, z) <=> following_sibling(z, x);
+
+ASSERT FORALL (x, z: Node):
+	preceding_sibling(x, z) => NOT(preceding_sibling(z, x));	
+
+ASSERT FORALL (x, z: Node):
+	previousSibling(z, x) <=> nextSibling(x, z);
+	
+ASSERT FORALL (x, z: Node):
+	previousSibling(z, x) => NOT(previousSibling(x, z));
+
+

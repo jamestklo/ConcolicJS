@@ -1,0 +1,40 @@
+% case-specific assertions
+r, dC, d0, d1, d2, t1, t2, t3, t4: Node;
+ASSERT DISTINCT(dC, d0, d1, d2);
+ASSERT root(r);
+
+% (dom0.firstElementChild===domC || dom1.lastElementChild===domC)
+% domC								<=> distinct dC			{op:"distinct", m:"dC"}
+% dom0								<=> distinct d0			{op:"distinct", m:"d0"}
+% dom0.firstElementChild			<=> firstChild(t1, d0) 	{op:"firstChild", l:"t1", r:d0, m:"t1"}
+% dom0.firstElementChild === domC	<=> firstChild(dC, d0)	{op:_EQcvc, l:t1, r:dC}
+% dom1								<=> distinct d1			{op:"distinct", m:"d1"}
+% dom1.lastElementChild				<=> lastChild(t2, d1)	{op:"lastChild", l:"t2", r:d1, m:"t2"}
+% dom1.lastElementChild	 === domC	<=> lastChild(dC, d1)	{op:_EQcvc, l:dC, r:t2}
+% OR								<=>						{op:_ORcvc, l:{op:_EQcvc, l:t1, r:dC}, r:{op:_EQcvc, l:dC, r:t2}}
+ASSERT firstChild(dC, d0) OR lastChild(dC, d1);		
+
+% (dom0.parentElement===domC || dom1.parentElement===domC)
+ASSERT parent(dC, d0) OR parent(dC, d1);
+
+% (dom1.nextElementSibling === dom2.lastElementChild) 
+ASSERT following_sibling(t1, d1) AND lastChild(t1, d2);
+
+% (dom0.parentElement.parentElement === dom2.firstChild.nextSibling)
+% dom0								<=> distinct d0					{op:"distinct", m:"d0"}
+% dom0.parentElement 				<=> parent(t2, d0), t2			{op:"parent", l:"t2", r:d0, m:"t2"}
+% dom0.parentElement.parentElement 	<=> parent(t3, t2), t3			{op:"parent", l:"t3", r:t2, m:"t3"}
+% dom2								<=> distinct d2					{op:"distinct", m:"d2"}
+% dom2.firstChild					<=> firstChild(t4, d2)			{op:"firstChild", l:"t4", r:d2, m:"t4"}
+% dom2.firstChild.nextSibling		<=> following_sibling(t5, t4)	{op:"following_sibling", l:"t5", r:t4, m:"t5"}
+% ===								<=> 							{op:_EQcvc, l:t3, r:t5}
+% function toString() {};
+ASSERT parent(t2, d0) AND parent(t3, t2) AND firstChild(t4, d2) AND following_sibling(t3, t4);
+
+% dom0.children[4] === dom2.firstChild.nextSibling
+% dom0								<=> distinct d0					{op:"distinct", m:"d0"}
+% dom0.children						<=>	child(t2, dom0)				{op:"child", r:d0}
+% dom0.children[4]					<=>	children(t2, dom0, 4)		{op:4, l:t2, r:{op:"children", r:d0}, m:"t2"}
+ASSERT children(t2, d0, 4) AND firstChild(t3, d2) AND following_sibling(t2, t3);
+
+

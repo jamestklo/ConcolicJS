@@ -95,7 +95,7 @@ public class CVCsolverDOM {
 		return null;
 	}	
     public static void main(String[] args) {
-    	String prefix = "C:/Temp/tklo/cvc4/";
+    	String prefix = "Z:/git/ConcolicJS/smt/";
     	String cvcpath = prefix+ "cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive"; 
     	String dompath = prefix+ "cvc3-DOM1.cvc";
     	String sespath = prefix+ "cvc3-example1.cvc";

@@ -17,12 +17,12 @@
     <dependency>
     	<groupId>com.crawljax</groupId>
     	<artifactId>crawljax-core</artifactId>
-    	<version>3.4</version>
+    	<version>3.3</version>
     </dependency>
 	<dependency>
 		<groupId>com.crawljax.plugins</groupId>
 		<artifactId>crawloverview-plugin</artifactId>
-		<version>3.4</version>
+		<version>3.3</version>
 	</dependency>
 	<dependency>
 		<groupId>com.crawljax.plugins</groupId>
