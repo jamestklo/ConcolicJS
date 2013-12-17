@@ -1,9 +1,20 @@
 \section{Related Work}
-Related work: 
+Whether the test inputs are manually, randomly (e.g. ~\cite{artemis}) or symbolically (e.g. ~\cite(kudzu, jalangi}) defined.
 
-\header{
+% may move to Intro
+%\header{Emmet or Zen coding.}
+%Emmet (formerly Zen coding) \cite{ZenSjeiti, ZenCoding} generates DOM elements as output.  
+%Input to Emmet is the abbreviation of a CSS query that precisely specifies the DOM structure in a declarative manner.
+%A major difference is that \tool solves for complex logic constraints (e.g. AND, OR conditions).
 
-\header{Emmet or Zen coding.}
-\cite{ZenSjeiti}
-\cite{ZenCoding}
 
+\header{Concolic Execution}
+Concolic execution ~\cite{cute}, also known as dynamic symbolic execution, is a method of exhaustively executing the source code for maximizing path coverage. 
+A path is a sequential permutation of branches.  For example, each IF statement has 2 branches: True and False; each iteration within a loop also has 2 branches: Stay and Break. 
+Execution of branches is mutually exclusive: going to True implies not going to False.
+Having the constraints generated from a dynamic backward slice, concolic execution uses a constraint solver to generate input that would drive the execution of each condition towards a specific branch. 
+
+Kudzu ~\cite{kudzu} uses a constraint solver to conduct constraint-based testing for JavaScript Web applications. 
+While our work focuses on generating HTML input to achieve path coverage, Kudzu focuses on generating string input to detect security vulnerabilities in JavaScript applications. 
+Our work is also designed to run on multiple browsers, while Kudzu runs on only the browser that supports its backward slicing component [11].
+%jalangi and Kudzu focuses on generating inputs, and did not address the problems of closures and making test cases runnable.
