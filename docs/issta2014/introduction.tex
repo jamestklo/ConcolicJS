@@ -46,7 +46,7 @@ To make the {\tt if} statement go to the {\tt True} branch, the web page's DOM s
 While manual generation of HTML is possible, the manual approach would quickly become tedious and not scalable.  
 The reason is that an unique DOM structure is required for going through different execution paths.  
 For example, to go to the {\tt False} branch of the above {\tt if} statement, rows cannot have 10 children.
-Therefore, when an {\tt if} statement depends on DOM operations to decide which branch to go, any addition of such {\\tt if} statements to the code would double the number of unique DOM structures for achieving path coverage, leading to exponential growth.
+Therefore, whenever there is an {\tt if} statement having DOM dependence, any addition of such {\tt if} statements would double the number of unique DOM structures for achieving path coverage in the code, leading to exponential growth.
 Moreover, because not every {\tt if} statement depends on DOM operations, manual generation can become complex and labour intensive to keep track of all relevant {\tt if} statements and multiple DOM elements involved.
 
 
