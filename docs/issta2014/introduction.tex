@@ -1,30 +1,34 @@
 \section{Introduction}
 
-JavaScript is increasingly a popular programming language for software implementation.%; and the World Wide Web is increasingly an attractive platform for delivering applications.
-HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to traditional desktop apps.  The latest round of browser wars make executing JavaScript more efficient, robust, secure and consistent across browsers.  Because of HTML5, more desktop and mobile operating systems actually now support implementing native apps using the JavaScript/HTML/CSS methodology ~\cite{jalangi}.
-The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware heterogeneity, also making JavaScript apps \footnote{JavaScript apps are preferred in Web browsers because they are lighter weight than Java applets and they don't require installation of any proprietary plugin e.g. Flash or Silverlight} a convenient platform for delivering the front end. %(e.g. ~\cite{BNSFoffice365}).
-Node.js's emergence makes JavaScript capable of implementing highly scalable servers ~\cite{nodeUpRunning}.  
-Indeed, many institutions such as the Khan Academy ~\cite{khanAcademy} use JavaScript and the Web for teaching programming.
+JavaScript is increasingly a popular language for software implementation: %; and the World Wide Web is increasingly an attractive platform for delivering applications.
+HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to those implemented for traditional desktops.  The latest round of browser wars makes executing JavaScript more efficient, robust, secure and consistent across platforms.  Because of HTML5, more desktop and mobile operating systems actually now support implementing native apps using the combination of JavaScript, HTML and CSS~\cite{jalangi}.
+The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware heterogeneity, which also makes JavaScript apps\footnote{JavaScript apps are preferred in Web browsers because they are lighter weight than Java applets and they don't require installation of any proprietary plugins such as Flash and Silverlight} a convenient solution for delivering the application front end (e.g.~\cite{BNSFoffice365}).
+Emergence of Node.js and its scalability also make JavaScript widely adopted on the server side.
+Consequently, many institutions such as the Khan Academy~\cite{khanAcademy} use JavaScript for teaching programming; and JavaScript has consistently been a top 2 in the RedMonk~\cite{redmonk} popularity rankings.%~\footnote{results are based on projects hosted at GitHub and questions asked at StackOverflow}.
 
-Unfortunately, despite the language's ubiquity, testing JavaScript can be challenging and cumbersome.
-For example, in a typical Web app, a lot of JavaScript code is intermixed with back end logic and front end HTML ~\cite{QUnitIntro}.
-Because of these dependencies, test cases cannot be fully run unless these dependencies are properly resolved.  
+Yet, despite the language's ubiquity, testing JavaScript can be challenging and cumbersome.
+For example, in a typical Web app, a lot of JavaScript code is intermixed with back end logic and front end HTML~\cite{QUnitIntro}.
+Such intermixes introduce dependencies when trying to run JavaScript code, and test cases cannot be fully run until those dependencies are properly resolved.
 
-In this paper, we elaborate the HTML problem and present our approach to it.
-HTML describes the graphical user interface (GUI) of a Web app.  In JavaScript, HTML is accessed and mutated by the Document Object Model (DOM) API.
-When JavaScript code runs, the execution would encounter operations on the DOM that subtly imply the DOM tree to have a particular structure. 
-In other words, when trying to run a test case, if the DOM structure does not satisfy what the code requires, eventually a DOM operation would fail and the test case would terminate prematurely.
+In this paper, we elaborate on the HTML problem and present our approach to it.
+In a Web app, HTML describes the graphical user interface, and JavaScript code that operate an API called the Document Object Model (DOM) are abundant, because the DOM API is the standard for accessing and mutating HTML.
+When JavaScript code runs, its runtime execution would encounter DOM operations that would subtly imply the DOM having a particular tree structure. 
+In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.
+A recent study in the literature~\cite{frolin2013} discovered that the majority of bugs in JavaScript are related to operations on the DOM.
 
-In a simplified example of a real world game Tetris ~\cite{domtris}, suppose the function {\tt checkRows} in Sample Code ~\ref{dom0} is being unit tested concolic-ly.  
+To further illustrate the necessity of a satisfiable DOM structure, suppose the function {\tt checkRows} in Sample Code ~\ref{dom0} is being unit tested concolic-ly.  
+The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement Tetris.  
+Concolic testing~\cite{cute} executes the app in a way to maximize path coverage; to do so, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in Sample Code ~\ref{dom0}.
 \begin{figure}
-\begin{lstlisting}[caption=Example use of closures.,label=dom0]
+\begin{lstlisting}[caption=Example that needs tracing and solver. The function getElementById() is equivalent to document.getElementById(),label=dom0]
 function checkRows() {
-  var field = document.getElementById("tetris");
-  for (var i=field.children.length; i--;) {
-    var row = $(">div#row"+i);
+  var field = getElementById("tetris"); 
+  var i, row;
+  for (i=field.children.length; i--;) {
+    row = getElementById("row"+i);
     if (row.children.length === 10) {
-	  // ... row filled, update score
-	}
+      // ... row filled, update score
+    }
   }
 }
 \end{lstlisting}
@@ -33,11 +37,28 @@ function checkRows() {
 To make the {\tt if} statement go to the {\tt True} branch, the web page's DOM structure must satisfy the following constraints:
 \begin {compactitem}
 \item there is an element with id {\tt tetris}
-\item {\tt tetris} contain children elements, because we must first enter the {\tt for} loop
-\item number of rows must be greater than or equal to the number of children that {\tt tetris} has
-\item rows must have ids in the nomenclature {\tt row0}, {\tt row1}...
+\item {\tt tetris} contains children elements, because we must first enter the {\tt for} loop
+\item there are rows having id's the nomenclature {\tt row0}, {\tt row1}...
+\item the number of rows must be greater than or equal to the number of children that {\tt tetris} has
 \item at least one of the rows must have exactly 10 children
 \end {compactitem}
+
+While manual generation of HTML is possible, the manual approach would quickly become tedious and not scalable.  
+The reason is that an unique DOM structure is required for going through different execution paths.  
+For example, to go to the {\tt False} branch of the above {\tt if} statement, rows cannot have 10 children.
+Therefore, when an {\tt if} statement depends on DOM operations to decide which branch to go, any addition of such {\\tt if} statements to the code would double the number of unique DOM structures for achieving path coverage, leading to exponential growth.
+Moreover, because not every {\tt if} statement depends on DOM operations, manual generation can become complex and labour intensive to keep track of all relevant {\tt if} statements and multiple DOM elements involved.
+
+
+
+% the problem can be hard
+% manual generation
+% random generation
+% greedy or just in time generation ~\cite{ZenCoding}
+% constraint-based generation
+% constraint solver
+% justify for tracing, look ahead, and generating constraints
+% justify for using a solver, rather than heuristics to resolve constraints
 
 % cannot generate HTML for game, 
 Note that the code does not imply the following, which we take for granted in a Tetris game.
@@ -50,9 +71,19 @@ Note that the code does not imply the following, which we take for granted in a 
 
 manual generation
 random generation
-greedy or just in time generation ~\cite{ZenCoding}
+
 
 %contributions
+
+0) DOM-specific tracing
+1) DOM solver
+2) Generating HTML
+3) Integration with QUnit
+
+
+
+DOM mutations
+Attributes
 
 
 Random testing, concolic testing... many prior work focus on generating inputs. 

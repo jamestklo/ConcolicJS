@@ -7,12 +7,12 @@
 solves complex conditions
 to solve precedence, we have 
 
-(a && a.b)
-_AND(a, _GET(a,b)); 
-_AND((_t=a, _t), _t && _GET(_t, b));
+%(a && a.b)
+%_AND(a, _GET(a,b)); 
+%_AND((_t=a, _t), _t && _GET(_t, b));
 
-result = f0(input) || f1(input);
-_OR(
+%result = f0(input) || f1(input);
+%_OR(
 
 \header{Backward Slicing.}
 % JavaScript API
