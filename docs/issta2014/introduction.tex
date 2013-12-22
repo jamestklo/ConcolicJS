@@ -15,14 +15,14 @@ In this paper, we elaborate on the HTML problem and our approach to it.
 In a Web app, HTML describes the graphical user interface.  The standard API for accessing and mutating HTML is the Document Object Model (DOM) API; thus JavaScript code that operate on the DOM are abundant in Web apps.
 When JavaScript code runs, its runtime execution would encounter DOM operations that would subtly imply the DOM having a particular tree structure. 
 In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.
-Indeed, a majority of JavaScript bugs are related to the DOM~\cite{frolin2013}.
+Indeed, the majority of JavaScript bugs are DOM related~\cite{frolin2013}.
 
 \subsection{Motivating Example}
-To further illustrate the necessity of a satisfiable DOM structure, suppose the {\tt function checkRows()} in Sample Code ~\ref{dom0} is being unit tested concolic-ly.  
+To further illustrate the necessity of a satisfiable DOM structure, suppose the {\tt function checkRows()} in Sample Code~\ref{dom0} is being unit tested concolic-ly.  
 The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement Tetris.  
-Concolic testing~\cite{cute} executes the app in a way to maximize path coverage; to do so, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in Sample Code ~\ref{dom0}.
+Concolic testing~\cite{cute} executes the app in a way to maximize path coverage; to do so, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in Sample Code~\ref{dom0}.
 \begin{figure}
-\begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
+\begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
 function checkRows() {
   var field = getElementById("tetris"); 
   var i, row;
@@ -36,25 +36,22 @@ function checkRows() {
 \end{lstlisting}
 \end{figure}
 
-To guide the {\tt if} statement going to the {\tt True} branch, the web page's DOM structure must satisfy the many constraints:
+To guide the {\tt if} statement going to the {\tt True} branch, the web page's DOM structure must satisfy many constraints:
 \begin {compactitem}
-\item there is an element with id {\tt tetris}
-\item {\tt tetris} contains children elements, because we must first enter the {\tt for} loop
-\item there are rows having id's in the nomenclature {\tt row0}, {\tt row1}, etc.
-\item the number of rows must be greater than or equal to the number of children that {\tt tetris} has
-\item at least one of the rows must have exactly 10 children
+\item There is an element with id {\tt tetris}.
+\item {\tt tetris} contains children elements, because we must first enter the {\tt for} loop.
+\item There are rows having id's in the nomenclature {\tt row0}, {\tt row1}, etc.
+\item The number of rows must be greater than or equal to the number of children that {\tt tetris} has.
+\item At least one of the rows must have exactly 10 children.
 \end {compactitem}
 
 %If any of the above constraints is not satisfied, the execution would lean towards a wrong path or even crash, e.g. when {\tt field} or {\tt row} is null.
-
 While manual generation of HTML is possible, the manual approach would quickly become tedious and not scalable.  
 The reason is that an unique DOM structure is required for going through a different execution path.
 For example, to go to the {\tt False} branch of the above {\tt if} condition, rows cannot have 10 children.
-Therefore, to cover both the {\tt True} and {\tt False} branches of an {\tt if} condition, 2 unique DOM structures are necessary.
-Generally, the exact number of unique DOM structures is 2 plus the number of {\tt else if}'s in the condition.
-Loops are more difficult for achieving path coverage, because it's not easy to determine the max upper limit of loop iterations.  For example, in Sample Code ~\ref{dom0}, {\tt field} can have any number of children.
+Therefore, to cover both the {\tt True} and {\tt False} branches of an {\tt if} condition, 2 unique DOM structures are necessary.\footnote{Generally, the exact number of unique DOM structures per condition is 2 plus the number of {\tt else if}'s in the condition.  Loops are more difficult for achieving path coverage, because it's not easy to determine the max upper limit of loop iterations.  For example, in Sample Code ~\ref{dom0}, {\tt field} can have any number of children.}
 
-Consequently, whenever there is an {\tt if} or {\tt loop} condition depending on the DOM, any addition of such conditions would at least double the number of unique DOM structures necessary for path coverage, leading to exponential growth.
+Consequently, the number of unique DOM structures would at least double whenever a DOM depending {\tt if} or {\tt loop} condition is added to the code.
 Moreover, manual generation can become complex as DOM-depending conditions can get scattered across multiple files in the code base, making it labor intensive to accurately trace all of the constraints and DOM elements.
 Random generation is simply not desirable because the required DOM tree may contain many DOM elements that have to be sophisticatedly organized in a precise structure.
 
@@ -64,12 +61,20 @@ In this paper we propose our automated approach for executing and testing JavaSc
 \item DOM tracing and constraints
 \item DOM solver
 \item Integration with unit testing frameworks such as QUnit
-\item We present the implementation of our approach is a tool called \tool; an online video provides a demonstration.
+\item We present the implementation of our approach in a tool called \tool; an online video provides a demonstration.
 \item We report the effecficay 
 \end {compactitem}
 
-% making test cases runnable
+\tool also augments approaches that aim to generate tests automatically.  
+Random testing~\cite{}, feedback directed testing~\cite{}, mutation testing~\cite{}, concolic testing~\cite{}... to our best knowledge, almost all of existing research focused on generating inputs for testing functions and apps.
+However, having just the inputs is often insufficient.  For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.\footnote{Another category of dependencies is closure variables.}
+Moreover, it should be noted that the {\tt function checkRows()} does not take any input arguments, and many functions are like that in JavaScript.
+Yet, these functions depend on, and would sometimes mutate, their dependencies such as the DOM.
+Thus given a test case, be it manually or automatically generated, \tool can be used to help the test case and its assertions get fully utilized.
 
+Ultimately, our higher level goal is to foster closer collaboration among designers and developers.\footnote{As part of separating concerns, design and development are often done by distinct individuals having very different backgrounds.}
+For example, because \tool generates reference HTML for satisfying code execution, it can be used to detect DOM mismatches between the designer's HTML vs. what is expected in the developer's JavaScript code.
+A mismatch may not always be the developer's fault.  Sometimes it is possible that the designer may have made a mistake when updating the HTML or may be just too busy and have forgotten to notify the developer about a change.
 
 % cannot generate HTML for game, 
 Note that the code does not imply the following, which we take for granted in a Tetris game.
@@ -80,32 +85,10 @@ Note that the code does not imply the following, which we take for granted in a 
 \item etc.
 \end {compactitem}
 
-
-% Random testing, concolic testing... many prior work focus on generating inputs. 
-% However, the problem is that just having the inputs to a function is not sufficient.  
-% For example, DOMtris is a very simple Web implementation of Tetris, almost all functions don't have any input arguments.  
-% Yet, all these functions both depend on and mutate the state of the app.  
-% In the case of DOMtris, an example use case is to increase score and clean up the game pieces when the gamer has fully filled one or more rows.  
-% The DOM makes up a big part of a Web's app state.  
-% Thus in this paper we focus on the DOM.  
-% Indeed, DOM operations make up a majority of an app's execution and defects, according to a study by Frolin.  
-
-% A naive approach is to do just in time generation of the DOM.  
-% For example, if the statement is document.getElementById(), we can just return or create an element with "id".  
-% Yet there are 2 subtle issues.
-
-% First, there are multiple possible outputs.  
-
-% Second, dependencies in Wikipedia.  
-
 % Using a solver is easier and protects us from more complicated cases.
 
-% Our approach also supports concolic testing of DOM operations.
 
 
 
-% The new perspective is distinct from our previous motivation, which was using our tool to define test cases and drive run time execution of the program.  
-
-% Inputs can be defined for a test case in different ways: manually by test engineers writing test cases or automatically through concolic or random testing
 
 

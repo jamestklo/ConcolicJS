@@ -1,47 +1,35 @@
 \section{Challenges}
-While an intuitive approach would be to generate DOM elements "just in time," it would not work in many cases.
-In Sample Code \ref{dom0}, when {\tt getElementById()} is called, we could just create a DOM element with the corresponding id.
-Yet, 
-\begin {compactitem}
-\item DOM tracing and constraints
-\end {compactitem}
+An intuitive approach would be to generate DOM elements "just in time"; however, such naive approach does not always work.
+Just in time generation is to greedily create whatever DOM elements necessary for satisfying the current single DOM operation.
+For example, in Sample Code \ref{dom0}, whenever {\tt getElementById()} is called, we could just create and return an ad-hoc DOM element having the corresponding id.
+When we see {\tt (children.length === 10)}, we could additionally create 10 ad-hoc children for the {\tt row}.
 
+The problem is that future DOM operations may contradict the ad-hoc DOM tree.  
+A counter example we discovered very early is by just loading Wikipedia~\cite{wikipedia}.  
+While loading the webpage, it executes the jQuery {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, which is to get an element by a specific id.  
+Then, some time later, the webpage calls {\tt \$("div\#B13\_120517\_dwrNode\_enYY")}, which is to get a <div> element by the exact same id.
+While the two queries may be written by different developers, we can easily see that the greedy approach does not work because it does not look ahead to future queries: when trying to satisfy {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, how do we know {\tt <div>} is the correct tag type in the first place?
+There can be many different possibilities for satisfying a single current DOM operation; and picking the correct answer out of the many possible ones may not be always trivial.
 
+While trying to generate satisfiable DOM trees, we tackled additional challenges:
 
+\header{Indirect Influence:}  Often a DOM operation may not directly appear inside an {\tt if} or {\tt loop} condition.  
+The result of different DOM operations may get assigned to multiple variables at various stages of execution prior to the condition, either within the same function or up in the runtime stack.
+For example, a condition may appear as simply {\tt if(a)} in the code; yet the variable {\tt a} can be {\tt (children.length === 10)} or something more complex, such as the result of multiple statements executed throughout the code.
+Each DOM operation in any part of the code is like a piece of a puzzle describing a subset clue of the overall DOM tree.  \tool has to systematically extract these puzzle pieces and analyse them collectively for generating a satisfiable DOM.
 
-% the problem can be hard
-% justify for tracing, look ahead, and generating constraints
-	% greedy or just in time generation ~\cite{ZenCoding}
-	% jQuery example
+\header{Nested Composition and Precedence:} Conditions are usually composed of sub-conditions linked by {\tt or}'s, {\tt and}'s, {\tt not}'s, and other logical operators nested inside one another.
+Executions of conditions can also have precedence.  For example, in an {\tt and}, when the first clause is {\tt false}, the second clause is never evaluated.  Similarly, an {\tt or} clause never evaluates the second clause when the first clause equals to {\tt true}.
+
+% drives the need for decorated execution, different from Jalangi
+
+\header{Interdependent Logical Constraints.} 
 % justify for using a solver, rather than heuristics to resolve constraints
 	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
 	% conditions example	
 	% future compatibility for multiple data types
-
-% say somewhere, each DOM operation is like a piece of a puzzle describing a subset of the HTML DOM tree.
+	
+\header{DOM mutations}
 
 %\header{Design Goals.}
 
-\header{Indirect Influence.}
-% drives the need for backward slicing
-
-\header{Complex Conditions and Precedence.}
-% drives the need for decorated execution, different from Jalangi
-
-\header{Interdependent Statements.} 
-% drives the need for constraints, look ahead
-% JQuery ("BV"), ("div BV") Code can be collaboratively contributed by different members of team.
-
-\header{}
-% drives the need for a solver
-
-\header{DOM mutations}
-
-%\header{eval(), inline and native code.}
-% Tudu
-% Go to Implementation
-
-%\header{Closures.}
-% tinysort() as example, most of the existing frameworks for unit testing don't address this issue [phantomJS].
-% drives the need for extracting functions
-% Go to Implementation
