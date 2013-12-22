@@ -1,4 +1,22 @@
 \section{Challenges}
+While an intuitive approach would be to generate DOM elements "just in time," it would not work in many cases.
+In Sample Code \ref{dom0}, when {\tt getElementById()} is called, we could just create a DOM element with the corresponding id.
+Yet, 
+\begin {compactitem}
+\item DOM tracing and constraints
+\end {compactitem}
+
+
+
+
+% the problem can be hard
+% justify for tracing, look ahead, and generating constraints
+	% greedy or just in time generation ~\cite{ZenCoding}
+	% jQuery example
+% justify for using a solver, rather than heuristics to resolve constraints
+	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
+	% conditions example	
+	% future compatibility for multiple data types
 
 % say somewhere, each DOM operation is like a piece of a puzzle describing a subset of the HTML DOM tree.
 
