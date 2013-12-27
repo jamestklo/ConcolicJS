@@ -1,35 +1,63 @@
 \section{Challenges}
-An intuitive approach would be to generate DOM elements "just in time"; however, such naive approach does not always work.
-Just in time generation is to greedily create whatever DOM elements necessary for satisfying the current single DOM operation.
-For example, in Sample Code \ref{dom0}, whenever {\tt getElementById()} is called, we could just create and return an ad-hoc DOM element having the corresponding id.
-When we see {\tt (children.length === 10)}, we could additionally create 10 ad-hoc children for the {\tt row}.
+An intuitive approach would be to generate DOM elements "just in time"; however, such naive approach does not always work.  
+Just in time generation is to greedily create whatever DOM elements necessary for satisfying the current single DOM operation.  
+For example, in Sample Code \ref{dom0}, whenever {\tt getElementById()} is called, we could just create and return an ad-hoc DOM element having the corresponding id.  
+When we see {\tt (children.length === 10)}, we could additionally create 10 ad-hoc children for the {\tt row}.  
 
 The problem is that future DOM operations may contradict the ad-hoc DOM tree.  
 A counter example we discovered very early is by just loading Wikipedia~\cite{wikipedia}.  
 While loading the webpage, it executes the jQuery {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, which is to get an element by a specific id.  
-Then, some time later, the webpage calls {\tt \$("div\#B13\_120517\_dwrNode\_enYY")}, which is to get a <div> element by the exact same id.
-While the two queries may be written by different developers, we can easily see that the greedy approach does not work because it does not look ahead to future queries: when trying to satisfy {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, how do we know {\tt <div>} is the correct tag type in the first place?
-There can be many different possibilities for satisfying a single current DOM operation; and picking the correct answer out of the many possible ones may not be always trivial.
+Then, some time later, the webpage calls {\tt \$("div\#B13\_120517\_dwrNode\_enYY")}, which is to get a <div> element by the exact same id.  
+While the two jQueries may be written by different developers, we can easily see that the greedy approach does not work because it does not look ahead to future queries: when trying to satisfy {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, how do we know {\tt <div>} is the correct tag type to generate in the first place?  
+There can be many different possibilities for satisfying a single current DOM operation; and picking the correct answer out of the many possible ones may not be always trivial.  
 
-While trying to generate satisfiable DOM trees, we tackled additional challenges:
+While trying to generate satisfiable DOM trees, we had to resolve additional challenges:  
 
-\header{Indirect Influence:}  Often a DOM operation may not directly appear inside an {\tt if} or {\tt loop} condition.  
-The result of different DOM operations may get assigned to multiple variables at various stages of execution prior to the condition, either within the same function or up in the runtime stack.
-For example, a condition may appear as simply {\tt if(a)} in the code; yet the variable {\tt a} can be {\tt (children.length === 10)} or something more complex, such as the result of multiple statements executed throughout the code.
-Each DOM operation in any part of the code is like a piece of a puzzle describing a subset clue of the overall DOM tree.  \tool has to systematically extract these puzzle pieces and analyse them collectively for generating a satisfiable DOM.
+\header{Indirect Influence.}
+Often a DOM operation may not directly appear inside an {\tt if} or a {\tt loop}.  
+The result of different DOM operations may get assigned to multiple variables at various execution stages prior to the condition, either within the same function or up in the runtime stack.  
+For example, a condition may appear as simply {\tt if(a)} in the code; yet the variable {\tt a} can be {\tt (children.length === 10)} or something more complex, such as the result of multiple statements executed throughout the code.  
+Each DOM operation in any part of the code is like a piece of a puzzle describing a subset clue of the overall DOM tree.  \tool has to systematically extract these puzzle pieces and analyse them collectively for generating a satisfiable DOM.  
 
-\header{Nested Composition and Precedence:} Conditions are usually composed of sub-conditions linked by {\tt or}'s, {\tt and}'s, {\tt not}'s, and other logical operators nested inside one another.
-Executions of conditions can also have precedence.  For example, in an {\tt and}, when the first clause is {\tt false}, the second clause is never evaluated.  Similarly, an {\tt or} clause never evaluates the second clause when the first clause equals to {\tt true}.
+\header{Dynamic Typing.}
+Dynamic analysis is usually necessary to accurately determine which conditions are DOM dependent.  
+JavaScript variables are dynamically typed.  Thus given a variable, we won't know exactly what type its value represents until we actually run the code.  
+In our previous example, {\tt a} can be anything: an integer, a string, a boolean, or an object.  
+Thus static analysis by itself is insufficient to detect which lines of code are related to DOM; and authors of existing static techniques~\cite{staticJsWWW09, staticJsWWW11} reveal substantial gaps and false positives in their own work.  
+In a condition, dynamic backward slicing~\cite{} is required to extract the runtime data flow of variables and discover what DOM operations are involved.  
 
+\header{Interdependent Logical Constraints.}  
+A condition may have logical constraints interdependent on logical constraints in other conditions.  
+In an oversimplified example, 2 of the conditions in Sample Code~\ref{domOr} inter-depend on each other because of the DOM policy that a DOM element cannot be both a child and a parent of another DOM element.  
+Specifically, sub-conditions {\tt i} and {\tt ii} must be mutually exclusive because {\tt d} cannot be both a child and parent of {\\t a}.
+Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DOM specific solver is required to understand the unique policies of the DOM and make decisions accordingly for generating a proper satisfying HTML.
+	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
+	% future compatibility for multiple data types
+\begin{figure}
+\begin{lstlisting}[caption=Example code showing conditions that have logical constraints interdepenent with each other.,label=domOr]  
+function DOMlogicExample() {
+  // ...
+  if (d === a.firstElementChild // i)
+   || d === b.lastElementChild) {}
+  // ... 
+  if (d === a.parentElement // ii)
+   || d === b.parentElement) {}
+  // ...
+}
+\end{lstlisting}
+\end{figure}
+
+\header{Nested Composition and Precedence.} 
+Adding to the overall complexity, conditions are usually composed of sub-conditions linked by {\tt or}'s, {\tt and}'s, {\tt not}'s, and other logical operators nested inside one another.
+Executions of conditions can also have precedence.  For example, in an {\tt and}, when the first sub-condition is {\tt false}, the second sub-condition is never executed.  Similarly, an {\tt or} never executes the second sub-condition when the first returns {\tt true}.
+% how is this a challenge
 % drives the need for decorated execution, different from Jalangi
 
-\header{Interdependent Logical Constraints.} 
-% justify for using a solver, rather than heuristics to resolve constraints
-	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
-	% conditions example	
-	% future compatibility for multiple data types
-	
-\header{DOM mutations}
+
+\header{DOM mutations.}
+Mutations to the DOM tree structure must be accounted for in both the backward slicing and the solver because changes to the HTML can happen any time during execution.
+Example mutations include adding or deleting a DOM node (e.g. in the use case of refreshing an email Inbox or deleting a message), or modifying the content or attributes within a DOM node.  
+Expressing DOM mutations can be more challenging than expressing numerical operations (e.g. additions and subtractions), because DOM mutations are more diverse, and the DOM is a tree structure.
+
 
 %\header{Design Goals.}
-

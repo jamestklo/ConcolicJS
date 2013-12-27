@@ -1,25 +1,27 @@
 \section{Introduction}
 JavaScript is increasingly a popular language for software implementation: %; and the World Wide Web is increasingly an attractive platform for delivering applications.
-HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to those implemented for traditional desktops.  
+For end users, HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to those implemented for traditional desktops.  
 The latest round of browser wars makes executing JavaScript more efficient, robust, secure and consistent.  
-Because of HTML5, more desktop and mobile operating systems actually now support implementing native apps using the combination of JavaScript, HTML and CSS~\cite{jalangi}.
-The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware heterogeneity, which also makes JavaScript apps\footnote{JavaScript apps are preferred in Web browsers because they are lighter weight than Java applets and they don't require installation of any proprietary plugins such as Flash and Silverlight} a convenient solution for delivering the application front end (e.g.~\cite{BNSFoffice365}).
-Emergence of Node.js and its scalability also make JavaScript widely adopted on the server side.
+For programmers, JavaScript does not have the burden of memory management and static typing; and more desktop and mobile operating systems actually now support implementing native apps using the combination of JavaScript, HTML and CSS~\cite{jalangi}.
+The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware heterogeneity, which also makes JavaScript apps\footnote{JavaScript apps are preferred in Web browsers because they are lighter weight than Java applets and they don't require installation of any proprietary plugins such as Flash and Silverlight} a conveniently portable solution for delivering the application front end (e.g.~\cite{BNSFoffice365}).
+Emergence and scalability of Node.js also make JavaScript widely adopted on the server side.
 Consequently, many institutions such as the Khan Academy~\cite{khanAcademy} use JavaScript for teaching programming; and JavaScript has consistently been a top 2 in the RedMonk~\cite{redmonk} popularity rankings.%~\footnote{results are based on projects hosted at GitHub and questions asked at StackOverflow}.
 
-Yet, despite the language's ubiquity, testing JavaScript can be challenging and cumbersome.
+Yet, despite the language's ubiquity, testing JavaScript is not easy.
 For example, in a typical Web app, a lot of JavaScript code is intermixed with back end logic and front end HTML~\cite{QUnitIntro}.
 Such intermixes introduce dependencies when trying to run JavaScript code, consequently test cases cannot be fully run until those dependencies are properly resolved.
 
 In this paper, we elaborate on the HTML problem and our approach to it.
 In a Web app, HTML describes the graphical user interface.  The standard API for accessing and mutating HTML is the Document Object Model (DOM) API; thus JavaScript code that operate on the DOM are abundant in Web apps.
+Example DOM operations are {\tt node.parentElement}, {\tt node.firstChild}, {\tt node.children}, and {\tt node.nextSibling}.
+
 When JavaScript code runs, its runtime execution would encounter DOM operations that would subtly imply the DOM having a particular tree structure. 
 In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.
 Indeed, the majority of JavaScript bugs are DOM related~\cite{frolin2013}.
 
 \subsection{Motivating Example}
 To further illustrate the necessity of a satisfiable DOM structure, suppose the {\tt function checkRows()} in Sample Code~\ref{dom0} is being unit tested concolic-ly.  
-The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement Tetris.  
+The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement the game Tetris.  
 Concolic testing~\cite{cute} executes the app in a way to maximize path coverage; to do so, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in Sample Code~\ref{dom0}.
 \begin{figure}
 \begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
@@ -39,7 +41,7 @@ function checkRows() {
 To guide the {\tt if} statement going to the {\tt True} branch, the web page's DOM structure must satisfy many constraints:
 \begin {compactitem}
 \item There is an element with id {\tt tetris}.
-\item {\tt tetris} contains children elements, because we must first enter the {\tt for} loop.
+\item {\tt tetris} contains children elements, so that we can first enter the {\tt for} loop.
 \item There are rows having id's in the nomenclature {\tt row0}, {\tt row1}, etc.
 \item The number of rows must be greater than or equal to the number of children that {\tt tetris} has.
 \item At least one of the rows must have exactly 10 children.
@@ -48,47 +50,40 @@ To guide the {\tt if} statement going to the {\tt True} branch, the web page's D
 %If any of the above constraints is not satisfied, the execution would lean towards a wrong path or even crash, e.g. when {\tt field} or {\tt row} is null.
 While manual generation of HTML is possible, the manual approach would quickly become tedious and not scalable.  
 The reason is that an unique DOM structure is required for going through a different execution path.
-For example, to go to the {\tt False} branch of the above {\tt if} condition, rows cannot have 10 children.
-Therefore, to cover both the {\tt True} and {\tt False} branches of an {\tt if} condition, 2 unique DOM structures are necessary.\footnote{Generally, the exact number of unique DOM structures per condition is 2 plus the number of {\tt else if}'s in the condition.  Loops are more difficult for achieving path coverage, because it's not easy to determine the max upper limit of loop iterations.  For example, in Sample Code ~\ref{dom0}, {\tt field} can have any number of children.}
+For example, to go to the {\tt False} branch of the above {\tt if}, rows cannot have 10 children.
+Therefore, to cover both the {\tt True} and {\tt False} branches of an {\tt if}, we must generate 2 unique DOM structures.  Generally, the exact number of unique DOM structures per condition is 2 plus the number of {\tt else if}'s.  Loops are more difficult for achieving path coverage, because it's not easy to determine the max upper limit of loop iterations.  For example, in Sample Code ~\ref{dom0}, {\tt field} can have any number of children.
 
-Consequently, the number of unique DOM structures would at least double whenever a DOM depending {\tt if} or {\tt loop} condition is added to the code.
-Moreover, manual generation can become complex as DOM-depending conditions can get scattered across multiple files in the code base, making it labor intensive to accurately trace all of the constraints and DOM elements.
-Random generation is simply not desirable because the required DOM tree may contain many DOM elements that have to be sophisticatedly organized in a precise structure.
+Nevertheless, the number of unique DOM structures would at least double whenever we try to cover an additional DOM-dependent condition, be it an {\tt if} or a {\tt loop}.  
+Moreover, manual generation can become complex as DOM-dependent conditions can get scattered across multiple files in the code, making it labor intensive to accurately trace all of the DOM elements and relevant constraints.  
+Random generation is simply not desirable because the required DOM tree may have a structure too precise for a random tree to match by chance.  
 
 \subsection{Contributions}
-In this paper we propose our automated approach for executing and testing JavaScript code that depend on the DOM:
+The following are main contributions of our paper:
 \begin {compactitem}
-\item DOM tracing and constraints
-\item DOM solver
-\item Integration with unit testing frameworks such as QUnit
+\item We propose our automated, generic, transparent and browser-independent approach for systematically generating HTML to test DOM-dependent JavaScript code.
+\item We describe how JavaScript code and its execution can dynamically be analyzed for deducing constraints relevant for generating HTML.
+\item We illustrate how extracted constraints can be solved into a satisfying DOM tree.
 \item We present the implementation of our approach in a tool called \tool; an online video provides a demonstration.
-\item We report the effecficay 
+\item We report how \tool and its generated DOM trees can help test suites improve coverage, reach complete execution, and get asserted.
 \end {compactitem}
 
-\tool also augments approaches that aim to generate tests automatically.  
+\tool augments approaches that aim to generate tests automatically.  
 Random testing~\cite{}, feedback directed testing~\cite{}, mutation testing~\cite{}, concolic testing~\cite{}... to our best knowledge, almost all of existing research focused on generating inputs for testing functions and apps.
 However, having just the inputs is often insufficient.  For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.\footnote{Another category of dependencies is closure variables.}
 Moreover, it should be noted that the {\tt function checkRows()} does not take any input arguments, and many functions are like that in JavaScript.
 Yet, these functions depend on, and would sometimes mutate, their dependencies such as the DOM.
-Thus given a test case, be it manually or automatically generated, \tool can be used to help the test case and its assertions get fully utilized.
+\tool has integration with QUnit~\cite{qunit} so that existing test suites can automatically take advantage of \tool without additional manual effort.  \tool is also extensible to be integrated with other test frameworks~\cite{jstests}.
+Thus given a test case, be its inputs were generated manually or automatically, \tool can be used to help the test case and its assertions get fully utilized.
 
 Ultimately, our higher level goal is to foster closer collaboration among designers and developers.\footnote{As part of separating concerns, design and development are often done by distinct individuals having very different backgrounds.}
 For example, because \tool generates reference HTML for satisfying code execution, it can be used to detect DOM mismatches between the designer's HTML vs. what is expected in the developer's JavaScript code.
 A mismatch may not always be the developer's fault.  Sometimes it is possible that the designer may have made a mistake when updating the HTML or may be just too busy and have forgotten to notify the developer about a change.
 
 % cannot generate HTML for game, 
-Note that the code does not imply the following, which we take for granted in a Tetris game.
-\begin {compactitem}
-\item Each {\tt row} is a child element of {\tt tetris}.
-\item Each {\tt row} is vertically stacked: {\tt row10} is right above {\tt row9}, which is also right on top of {\tt row8}, and so on.
-\item Children of a {\tt row} are blocks that make up a piece.  
-\item etc.
-\end {compactitem}
-
-% Using a solver is easier and protects us from more complicated cases.
-
-
-
-
-
-
+%Note that the code does not imply the following, which we take for granted in a Tetris game.
+%\begin {compactitem}
+%\item Each {\tt row} is a child element of {\tt tetris}.
+%\item Each {\tt row} is vertically stacked: {\tt row10} is right above {\tt row9}, which is also right on top of {\tt row8}, and so on.
+%\item Children of a {\tt row} are blocks that make up a piece.  
+%\item etc.
+%\end {compactitem}
