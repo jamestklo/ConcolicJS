@@ -1,8 +1,36 @@
 \section{Approach}
 
+\header{Dynamic Backward Slicing.}
+In a condition, dynamic backward slicing~\cite{} is required to discover what DOM operations the condition has.  
+During execution, given a variable at a point in time, a dynamic backward slice traces how the variable has arrived at its current value: what operations or calculations had been previously done.  
+For example, if the variable {\tt a} equals to {\tt row.children.length === b} at line 6 during execution, {\tt a}'s backward slice would be backward slices of {\tt row.children.length} and {\tt b}, linked by the strict equal {\tt ===} operator.  
+
 \header{Decorated Execution.}
-solves complex conditions
-to solve precedence, we have 
+% example for: 1) precedence, 2) 
+Decorated execution is a simple and efficient way of capturing the complexity and precedence of conditions in execution.  
+
+Dynamic backward slicing first requires logging the runtime execution and our logging approach is similar to Jalangi~\cite{jalangi}'s shadow system, in which we encapsulate each data value into an object; the object contains the log (backward trace, in our case) in addition to the data’s current value. While it can also be used for concolic testing, Jalangi’s shadow system is mainly aimed at record and replay.  
+Each condition is composed of 1 or more sub-conditions nested inside or linked beside other sub-conditions.  Each sub-condition is composed of 1 or more variables being compared to other variables.  
+
+\begin{figure}
+\begin{lstlisting}[caption=Example showing how code is decorated for logging execution and using the trace to construct a dynamic backward slice,label=decorated]  
+function DecoratedExecution() {
+  // 2 lines of original code
+  var a = children.length === b; 
+  if (a) {}
+  // ...
+  // decorated version of above 2 lines:
+  var a = _SHEQ(_GET(children, "length"), b);
+  if (__condStart()) {}
+  // ...
+}
+\end{lstlisting}
+\end{figure}
+
+
+% why not shadow execution, as in jalangi 
+% describe what decorated execution is
+
 
 %(a && a.b)
 %_AND(a, _GET(a,b)); 
@@ -11,12 +39,14 @@ to solve precedence, we have
 %result = f0(input) || f1(input);
 %_OR(
 
-\header{Backward Slicing.}
-% JavaScript API
 
 \header{DOM Solver.}
 % SMT-lib language, swappable between CVC and Z3.
 
+
 \header{Integration with QUnit and Selenium.}
 
+
 \header{Limited Path Coverage.}
+
+
