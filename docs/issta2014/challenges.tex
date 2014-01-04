@@ -17,7 +17,7 @@ While trying to generate satisfiable DOM trees, we had to resolve additional cha
 Often a DOM operation may not directly appear inside an {\tt if} or a {\tt loop}.  
 The result of different DOM operations may get assigned to multiple variables at various execution stages prior to the condition, either within the same function or up in the runtime stack.  
 For example, a condition may appear as simply {\tt if(a)} in the code; yet the variable {\tt a} can be {\tt (children.length === 10)} or something more complex, such as the result of multiple statements executed throughout the code.  
-Each DOM operation in any part of the code is like a piece of a puzzle describing a subset clue of the overall DOM tree.  \tool has to systematically extract these puzzle pieces and analyse them collectively for generating a satisfiable DOM.  
+
 
 \header{Dynamic Typing.}
 Dynamic analysis is usually necessary to accurately determine which conditions are DOM dependent.  
@@ -25,7 +25,7 @@ JavaScript variables are dynamically typed.  Thus given a variable, we won't kno
 In our previous example, {\tt a} can be anything: an integer, a string, a boolean, or an object.  
 Static analysis by itself is insufficient to detect which lines of code are DOM related.
 Indeed, authors of existing JavaScript static techniques~\cite{staticJsWWW09, staticJsWWW11} reveal substantial gaps and false positives in their own work.  
-Therefore, the only way to discover whether a condition contain DOM operations is to run the code and analyze how a condition ends up being at the {\tt True} or {\tt False} branch.
+Therefore, the only way to discover whether a condition contains DOM operations is to run the code and analyze how a condition ends up being at the {\tt True} or {\tt False} branch.
 
 \header{Interdependent Logical Constraints.}  
 A condition may have logical constraints interdependent on logical constraints in other conditions.  
