@@ -18,3 +18,5 @@ Kudzu ~\cite{kudzu} uses a constraint solver to conduct constraint-based testing
 While our work focuses on generating HTML input to achieve path coverage, Kudzu focuses on generating string input to detect security vulnerabilities in JavaScript applications. 
 Our work is also designed to run on multiple browsers, while Kudzu runs on only the browser that supports its backward slicing component [11].
 %jalangi and Kudzu focuses on generating inputs, and did not address the problems of closures and making test cases runnable.
+
+Dynamic backward slicing first requires logging the runtime execution and our logging approach is similar to Jalangi~\cite{jalangi}'s shadow system, in which we encapsulate each data value into an object; the object contains the log (backward trace, in our case) in addition to the data’s current value. While it can also be used for concolic testing, Jalangi’s shadow system is mainly aimed at record and replay.  
