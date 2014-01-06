@@ -7,10 +7,10 @@ The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware he
 Emergence and scalability of Node.js also make JavaScript widely adopted on the server side.
 Consequently, many institutions such as the Khan Academy~\cite{khanAcademy} use JavaScript for teaching programming; and JavaScript has consistently been a top 2 in the RedMonk~\cite{redmonk} popularity rankings.%~\footnote{results are based on projects hosted at GitHub and questions asked at StackOverflow}.
 
-Yet, despite the language's ubiquity, testing JavaScript is not easy.
+Yet, despite the language's ubiquity, testing JavaScript is not easy.  
 For example, because HTML describes the graphical user interface of a Web app, a lot of JavaScript code is written to access and mutate HTML through the Document Object Model (DOM) API.  
-When JavaScript code runs, its runtime execution would encounter DOM operations that would subtly imply the DOM (and thus the webpage's HTML) having a particular tree structure.
-In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.  Indeed, the majority of JavaScript bugs are DOM related~\cite{frolin2013}.
+When JavaScript code runs, its runtime execution would encounter DOM operations that would subtly imply the DOM (and thus the webpage's HTML) having a particular tree structure.  
+In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.  
 % Example DOM operations {\tt node.parentElement}, {\tt node.firstChild}, {\tt node.children}, and {\tt node.nextSibling}.
 
 \subsection{Motivating Example}
@@ -32,7 +32,7 @@ function checkRows() {
 \end{lstlisting}
 \end{figure}
 
-To guide the {\tt if} statement going to the {\tt True} branch, the web page's HTML must lead to a DOM structure that satisfies many constraints:
+To guide the {\tt if} statement going to the {\tt True} branch, the web page's HTML must yield a DOM structure satisfying many constraints:
 \begin {compactitem}
 \item There is an element with id {\tt tetris}.
 \item {\tt tetris} contains children elements, so that we can first enter the {\tt for} loop.
@@ -43,22 +43,23 @@ To guide the {\tt if} statement going to the {\tt True} branch, the web page's H
 
 Until all of the above constraints are satisfied, the function's execution would likely lean towards an unintended path or would even halt.   
 For example, when {\tt field} is {\tt null}, the property access {\tt field.children} would result in a {\tt Type Error} and consequently the rest of the function cannot be run or tested.  
-Therefore, a satisfying HTML must be generated so that execution of the function and test case would not crash and can be guided towards the intended path.  
+Therefore, a satisfying HTML must be generated to yield a proper DOM structure so that execution of the function and of the test case would not crash and can be guided towards the intended path.  
 
 While manual generation of HTML is possible, the manual approach would quickly become tedious and not scalable.  
 The reason is that a unique DOM structure is required for going through a different execution path.
 For example, to go to the {\tt False} branch of the above {\tt if}, rows cannot have 10 children.
-Therefore, to cover both the {\tt True} and {\tt False} branches of an {\tt if}, we must generate 2 unique DOM structures.  Generally in an {\tt if } block, the exact number of unique DOM structures per condition is 2 plus the number of {\tt else if}'s.  Loops are more difficult for achieving path coverage, because it's not easy to determine the max upper limit of loop iterations.  For example, in Sample Code ~\ref{dom0}, {\tt field} can have any number of children.
+Therefore, to cover both the {\tt True} and {\tt False} branches of an {\tt if}, we must generate 2 unique DOM structures.  Generally in an {\tt if } block, the exact number of unique DOM structures per condition is 2 plus the number of {\tt else if}'s in the {\tt if} block.  Loops are more difficult for achieving path coverage, because it's not easy to determine the max upper limit of loop iterations.  For example, in Sample Code ~\ref{dom0}, {\tt field} can have any number of children.
 
 Nevertheless, the number of unique DOM structures would at least double whenever we try to cover an additional DOM-dependent condition, be it an {\tt if} or a {\tt loop}.  
 Moreover, manual generation can become complex as DOM-dependent conditions can get scattered across multiple files in the code, making it labor intensive to accurately trace all of the DOM elements and relevant constraints.  
 Random generation is simply not desirable because the required DOM tree may have a structure too precise for a random tree to match by chance.  
 Thus the desired approach has to be automated, systematic and precise.
 
+
 \subsection{Contributions}
 The following are main contributions of our paper:
 \begin {compactitem}
-\item We propose our automated, generic, transparent and browser-independent approach for systematically generating HTML to test DOM-dependent JavaScript code.
+\item We propose our automated, generic, transparent and browser-independent approach for systematically generating HTML to test JavaScript code that contain DOM operations.
 \item We describe how JavaScript code and its execution can dynamically be analyzed for deducing constraints relevant for generating HTML.
 \item We illustrate how extracted constraints can be solved into a satisfying DOM tree.
 \item We present the implementation of our approach in a tool called \tool; an online video provides a demonstration.
@@ -66,7 +67,7 @@ The following are main contributions of our paper:
 \end {compactitem}
 
 \tool augments approaches that aim to generate tests automatically.  
-Random testing~\cite{}, feedback directed testing~\cite{}, mutation testing~\cite{}, concolic testing~\cite{}... to our best knowledge, almost all of existing research focused on generating input parameters for testing functions or HTML inputs\footnote{by HTML inputs we include inputs for HTML text fields, forms and buttons.} for testing apps.
+Random testing~\cite{}, feedback directed testing~\cite{}, mutation testing~\cite{}, concolic testing~\cite{}... to our best knowledge, almost all of existing research focused on generating input parameters for testing functions or HTML inputs\footnote{by HTML inputs we include inputs for HTML text fields, forms, buttons mouse clicks and key presses.} for testing apps.
 However, having just function parameters and HTML inputs is often insufficient.  For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.\footnote{Another category of dependencies is closure variables.}
 Moreover, it should be noted that the {\tt function checkRows()} does not take any input arguments, and many functions are like that in JavaScript.
 Yet, these functions depend on, and would sometimes mutate, their dependencies such as the DOM.

@@ -1,14 +1,25 @@
 \section{Approach}
 Each DOM operation in any part of the code is like a piece of a puzzle describing a subset clue of the overall DOM tree.  \tool has to systematically extract these puzzle pieces and analyse them collectively for generating a satisfiable DOM.  
 
+
 \header{Dynamic Backward Slicing.}
-In a condition, dynamic backward slicing~\cite{} is required to discover what DOM operations the condition has.  
+In a condition, dynamic backward slicing~\cite{} is required to discover what DOM operations a condition has.  
 During execution, given a variable at a point in time, a dynamic backward slice traces how the variable has arrived at its current value: what operations or calculations had been previously done.  
 For example, if the variable {\tt a} equals to {\tt row.children.length === b} at line 6 during execution, {\tt a}'s backward slice would be backward slices of {\tt row.children.length} and {\tt b}, linked by the strict equal {\tt ===} operator.  
+Eventually a dynamic backward slice would lead us to original inputs, constant values, and environmental dependencies such as the DOM.  
+For example, a dynamic backward slice of {\tt row} would lead us to the DOM element with ID {\tt "row"+i}, where {\tt "row"} is a constant string, and {\tt i} has a backward slice leading to {\tt field.children.length}, which would lead us to the DOM element with ID {\tt "field"}.
 
 \header{Decorated Execution.}
-% example for: 1) precedence, 2) 
-Decorated execution is a simple and efficient way of capturing the complexity and precedence of conditions in execution.  
+To generate a dynamic backward slice, we must accurately capture the complexity and dynamic precedence of conditions in execution; and decorated execution is a simple and efficient way of doing the capture.  
+% what decorated execution is, how it works, why it works
+Sample code\ref{decorated} illustrates the semantics of decorated execution.  
+% example for: 1) precedence, 2)
+% why not shadow execution
+% functions, boundary to native functions
+% we call it decorated execution because we wrap around each value.  
+A condition is made up of sub-conditions, and a sub-condition can be seen as variables being compared to one another.  
+
+
 
 Dynamic backward slicing first requires logging the runtime execution and our logging approach is similar to Jalangi~\cite{jalangi}'s shadow system, in which we encapsulate each data value into an object; the object contains the log (backward trace, in our case) in addition to the data’s current value. While it can also be used for concolic testing, Jalangi’s shadow system is mainly aimed at record and replay.  
 Each condition is composed of 1 or more sub-conditions nested inside or linked beside other sub-conditions.  Each sub-condition is composed of 1 or more variables being compared to other variables.  
@@ -17,16 +28,31 @@ Each condition is composed of 1 or more sub-conditions nested inside or linked b
 \begin{lstlisting}[caption=Example showing how code is decorated for logging execution and using the trace to construct a dynamic backward slice,label=decorated]  
 function DecoratedExecution() {
   // 2 lines of original code
-  var a = children.length === b; 
+  var a = row.children.length === b; 
   if (a) {}
   // ...
-  // decorated version of above 2 lines:
-  var a = _SHEQ(_GET(children, "length"), b);
+  // decorated version of original code
+  var a = _SHEQ(_GET(_GET(row, "children"), "length"), b);
   if (__condStart()) {}
   // ...
 }
 \end{lstlisting}
 \end{figure}
+\begin{figure}
+\begin{lstlisting}[caption=Example showing how code is decorated for logging execution and using the trace to construct a dynamic backward slice,label=sheq]  
+function DecoratedExecution() {
+  // 2 lines of original code
+  var a = row.children.length === b; 
+  if (a) {}
+  // ...
+  // decorated version of original code
+  var a = _SHEQ(_GET(_GET(row, "children"), "length"), b);
+  if (__condStart()) {}
+  // ...
+}
+\end{lstlisting}
+\end{figure}
+%eval
 
 
 % why not shadow execution, as in jalangi 
@@ -43,7 +69,10 @@ function DecoratedExecution() {
 
 \header{DOM Solver.}
 % SMT-lib language, swappable between CVC and Z3.
+	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
+	% future compatibility for multiple data types
 
+\header{Conditional Slicing.}
 
 \header{Integration with QUnit and Selenium.}
 

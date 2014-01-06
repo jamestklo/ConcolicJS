@@ -1,41 +1,62 @@
 \section{Challenges}
+While trying to generate satisfiable DOM trees, we had to resolve the following challenges:  
+
+\header{Greedy does not always work.}
+% why tracing 
 An intuitive approach would be to generate DOM elements "just in time"; however, such naive approach does not always work.  
 Just in time generation is to greedily create whatever DOM elements necessary for satisfying the current single DOM operation.  
 For example, in Sample Code \ref{dom0}, whenever {\tt getElementById()} is called, we could just create and return an ad-hoc DOM element having the corresponding id.  
 When we see {\tt (row.children.length === 10)}, we could additionally create 10 ad-hoc children for the {\tt row}.  
 
-The problem is that future DOM operations may contradict the ad-hoc DOM tree.  
+The problem is that other DOM operations may contradict the ad-hoc DOM tree.  
 A counter example we discovered very early is by just loading Wikipedia~\cite{wikipedia}.  
 While loading the webpage, it executes the jQuery {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, which is to get an element by a specific id.  
 Then, some time later, the webpage calls {\tt \$("div\#B13\_120517\_dwrNode\_enYY")}, which is to get a <div> element by the exact same id.  
-While the two jQueries may be written by different developers, we can easily see that the greedy approach does not work because it does not look ahead to future queries: when trying to satisfy {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, how do we know {\tt <div>} is the correct tag type to generate in the first place?  
-There can be many different possibilities for satisfying a single current DOM operation; and picking the correct answer out of the many possible ones may not be always trivial.  
-
-While trying to generate satisfiable DOM trees, we had to resolve additional challenges:  
-
-\header{Indirect Influence.}
-Often a DOM operation may not directly appear inside an {\tt if} or a {\tt loop}.  
-The result of different DOM operations may get assigned to multiple variables at various execution stages prior to the condition, either within the same function or up in the runtime stack.  
-For example, a condition may appear as simply {\tt if(a)} in the code; yet the variable {\tt a} can be {\tt (children.length === 10)} or something more complex, such as the result of multiple statements executed throughout the code.  
+While the two jQueries may be written by different developers, we can easily see that the greedy approach does not work because it does not consider DOM operations in other parts of the code.
+when trying to satisfy {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, how do we know a <div> is the correct tag type to generate in the first place?  
+If the generated DOM element is not a <div>, then the 2nd jQuery would return {\tt null}.  
+There can be many different possibilities for satisfying a single current DOM operation; and picking the correct answer out of the many possible ones requires collectively tracing relevant DOM operations.  
 
 
-\header{Dynamic Typing.}
-Dynamic analysis is usually necessary to accurately determine which conditions are DOM dependent.  
+\header{Indirect Influence.}  
+% why backward slicing
+While executing JavaScript code would subtly or passively imply the DOM having a particular tree structure (as in the jQuery example), sometimes the structure of the DOM tree would actively determine which branch a condition would go into.  
+For example, in Sample Code~\ref{dom0}, we see that whether a {\tt row} has 10 children would actively determine whether the {\tt if} condition would go into the {\tt true} or {\tt false} branch.
+While the DOM dependence is obvious in Sample Code~\ref{dom0}, very often DOM operations may not directly appear inside a condition: the result of different DOM operations may get assigned to multiple variables at various execution stages prior to the condition, either within the same function or up in the runtime stack.  
+For example, a condition may appear as a simple {\tt if(a)} in the code; yet the variable {\tt a} can be {\tt (row.children.length === 10)} or something more complex, such as the result of multiple statements executed throughout the code.  
+We have to backward slice variables so that we can accurately determine what DOM operations a condition may depend upon.
+
+
+\header{Dynamic Typing.}  
+% why dynamic analysis, not static analysis; why tracing and backward slicing both have to be dynamic.
 JavaScript variables are dynamically typed.  Thus given a variable, we won't know exactly what type its value represents until we actually run the code.  
 In our previous example, {\tt a} can be anything: an integer, a string, a boolean, or an object.  
 Static analysis by itself is insufficient to detect which lines of code are DOM related.
 Indeed, authors of existing JavaScript static techniques~\cite{staticJsWWW09, staticJsWWW11} reveal substantial gaps and false positives in their own work.  
-Therefore, the only way to discover whether a condition contains DOM operations is to run the code and analyze how a condition ends up being at the {\tt True} or {\tt False} branch.
+Thus the only way to discover whether a condition contains DOM operations is to run the code.  Both tracing and backward slicing have to be dynamic to accurately determine which conditions depend on the DOM, and which don't.  
+
+
+%\header{Nested Composition and Dynamic Precedence.}  
+%What is the best and simplest way to incorporate dynamic tracing and dynamic backward slicing into the execution of JavaScript source code?  
+%After all, if we were to support concolic testing, we must be able to accurately guide execution towards an intended path and thus we must properly understand how a condition would result in the {\tt True} and {\tt False} branches.    
+%As stated in our contributions, our approach is generic, transparent, and browser independent; thus we cannot modify the source code of Web browsers and natively support slicing and tracing.  
+%This is why we instrument JavaScript as it gets downloaded to the browser.  
+% why decorated execution, not offline analysis
+%Adding to the overall complexity, conditions are usually composed of sub-conditions linked by logical operators (e.g. {\tt or}'s, {\tt and}'s, {\tt not}'s) nested inside one another.
+%Executions of conditions can also have precedence.  For example, in an {\tt and}, when the first sub-condition is {\tt false}, the second sub-condition is never executed.  Similarly, an {\tt or} never executes the second sub-condition when the first returns {\tt true}.
+% how is this a challenge
+% drives the need for decorated execution, different from Jalangi
+
 
 \header{Interdependent Logical Constraints.}  
-A condition may have logical constraints interdependent on logical constraints in other conditions.  
-In an oversimplified example, 2 of the conditions in Sample Code~\ref{domOr} inter-depend on each other because of the DOM policy that a DOM element cannot be both a child and a parent of another DOM element.  
+% why solver, not heuristics 
+Given a dynamic trace and a dynamic backward slice deduced from the logs of decorated execution, we would have a clear mapping between DOM operations and conditions; thus a logical approach would be to generate a DOM tree directly from the trace and backward slice.  
+However, an heuristic approach may not always work because a condition may have logical constraints that are interdependent on logical constraints in other conditions.  
+For example, 2 of the conditions in Sample Code~\ref{domOr} inter-depend on each other because of the DOM policy that a DOM element cannot be both a child and a parent of another DOM element.  
 Specifically, sub-conditions {\tt i} and {\tt ii} must be mutually exclusive because {\tt d} cannot be both a child and parent of {\tt a}.
 Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DOM specific solver is required to understand the unique policies of the DOM and make decisions accordingly for generating a proper satisfying HTML.
-	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
-	% future compatibility for multiple data types
 \begin{figure}
-\begin{lstlisting}[caption=Example code showing conditions that have logical constraints interdepenent with each other.,label=domOr]  
+\begin{lstlisting}[caption=Example code showing conditions that have logical constraints interdependent with each other.,label=domOr]  
 function DOMlogicExample() {
   // ...
   if (d === a.firstElementChild // i)
@@ -48,16 +69,9 @@ function DOMlogicExample() {
 \end{lstlisting}
 \end{figure}
 
-\header{Nested Composition and Precedence.} 
-Adding to the overall complexity, conditions are usually composed of sub-conditions linked by logical operators (e.g. {\tt or}'s, {\tt and}'s, {\tt not}'s) nested inside one another.
-Executions of conditions can also have precedence.  For example, in an {\tt and}, when the first sub-condition is {\tt false}, the second sub-condition is never executed.  Similarly, an {\tt or} never executes the second sub-condition when the first returns {\tt true}.
-% how is this a challenge
-% drives the need for decorated execution, different from Jalangi
 
-\header{DOM mutations.}
+ \header{DOM mutations.}
+% why conditional slicing
 Mutations to the DOM tree structure must be accounted for in both the backward slicing and the solver because changes to the HTML can happen any time during execution.
 Example mutations include adding or deleting a DOM node (e.g. in the use case of refreshing an email Inbox or deleting a message), or modifying the content or attributes within a DOM node.  
 Expressing DOM mutations can be more challenging than expressing numerical operations (e.g. additions and subtractions), because DOM mutations are more diverse, and the DOM is a tree structure.
-
-
-%\header{Design Goals.}
