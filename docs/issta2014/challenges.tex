@@ -47,14 +47,6 @@ Thus the only way to discover whether a condition contains DOM operations is to 
 % how is this a challenge
 % drives the need for decorated execution, different from Jalangi
 
-
-\header{Interdependent Logical Constraints.}  
-% why solver, not heuristics 
-Given a dynamic trace and a dynamic backward slice deduced from the logs of decorated execution, we would have a clear mapping between DOM operations and conditions; thus a logical approach would be to generate a DOM tree directly from the trace and backward slice.  
-However, an heuristic approach may not always work because a condition may have logical constraints that are interdependent on logical constraints in other conditions.  
-For example, 2 of the conditions in Sample Code~\ref{domOr} inter-depend on each other because of the DOM policy that a DOM element cannot be both a child and a parent of another DOM element.  
-Specifically, sub-conditions {\tt i} and {\tt ii} must be mutually exclusive because {\tt d} cannot be both a child and parent of {\tt a}.
-Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DOM specific solver is required to understand the unique policies of the DOM and make decisions accordingly for generating a proper satisfying HTML.
 \begin{figure}
 \begin{lstlisting}[caption=Example code showing conditions that have logical constraints interdependent with each other.,label=domOr]  
 function DOMlogicExample() {
@@ -69,6 +61,13 @@ function DOMlogicExample() {
 \end{lstlisting}
 \end{figure}
 
+\header{Interdependent Logical Constraints.}  
+% why solver, not heuristics 
+Given a dynamic trace and a dynamic backward slice deduced from the logs of decorated execution, we would have a clear mapping between DOM operations and conditions; thus a logical approach would be to generate a DOM tree directly from the trace and backward slice.  
+However, an heuristic approach may not always work because a condition may have logical constraints that are interdependent on logical constraints in other conditions.  
+For example, 2 of the conditions in Sample Code~\ref{domOr} inter-depend on each other because of the DOM policy that a DOM element cannot be both a child and a parent of another DOM element.  
+Specifically, sub-conditions {\tt i} and {\tt ii} must be mutually exclusive because {\tt d} cannot be both a child and parent of {\tt a}.
+Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DOM specific solver is required to understand the unique policies of the DOM and make decisions accordingly for generating a proper satisfying HTML.
 
  \header{DOM mutations.}
 % why conditional slicing

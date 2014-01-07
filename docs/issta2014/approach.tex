@@ -1,50 +1,47 @@
 \section{Approach}
+Given a piece of JavaScript code and a test case, our goal is to generate HTML so that the HTML's DOM structure would guide and support the execution of the code being tested towards the intended path.  
+As an overview, our approach is to first instrument the JavaScript code so that we can log the code's execution for producing a dynamic backward slice and a dynamic trace.  
+Next we analyze the trace and the slice to extract DOM-specific operations and deduce constraints, which the DOM solver would take as input for generating a suitable DOM structure and corresponding HTML.  
+Then we integrate the HTML into a test framework for running assertions.  
+
 %Each DOM operation in any part of the code is like a piece of a puzzle describing a subset clue of the overall DOM tree.  \tool has to systematically extract these puzzle pieces and analyse them collectively for generating a satisfiable DOM.  
 
+\begin{figure}
+\begin{lstlisting}[caption=Example showing how code is decorated execution for dynamic tracing and dynamic backward slicing,label=sheq]  
+function beforeInstrumentation() {
+  var a = row.children.length === b; 
+  if (a) {}
+}
+
+function afterInstrumentation() {
+  try {
+    var JSCompiler_func_1_c = __funcEnter("FUNCTION decorated0.js 1", this, arguments);
+    var a = _SHEQ(_GET(_GET(row, "children"), "length"), b);
+    if (__cond("IF_NAME decorated0.js 0", a)) {
+    }
+  } catch (JSCompiler_func_1_e) {
+    __funcExit("FUNCTION decorated0.js 1", JSCompiler_func_1_e);
+    throw JSCompiler_func_1_e;
+  }
+  __funcExit("FUNCTION decorated0.js 1")
+}
+\end{lstlisting}
+\end{figure}
 
 \header{Decorated Execution.}
-Decorated execution 
-To generate a dynamic backward slice, we must accurately capture a condition's potential nested composition and potential dynamic precedence; and decorated execution is a simple and efficient way of doing the capture.  
-% what decorated execution is, how it works, why it works
-Sample code\ref{decorated} illustrates the semantics of decorated execution. 
+Decorated execution is where we instrument the JavaScript code so that the execution of each operator can be captured and decorated with taint data.  Sample code \ref{sheq} illustrates the semantics of decorated execution.  
+A general rule of thumb is that we transform each native JavaScript operator into a function call.  For example, the native {\tt .} operator is transformed into a call to {\tt \_GET()}; thus {\tt row.children} becomes {\tt \_GET(row, "children")}.  {\tt \_SHEQ} represents the strict equal operator "{\tt ===}".  
+A special case happens when we transform the {\tt \&\&} and {\tt |}{\tt |} operators, in which we have to consider the precedence of the operator's left hand side.   
+For example, if the code is {\tt a \&\& a.b}, the transformed version becomes {\tt \_AND(a, a.b)}; yet we don't want to execute {\tt a.b} when {\tt a} is {\tt null} or {\tt undefined}.  Our solution is to assign the left hand side into a temporary variable, and then check the value of the temporary variable before executing the right hand side.
+
 % example for: 1) precedence, 2)
 % functions, boundary to native functions
 % we call it decorated execution because we wrap around each value.  
 
-Decorated execution naturally captures the nested composition of conditions, i.e. when conditions are composed of sub-conditions linked by logical operators (e.g. {\tt or}'s, {\tt and}'s, {\tt not}'s) nested inside one another.
+%Decorated execution naturally captures the nested composition of conditions, i.e. when conditions are composed of sub-conditions linked by logical operators (e.g. {\tt or}'s, {\tt and}'s, {\tt not}'s) nested inside one another.
+%To generate a dynamic backward slice, we must accurately capture a condition's potential nested composition and potential dynamic precedence; and decorated execution is a simple and efficient way of doing the capture.  
+%Each condition is composed of 1 or more sub-conditions nested inside or linked beside other sub-conditions.  Each sub-condition is composed of 1 or more variables being compared to other variables.  
 
-
-
-Each condition is composed of 1 or more sub-conditions nested inside or linked beside other sub-conditions.  Each sub-condition is composed of 1 or more variables being compared to other variables.  
-
-\begin{figure}
-\begin{lstlisting}[caption=Example showing how code is decorated for logging execution and using the trace to construct a dynamic backward slice,label=decorated]  
-function DecoratedExecution() {
-  // 2 lines of original code
-  var a = row.children.length === b; 
-  if (a) {}
-  // ...
-  // decorated version of original code
-  var a = _SHEQ(_GET(_GET(row, "children"), "length"), b);
-  if () {}
-  // ...
-}
-\end{lstlisting}
-\end{figure}
-\begin{figure}
-\begin{lstlisting}[caption=Example showing how code is decorated for logging execution and using the trace to construct a dynamic backward slice,label=sheq]  
-function DecoratedExecution() {
-  // 2 lines of original code
-  var a = row.children.length === b; 
-  if (a) {}
-  // ...
-  // decorated version of original code
-  var a = _SHEQ(_GET(_GET(row, "children"), "length"), b);
-  if (__condStart()) {}
-  // ...
-}
-\end{lstlisting}
-\end{figure}
 %eval
 
 
@@ -59,7 +56,11 @@ function DecoratedExecution() {
 %result = f0(input) || f1(input);
 %_OR(
 
-\header{Dynamic Backward Slicer.}
+\header {Trace MapReducer}
+
+
+\header{Slice Analyzer}
+% Tree structure, Post order traversal
 In a condition, dynamic backward slicing discovers what DOM operations a condition has.  
 During execution, given a variable at a point in time, a dynamic backward slice traces how the variable has arrived at its current value: what operations or calculations had been previously done.  
 For example, if the variable {\tt a} equals to {\tt row.children.length === b} at line 6 during execution, {\tt a}'s backward slice would be backward slices of {\tt row.children.length} and {\tt b}, linked by the strict equal {\tt ===} operator.  
@@ -67,9 +68,9 @@ Eventually a dynamic backward slice would lead us to original inputs, constant v
 For example, a dynamic backward slice of {\tt row} would lead us to the DOM element with ID {\tt "row"+i}, where {\tt "row"} is a constant string, and {\tt i} has a backward slice leading to {\tt field.children.length}, which would lead us to the DOM element with ID {\tt "field"}.
 
 
-\header {Dynamic Tracer.}
-
 \header{DOM Solver.}
+% how to create rules in DOM solver, example rules.  Intuition behind it.
+% why not XML solver, not scalable
 % SMT-lib language, swappable between CVC and Z3.
 	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
 	% future compatibility for multiple data types

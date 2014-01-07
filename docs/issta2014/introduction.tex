@@ -57,7 +57,7 @@ Thus the desired approach has to be automated, systematic and precise.
 
 
 \subsection{Contributions}
-The following are main contributions of our paper:
+The following are the main contributions of our paper:
 \begin {compactitem}
 \item We propose our automated, generic, transparent and browser-independent approach for systematically generating HTML to test JavaScript code that contain DOM operations.
 \item We describe how JavaScript code and its execution can dynamically be analyzed for deducing constraints relevant for generating HTML.
@@ -69,7 +69,7 @@ The following are main contributions of our paper:
 \tool augments approaches that aim to generate tests automatically.  
 Random testing~\cite{}, feedback directed testing~\cite{}, mutation testing~\cite{}, concolic testing~\cite{}... to our best knowledge, almost all of existing research focused on generating input parameters for testing functions or HTML inputs\footnote{by HTML inputs we include inputs for HTML text fields, forms, buttons mouse clicks and key presses.} for testing apps.
 However, having just function parameters and HTML inputs is often insufficient.  For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.\footnote{Another category of dependencies is closure variables.}
-Moreover, it should be noted that the {\tt function checkRows()} does not take any input arguments, and many functions are like that in JavaScript.
+Moreover, it should be noted that the {\tt function checkRows()} does not take any input parameters, and many functions are like that in JavaScript.
 Yet, these functions depend on, and would sometimes mutate, their dependencies such as the DOM.
 
 \tool has integration with QUnit~\cite{qunit} so that existing test suites can automatically take advantage of \tool without additional manual effort.  \tool is also extensible to be integrated with other test frameworks~\cite{jstests}.
