@@ -26,6 +26,8 @@ function checkRows() {
     row = getElementById("row"+i);
     if (row.children.length === 10) {
       // ... row filled, update score
+	  // ... clean up
+	  row.innerHTML = "";
     }
   }
 }

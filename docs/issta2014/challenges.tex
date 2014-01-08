@@ -65,11 +65,12 @@ function DOMlogicExample() {
 % why solver, not heuristics 
 Given a dynamic trace and a dynamic backward slice deduced from the logs of decorated execution, we would have a clear mapping between DOM operations and conditions; thus a logical approach would be to generate a DOM tree directly from the trace and backward slice.  
 However, an heuristic approach may not always work because a condition may have logical constraints that are interdependent on logical constraints in other conditions.  
-For example, 2 of the conditions in Sample Code~\ref{domOr} inter-depend on each other because of the DOM policy that a DOM element cannot be both a child and a parent of another DOM element.  
+In an obvious example, 2 of the conditions in Sample Code~\ref{domOr}, the 2 {\tt if} statements, inter-depend on each other because of the DOM policy that a DOM element cannot be both a child and a parent of another DOM element.  
 Specifically, sub-conditions {\tt i} and {\tt ii} must be mutually exclusive because {\tt d} cannot be both a child and parent of {\tt a}.
 Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DOM specific solver is required to understand the unique policies of the DOM and make decisions accordingly for generating a proper satisfying HTML.
 
  \header{DOM mutations.}
+% give update score as example
 % why conditional slicing
 Mutations to the DOM tree structure must be accounted for in both the backward slicing and the solver because changes to the HTML can happen any time during execution.
 Example mutations include adding or deleting a DOM node (e.g. in the use case of refreshing an email Inbox or deleting a message), or modifying the content or attributes within a DOM node.  
