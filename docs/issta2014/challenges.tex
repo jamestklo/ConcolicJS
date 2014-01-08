@@ -48,7 +48,7 @@ Thus the only way to discover whether a condition contains DOM operations is to 
 % drives the need for decorated execution, different from Jalangi
 
 \begin{figure}
-\begin{lstlisting}[caption=Example code showing conditions that have logical constraints interdependent with each other.,label=domOr]  
+\begin{lstlisting}[caption=Example code showing conditions that have logical constraints interdependent with each other.  To make both of these {\tt if} statements true sub conditions i) and ii) become mutually exclusive: they cannot be true at the same time.  Thus a logic solver is required to generate a satisfiable DOM structure and HTML.,label=domOr]  
 function DOMlogicExample() {
   // ...
   if (d === a.firstElementChild // i)
