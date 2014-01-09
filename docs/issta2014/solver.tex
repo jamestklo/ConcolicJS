@@ -1,26 +1,29 @@
 \section{DOM Solver}
-The DOM solver takes the constraints defined by the MapDeducer and attempts to generate a satisfiable HTML.  The solver is implemented as an extension of a SMT solver~\cite{cvc3} and would report anything not satisfiable.  
+The DOM solver takes the constraints defined by the MapDeducer and attempts to generate a satisfiable DOM structure.  The solver is implemented as an extension of a SMT solver~\cite{cvc3} and would report anything not satisfiable.  
 
-\header{Boolean Functions for DOM Operations.}
-A major part of the DOM is its tree structure.  In JavaScript, the tree is inferred by the DOM operations executed.  
-Each DOM operation in any line of code (e.g. different conditions) is like a piece of a puzzle describing a subset clue of the overall DOM tree.  
+\header{DOM tree \& DOM operations.}
+A major part of the DOM is its multi-children tree structure.  When generating a satisfiable DOM, we use the DOM operations executed to infer the overall DOM tree.    
+Each DOM operation in any line of code is like a piece of a puzzle describing a subset clue of the overall DOM tree.   
+For example {\tt a = elem.parentElement.nextElementSibling} implies 2 subset clues: {\tt elem} has a parent element, and the parent has a sibling.
+
+Yet, questions remain unanswered about exactly where does {\tt elem} fit in the overall DOM tree; and other DOM operations would provide clues for that.  The DOM solver would take all the clues and generate a satisfiable structure.   
 
 \begin{figure}
-\begin{lstlisting}[caption=Condensed example extended from Sample Code ~\ref{domOr} demonstrating various DOM operations and their interdependency with each other.,label=domOrExtended]  
-function DOMlogicExample() {
-  // Interdependent logical constraints
-  if (d === a.firstElementChild // i)
-   || d === b.lastElementChild) {}
-  if (d === a.parentElement // ii)
-   || d === b.parentElement) {}
+\begin{lstlisting}[caption=Example extended from Sample Code ~\ref{domOr} to demonstrate capability of DOM solver to resolve more complex DOM operations and their interdependency with each other.,label=domOrExtended]  
+// Interdependent logical constraints
+if (d === elem.firstElementChild // i)
+ || d === b.lastElementChild) {}
+if (d === elem.parentElement // ii)
+ || d === b.parentElement) {}
   
-  if (b.previousElementSibling === 
-      c.firstElementChild) {}
+if (b.previousElementSibling === 
+    c.firstElementChild) {}
   
-  if (a.parentElement.parentElement ===
-      b.firstElementChild.nextElementSibling) {}
+if (elem.parentElement.parentElement 
+    === c.lastElementChild.previousElementSibling) {}
 	  
-  if (c.children[2] === a.nextElementSibling) {}  
+if (c.children[2] === 
+    b.nextElementSibling) {}  
 }
 \end{lstlisting}
 \end{figure}
@@ -32,8 +35,8 @@ function DOMlogicExample() {
   <span/>
   <span id="b">
     <span id="d">
-      <span id="a"/>
-	</span>
+      <span id="elem"/>
+    </span>
   </span>
   <span/>
 </span>
@@ -48,9 +51,19 @@ function DOMlogicExample() {
 	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
 	% future compatibility for multiple data types
 
-\header{Boolean Functions.}	
+\header{DOM operations into Boolean functions.}	
 
+
+\header{Solver Output into Heuristics.}
 Because CVC does not support strings natively, for now we map tag names into integers in CVC.  
 <span> is the default tag type because <span> is an inline element and not a block.
+
+
+\header{Ordering Children.}
+
+
+\header{DOM mutations.}
+
+
 \header{Conditional Slicing.}
 

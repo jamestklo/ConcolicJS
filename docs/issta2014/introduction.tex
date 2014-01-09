@@ -11,7 +11,6 @@ Yet, despite the language's ubiquity, testing JavaScript is not easy.
 For example, because HTML describes the graphical user interface of a Web app, a lot of JavaScript code is written to access and mutate HTML through the Document Object Model (DOM) API.  
 When JavaScript code runs, its runtime execution would encounter DOM operations that would subtly imply the DOM (and thus the webpage's HTML) having a particular tree structure.  
 In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.  
-% Example DOM operations {\tt node.parentElement}, {\tt node.firstChild}, {\tt node.children}, and {\tt node.nextSibling}.
 
 \subsection{Motivating Example}
 To further illustrate the necessity of having a satisfiable DOM structure, suppose the {\tt function checkRows()} in Sample Code~\ref{dom0} is being unit tested concolic-ly.  

@@ -12,7 +12,7 @@ import com.crawljax.core.configuration.BrowserConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration.CrawljaxConfigurationBuilder;
 import com.crawljax.core.configuration.ProxyConfiguration;
-import com.crawljax.plugins.crawloverview.CrawlOverview;
+//import com.crawljax.plugins.crawloverview.CrawlOverview;
 //import com.crawljax.plugins.proxy.WebScarabProxyPlugin;
 
 import edu.ubc.webscarab.MyProxyPlugin;

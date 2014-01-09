@@ -1,24 +1,24 @@
-\section{Technical Details}
+\section{DOM Constraints}
 Given a piece of JavaScript code and a test case, our goal is to generate HTML so that the HTML's DOM structure would guide and support the execution of the code being tested towards the intended path.  
 As an overview, our approach is to first instrument the JavaScript code so that we can log the code's execution for producing a dynamic backward slice and a dynamic trace.  
 Next we analyze the trace and the slice to extract DOM-specific operations and to deduce constraints, which the DOM solver would take as input for generating a suitable DOM structure and corresponding HTML.  
 Then we integrate the HTML into a test framework for running assertions.  
 
 \begin{figure}
-\begin{lstlisting}[caption=Example showing how code is instrumented for dynamic analysis.,label=sheq]  
-function beforeInstrumentation(i) {
-  var row = getElementById("row"+i);
-  var a = row.children.length === b; 
-  if (a) {}
-}
+\begin{lstlisting}[caption=Example showing how code is instrumented for dynamic analysis.  The comment at line 9 shows the decorated object {\tt a} and its nested tree data structure.  {\tt a}'s actual value is {\tt true} because both left and right hand side have the same value 10.,label=sheq]  
+// Before Instrumentation
+var row = getElementById("row"+i);
+var a = row.children.length === b; 
+if (a) {}
 
-function afterInstrumentation(i) {
-  var row = _CALL(getElementById, _ADD(_CONST("STRING filename.js 0", "row"), i));
-  var a = _SHEQ(_GET(_GET(row, "children"), "length"), b);
-  // a = {val: true, op:_SHEQ, 0:{val: 10, op:_GET, ...}, 1:"b"};
-  if (__cond("IF_NAME filename.js 1", a)) {}
-}
-
+// After Instrumentation(i)
+var row = _CALL(getElementById, _ADD(_CONST("STRING filename.js 0", "row"), i));
+var a = _SHEQ(_GET(_GET(row, "children"), "length"), b);
+/* a = {val: true
+      , op:	_SHEQ
+      , 0:	{val: 10, op:_GET, ...}
+      , 1:	{val: 10, ...}}; */
+if (__cond("IF_NAME filename.js 1", a)){}
 \end{lstlisting}
 \end{figure}
 
@@ -36,14 +36,14 @@ Another special case is the {\tt ++} and {\tt --} operators.  For operations lik
 % functions, boundary to native functions
 
 
-\header{Backward Slicer}
+\header{Backward Slicer.}
 % would a diagram be good?
 The data structure of the decorated objects can be seen as a nested or tree structure because the calls to the operator functions are nested inside one another.  For example, in Sample Code \ref{sheq}, the call to {\tt \_GET(..., "length")} is nested inside the call to {\tt \_SHEQ()}.  
 Therefore, if we simply put the name of the operator function (e.g. "\_GET", "\_SHEQ", ...), inside the taint data, we can easily generate a backward slice via a tree traversal.  
 
 In Sample Code \ref{sheq}, the variable {\tt a} equals to ({\tt row.children.length === b}).  Thus {\tt a}'s backward slice must contain the backward slices of {\tt b} and {\tt row.children.length}, linked by the strict equal {\tt ===} operator.  
 At line 8, the decorated object returned by {\tt \_SHEQ()}, assigned to the variable {\tt a}, is the tree parent of 2 decorated objects: {\tt b}, and the decorated object returned by the {\tt \_GET()} call.  
-Because the tree children of a decorated object always come from earlier executions, e.g. {\tt \_GET(..., "children")} is executed before {\tt \_GET(..., "length")} before {\tt \_SHEQ(..., b)), the tree's hierarchical structure is reversely proportional to the temporal order in which operator functions are executed.  
+Because the tree children of a decorated object always come from earlier executions, e.g. {\tt \_GET(..., "children")} is executed before {\tt \_GET(..., "length")} before {\tt \_SHEQ(..., b)}, the tree's hierarchical structure is reversely proportional to the temporal order in which operator functions are executed.  
 The backward slicer traverses (e.g. post order) the decorated objects, yields a temporal history of the code's runtime execution, and generates a dynamic backward slice.  
 
 During the traversal, we identify conditions that contain DOM operations and extract these DOM operations accordingly.  Each tree leaf represents an input or a constant.  
@@ -67,17 +67,16 @@ ASSERT childrenLength(row0) = 10;
 \end{lstlisting}
 \end{figure}
 
-\header {Trace Mapper \& Constraints Deducer} 
+\header {Trace Mapper \& Constraints Deducer.} 
 For each instance that a condition is executed, the backward slicer would yield what DOM operations the instance has and how these DOM operations are related or interdependent on one another.  
 Because each condition can get executed more than once at different time points, the MapDeducer would aggregate all executed conditions, map them according to their ID, and deduce constraints for the DOM solver to generate a satisfiable HTML.  
 The MapDeducer works like MapReduce.  So far everything is code-oriented in which we focus on each condition and its dynamic backward slice.  The MapDeducer would transition the focus to be DOM-oriented in which we assemble clues about the same part of the DOM tree that are scattered across multiple lines of code.  
-The MapDeducer would put together the processed clues across multiple parts of the DOM tree back together, into a single set of constraints for the DOM solver to generate a satisfiable HTML.  
-
+The MapDeducer would put together the processed clues across multiple parts of the DOM tree back together, into a single set of constraints for the DOM solver to generate a satisfiable HTML.
 Sample Code~\ref{constraints0} illustrates constraints deduced from a dynamic backward slice of Sample Code~\ref{dom0}. 
 %Recall the jQuery example from the Challenges section.  The MapDeducer would 
 
 \begin{figure}
-\begin{lstlisting}[caption=Example HTML generated by the DOM solver based on the constraints defined in Sample Code ~\ref{constraints0}.  Note that {\tt row0} is not a child of {\tt tetris} because the source code is Sample Code \ref{dom0} did not require any row to be a child of {\tt tetris}.,label=html0]  
+\begin{lstlisting}[caption=Example HTML generated by the DOM solver based on the constraints defined in Sample Code ~\ref{constraints0}.  Note that {\tt row0} is not a child of {\tt tetris} because the source code in Sample Code \ref{dom0} did not require the rows to be children of {\tt tetris}.,label=html0]  
 <span id="tetris"><span></span></span>
 <span id="row0">
   <span/><span/><span/><span/><span/>
