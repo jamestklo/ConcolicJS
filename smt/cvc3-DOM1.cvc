@@ -92,5 +92,3 @@ ASSERT FORALL (x, z: Node):
 	
 ASSERT FORALL (x, z: Node):
 	previousSibling(z, x) => NOT(previousSibling(x, z));
-
-

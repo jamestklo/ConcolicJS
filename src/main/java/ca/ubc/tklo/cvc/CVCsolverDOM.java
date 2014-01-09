@@ -29,6 +29,7 @@ public class CVCsolverDOM {
 			BufferedReader buf = new BufferedReader(new StringReader(cvc_slice));
 			try {
 				nodeIDs = new HashSet<String>();
+				tempIDs = new HashSet<String>();
 				String[] line = buf.readLine().split("[,\\s:]");
 				sessionID = line[0];
 				int sessionID_length = sessionID.length();				

@@ -87,10 +87,9 @@ public class WebScarab {
      * of user interfaces
      */
     public static void main(String[] args) {
-    	//System.setProperty("WebScarab.ip", "142.103.224.202");
     	//System.setProperty("WebScarab.ip", "127.0.0.1");
     	System.setProperty("WebScarab.ip", "localhost");
-    	//System.setProperty("WebScarab.ip", "192.168.0.13");
+    	//System.setProperty("WebScarab.ip", "198.162.35.1");
     	
         try {
             System.setProperty("sun.awt.exception.handler", ExceptionHandler.class.getName());

@@ -36,5 +36,3 @@ ASSERT parent(t2, d0) AND parent(t3, t2) AND firstChild(t4, d2) AND following_si
 % dom0.children						<=>	child(t2, dom0)				{op:"child", r:d0}
 % dom0.children[4]					<=>	children(t2, dom0, 4)		{op:4, l:t2, r:{op:"children", r:d0}, m:"t2"}
 ASSERT children(t2, d0, 4) AND firstChild(t3, d2) AND following_sibling(t2, t3);
-
-

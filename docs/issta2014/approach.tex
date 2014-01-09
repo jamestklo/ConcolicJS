@@ -4,7 +4,6 @@ As an overview, our approach is to first instrument the JavaScript code so that 
 Next we analyze the trace and the slice to extract DOM-specific operations and to deduce constraints, which the DOM solver would take as input for generating a suitable DOM structure and corresponding HTML.  
 Then we integrate the HTML into a test framework for running assertions.  
 
-
 \begin{figure}
 \begin{lstlisting}[caption=Example showing how code is instrumented for dynamic analysis.,label=sheq]  
 function beforeInstrumentation(i) {
@@ -16,15 +15,17 @@ function beforeInstrumentation(i) {
 function afterInstrumentation(i) {
   var row = _CALL(getElementById, _ADD(_CONST("STRING filename.js 0", "row"), i));
   var a = _SHEQ(_GET(_GET(row, "children"), "length"), b);
+  // a = {val: true, op:_SHEQ, 0:{val: 10, op:_GET, ...}, 1:"b"};
   if (__cond("IF_NAME filename.js 1", a)) {}
 }
+
 \end{lstlisting}
 \end{figure}
 
-
 \header{Decorated Execution.}
 Decorated execution is where we statically instrument the JavaScript code so that the execution of each JavaScript operator can be captured and decorated with taint data for producing a dynamic trace and a dynamic backward slice.  Sample code \ref{sheq} illustrates the semantics of decorated execution.  
-A general rule of thumb is that we transform each JavaScript operator into a function call.  For example, the {\tt .} operator is transformed into a call to {\tt \_GET()}; thus {\tt row.children} becomes {\tt \_GET(row, "children")}.  {\tt \_SHEQ} represents the strict equal operator "{\tt ===}".  
+A general rule of thumb is that we transform each use of a JavaScript operator (e.g. {\tt .}) into a call to a corresponding operator function (e.g. {\tt \_GET()}).  For example, {\tt row.children} becomes {\tt \_GET(row, "children")}.  {\tt \_SHEQ} represents the strict equal operator "{\tt ===}".  
+Each operator function wraps (thus decorates) the actual computed value inside a decorated object that also contains taint data.   
 
 A special case happens when we transform the {\tt \&\&} and {\tt |}{\tt |} operators, in which we have to consider the precedence of the operator's left hand side.   
 For example, if the code is {\tt a \&\& a.b}, the transformed version becomes {\tt \_AND(a, a.b)}; yet we don't want to execute {\tt a.b} when {\tt a} is {\tt null} or {\tt undefined}.  
@@ -32,53 +33,55 @@ The left hand side can be a call to a function that may change the internal stat
 Thus our solution is to assign the left hand side into a temporary variable, and then check the value of the temporary variable before executing the right hand side: {\tt \_AND(t = a, t \&\& \_GET(a, "b"))} and {\tt \_AND(t = \_CALL(appendLog), t \&\& \_CALL(update))}.  
 
 Another special case is the {\tt ++} and {\tt --} operators.  For operations like {\tt i++}, we have to assign {\tt i} to a temporary variables first as return value before incrementing {\tt i}.
-Decorated execution is named after the decorator pattern~\cite{decoratorPattern}; the return value of each operator function (e.g. {\tt \_AND()}) is decorated with taint data for dynamic analysis, e.g. dynamic slicing and dynamic symbolic execution.  
 % functions, boundary to native functions
 
 
 \header{Backward Slicer}
 % would a diagram be good?
-During execution, the calls to the operator functions are nested inside one another.  For example, in Sample Code \ref{sheq}, there's a call to {\tt \_GET(..., "length")} nested inside the call to {\tt \_SHEQ()}.  
-Therefore, if we simply put the name of the operator function (e.g. "\_GET", "\_SHEQ"), inside the taint data, we can easily generate a backward slice via a tree traversal.  
+The data structure of the decorated objects can be seen as a nested or tree structure because the calls to the operator functions are nested inside one another.  For example, in Sample Code \ref{sheq}, the call to {\tt \_GET(..., "length")} is nested inside the call to {\tt \_SHEQ()}.  
+Therefore, if we simply put the name of the operator function (e.g. "\_GET", "\_SHEQ", ...), inside the taint data, we can easily generate a backward slice via a tree traversal.  
 
 In Sample Code \ref{sheq}, the variable {\tt a} equals to ({\tt row.children.length === b}).  Thus {\tt a}'s backward slice must contain the backward slices of {\tt b} and {\tt row.children.length}, linked by the strict equal {\tt ===} operator.  
 At line 8, the decorated object returned by {\tt \_SHEQ()}, assigned to the variable {\tt a}, is the tree parent of 2 decorated objects: {\tt b}, and the decorated object returned by the {\tt \_GET()} call.  
-Because the tree children of a decorated object always come from earlier executions (e.g. {\tt \_GET(..., "children")} is executed before {\tt \_GET(..., "length")}, before {\tt \_SHEQ(..., b))}, the tree's hierarchical structure is reversely proportional to the temporal order in which operator functions are executed.  
-The backward slicer traverses the tree of decorated objects, yields a temporal history of the code's runtime execution, and generates a dynamic backward slice.  
+Because the tree children of a decorated object always come from earlier executions, e.g. {\tt \_GET(..., "children")} is executed before {\tt \_GET(..., "length")} before {\tt \_SHEQ(..., b)), the tree's hierarchical structure is reversely proportional to the temporal order in which operator functions are executed.  
+The backward slicer traverses (e.g. post order) the decorated objects, yields a temporal history of the code's runtime execution, and generates a dynamic backward slice.  
 
 During the traversal, we identify conditions that contain DOM operations and extract these DOM operations accordingly.  Each tree leaf represents an input or a constant.  
 For example, a dynamic backward slice of {\tt row} would lead us to the DOM element with ID {\tt "row"+i}, where {\tt "row"} is a constant string, and {\tt i} has a backward slice leading to {\tt field.children.length}, which would lead us to the DOM element with ID {\tt "field"}.  
-Because variables can be used multiple times, each variable can belong to more than 1 tree and can have more than 1 parent.  Thus the structure would appear more like a directed acyclic graph than a tree, even though a variable would never be a tree ancestor of any of its own ancestors.  
-
-
-\header {Trace Mapper \& Constraints Deducer} 
-For each condition, the backward slicer would yield what DOM operations the condition has and how these DOM operations are related or interdependent on one another; the MapDeducer would aggregate multiple conditions and deduce constraints for the DOM solver to generate a satisfiable HTML.  
-The MapDeducer works like MapReduce.  So far everything is code-oriented in which we focus on each condition and its dynamic backward slice.  The MapDeducer would transition the focus to be DOM-oriented in which we assemble clues about the same part of the DOM tree that are scattered across multiple lines of code.  
-The MapDeducer would then put together the processed clues across multiple parts of the DOM tree back together, into a single set of constraints for the DOM solver to generate a satisfiable HTML.  
-%sRecall the jQuery example from the Challenges section.  The MapDeducer would 
-
+Because variables can be used multiple times, each variable can belong to more than 1 tree and can have more than 1 parent.  Thus the data structure would appear more like a directed acyclic graph than a tree, even though a variable would never be a tree ancestor of any of its own ancestors.  
 
 \begin{figure}
-\begin{lstlisting}[caption=Example showing DOM constraints deduced from dynamic trace and dynamic slice.,label=constraints]  
+\begin{lstlisting}[caption=DOM constraints for generating an HTML that would satisfy for going the {\tt True} branch in the {\tt if} statement of Sample Code ~\ref{dom0}.  The constraints are shown in the input format for the CVC~\cite{cvc3} implementation of the SMT solver. "\%" is the comment operator in CVC.,label=constraints0]
+% document.getElementById("tetris");
+ASSERT DISTINCT(tetris);
+
+% (tetris.children.length)--;
+ASSERT childrenLength(tetris) > 0;
+
+% document.getElementById("row"+0);
+ASSERT DISTINCT(row0);
+
+% row.children.length === 10;
+ASSERT childrenLength(row0) = 10;
+
 \end{lstlisting}
 \end{figure}
 
+\header {Trace Mapper \& Constraints Deducer} 
+For each instance that a condition is executed, the backward slicer would yield what DOM operations the instance has and how these DOM operations are related or interdependent on one another.  
+Because each condition can get executed more than once at different time points, the MapDeducer would aggregate all executed conditions, map them according to their ID, and deduce constraints for the DOM solver to generate a satisfiable HTML.  
+The MapDeducer works like MapReduce.  So far everything is code-oriented in which we focus on each condition and its dynamic backward slice.  The MapDeducer would transition the focus to be DOM-oriented in which we assemble clues about the same part of the DOM tree that are scattered across multiple lines of code.  
+The MapDeducer would put together the processed clues across multiple parts of the DOM tree back together, into a single set of constraints for the DOM solver to generate a satisfiable HTML.  
 
-\header{DOM Solver.}
-The DOM solver takes the constraints defined by the MapDeducer and attempts to generate a satisfiable HTML.  The solver is implemented as an extension of a SMT solver~\cite{cvc3} and would report anything not satisfiable.  
-% 
-% how to create rules in DOM solver, example rules.  Intuition behind it.
-% why not XML solver, not scalable
-% SMT-lib language, swappable between CVC and Z3.
-	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
-	% future compatibility for multiple data types
+Sample Code~\ref{constraints0} illustrates constraints deduced from a dynamic backward slice of Sample Code~\ref{dom0}. 
+%Recall the jQuery example from the Challenges section.  The MapDeducer would 
 
-	
-\header{Conditional Slicing.}
-
-
-\header{Integration with QUnit and Selenium.}
-
-
-\header{Limited Path Coverage.}
-
+\begin{figure}
+\begin{lstlisting}[caption=Example HTML generated by the DOM solver based on the constraints defined in Sample Code ~\ref{constraints0}.  Note that {\tt row0} is not a child of {\tt tetris} because the source code is Sample Code \ref{dom0} did not require any row to be a child of {\tt tetris}.,label=html0]  
+<span id="tetris"><span></span></span>
+<span id="row0">
+  <span/><span/><span/><span/><span/>
+  <span/><span/><span/><span/><span/>
+</span>
+\end{lstlisting}
+\end{figure}
