@@ -1,6 +1,6 @@
 tmpCVC, tmpCVC002, dom1, dom2, tmpCVC006, tmpCVC003, dom0, tmpCVC005, tmpCVC008, domC: Node;
 ASSERT root(tmpCVC);
-ASSERT previousSibling(tmpCVC002,dom1) AND DISTINCT(dom1) AND firstChild(tmpCVC002,dom2) AND DISTINCT(dom2);
+ASSERT nextSibling(tmpCVC002,dom1) AND DISTINCT(dom1) AND lastChild(tmpCVC002,dom2) AND DISTINCT(dom2);
 ASSERT parent(tmpCVC006,tmpCVC003) AND parent(tmpCVC003,dom0) AND DISTINCT(dom0) AND nextSibling(tmpCVC006,tmpCVC005) AND firstChild(tmpCVC005,dom2) AND DISTINCT(dom2);
 ASSERT children(tmpCVC008,dom2,2) AND nextSibling(tmpCVC008,dom1) AND DISTINCT(dom1);
 ASSERT (firstChild(domC,dom0) AND DISTINCT(dom0) AND DISTINCT(domC)) OR (firstChild(domC,dom1) AND DISTINCT(dom1) AND DISTINCT(domC));

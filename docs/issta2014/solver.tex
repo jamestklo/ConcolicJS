@@ -1,0 +1,56 @@
+\section{DOM Solver}
+The DOM solver takes the constraints defined by the MapDeducer and attempts to generate a satisfiable HTML.  The solver is implemented as an extension of a SMT solver~\cite{cvc3} and would report anything not satisfiable.  
+
+\header{Boolean Functions for DOM Operations.}
+A major part of the DOM is its tree structure.  In JavaScript, the tree is inferred by the DOM operations executed.  
+Each DOM operation in any line of code (e.g. different conditions) is like a piece of a puzzle describing a subset clue of the overall DOM tree.  
+
+\begin{figure}
+\begin{lstlisting}[caption=Condensed example extended from Sample Code ~\ref{domOr} demonstrating various DOM operations and their interdependency with each other.,label=domOrExtended]  
+function DOMlogicExample() {
+  // Interdependent logical constraints
+  if (d === a.firstElementChild // i)
+   || d === b.lastElementChild) {}
+  if (d === a.parentElement // ii)
+   || d === b.parentElement) {}
+  
+  if (b.previousElementSibling === 
+      c.firstElementChild) {}
+  
+  if (a.parentElement.parentElement ===
+      b.firstElementChild.nextElementSibling) {}
+	  
+  if (c.children[2] === a.nextElementSibling) {}  
+}
+\end{lstlisting}
+\end{figure}
+
+
+\begin{figure}
+\begin{lstlisting}[caption=Condensed example extended from Sample Code ~\ref{domOr} demonstrating various DOM operations and their interdependency with each other.,label=domOrExtended]  
+<span id="c">
+  <span/>
+  <span id="b">
+    <span id="d">
+      <span id="a"/>
+	</span>
+  </span>
+  <span/>
+</span>
+\end{lstlisting}
+\end{figure}
+
+
+% XPath
+% how to create rules in DOM solver, example rules.  Intuition behind it.
+% why not XML solver, not scalable
+% SMT-lib language, swappable between CVC and Z3.
+	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
+	% future compatibility for multiple data types
+
+\header{Boolean Functions.}	
+
+Because CVC does not support strings natively, for now we map tag names into integers in CVC.  
+<span> is the default tag type because <span> is an inline element and not a block.
+\header{Conditional Slicing.}
+
