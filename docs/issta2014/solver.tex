@@ -21,7 +21,7 @@ if (c.children[2] ===
 \end{lstlisting}
 \end{figure}
 
-\header{DOM tree \& DOM operations.}
+\header{DOM Tree \& DOM Operations.}
 A major part of the DOM is its single parent, multi-children tree structure.  When generating a satisfiable DOM, we use the execution of DOM operations to infer the overall DOM tree.    
 Each DOM operation in any line of code is like a piece of a puzzle describing a subset clue of the overall DOM tree.   
 For example {\tt a = elem.parentElement.nextElementSibling} implies 2 subset clues: {\tt elem} has a parent element, and the parent has a sibling.  
@@ -51,7 +51,7 @@ That said, questions remain unanswered about exactly where does {\tt elem} fit i
 	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
 	% future compatibility for multiple data types
 	
-\header{DOM operations into SMT functions.}	
+\header{DOM Operations into SMT Quantifiers.}	
 Each DOM operation is transformed into a SMT function in the solver.  We then use quantifiers (e.g. {\tt EXISTS}, {\tt FORALL}) to define how the SMT functions relate to each other.  
 Sample Code ~\ref{childrenLength} shows the boolean functions and integer functions we defined for supporting the {\tt elem.children.length} operation.  We first quantify the parent-child relationship: 
 \begin{compactitem} 
