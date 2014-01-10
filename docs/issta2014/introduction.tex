@@ -25,8 +25,6 @@ function checkRows() {
     row = getElementById("row"+i);
     if (row.children.length === 10) {
       // ... row filled, update score
-      // ... clean up
-	  row.innerHTML = "";
     }
   }
 }
@@ -62,13 +60,13 @@ The following are the main contributions of our paper:
 \begin {compactitem}
 \item We propose our automated, generic, transparent and browser-independent approach for systematically generating HTML to test JavaScript code that contain DOM operations.
 \item We describe how JavaScript code and its execution can dynamically be analyzed for deducing constraints relevant for generating HTML.
-\item We illustrate how extracted constraints can be solved into a satisfying DOM tree.
+\item We prototyped a novel DOM solver for generating satisfiable a DOM tree that would yield an HTML for going into a specific execution path. 
 \item We present the implementation of our approach in a tool called \tool; an online video provides a demonstration.
 \item We report how \tool and its generated DOM trees can help test suites improve coverage, reach complete execution, and have all their assertions done.
 \end {compactitem}
 
 \tool augments approaches that aim to generate tests automatically.  
-Random testing~\cite{}, feedback directed testing~\cite{}, mutation testing~\cite{}, concolic testing~\cite{}... to our best knowledge, almost all of existing research focused on generating input parameters for testing functions or HTML inputs\footnote{by HTML inputs we include inputs for HTML text fields, forms, buttons mouse clicks and key presses.} for testing apps.
+Random testing~\cite{artemis}, feedback directed testing~\cite{}, mutation testing~\cite{pythia}, concolic testing~\cite{cute}... to our best knowledge, almost all of existing research focused on generating input parameters for testing functions or HTML inputs\footnote{by HTML inputs we include inputs for HTML text fields, forms, buttons mouse clicks and key presses.} for testing apps.
 However, having just function parameters and HTML inputs is often insufficient.  For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.\footnote{Another category of dependencies is closure variables.}
 Moreover, it should be noted that the {\tt function checkRows()} does not take any input parameters, and many functions are like that in JavaScript.
 Yet, these functions depend on, and would sometimes mutate, their dependencies such as the DOM.
@@ -84,3 +82,4 @@ Thus given a test case, be its inputs were generated manually or automatically, 
 %\item Children of a {\tt row} are blocks that make up a piece.  
 %\item etc.
 %\end {compactitem}
+

@@ -11,7 +11,7 @@ parent:			(Node, Node) -> BOOLEAN;
 child: 			(Node, Node) -> BOOLEAN;	
 children: 		(Node, Node, INT) -> BOOLEAN;
 childIndex:		(Node) -> INT;
-childrenLength:		(Node)	 	 -> INT;
+childrenLength:	(Node) -> INT;
 
 following_sibling: 	(Node, Node) -> BOOLEAN;
 preceding_sibling: 	(Node, Node) -> BOOLEAN;

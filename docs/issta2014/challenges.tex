@@ -1,7 +1,7 @@
 \section{Challenges}
 While trying to generate satisfiable DOM trees, we had to resolve the following challenges:  
 
-\header{Partial Constraints.}
+\header{Partial Clues.}  
 % why tracing 
 An intuitive approach would be to generate DOM elements "just in time"; however, such naive approach does not always work.  
 Just in time generation is to greedily create whatever DOM elements necessary for satisfying the current single DOM operation.  
@@ -24,7 +24,7 @@ While executing JavaScript code would subtly or passively imply the DOM having a
 For example, in Sample Code~\ref{dom0}, we see that whether a {\tt row} has 10 children would actively determine whether the {\tt if} condition would go into the {\tt true} or {\tt false} branch.
 While the DOM dependence is obvious in Sample Code~\ref{dom0}, very often DOM operations may not directly appear inside a condition: the result of different DOM operations may get assigned to multiple variables at various execution stages prior to the condition, either within the same function or up in the runtime stack.  
 For example, a condition may appear as a simple {\tt if(a)} in the code; yet the variable {\tt a} can be {\tt (row.children.length === 10)} or something more complex, such as the result of multiple statements executed throughout the code.  
-We have to backward slice variables so that we can accurately determine what DOM operations a condition may depend upon.
+We have to backward slice variables so that we can accurately determine what DOM operations a condition may depend upon.  
 
 
 \header{Dynamic Typing.}  
@@ -59,7 +59,7 @@ if (d === a.parentElement // ii)
 \end{lstlisting}
 \end{figure}
 
-\header{Interdependent Logical Constraints.}  
+\header{Interdependent Logic.}  
 % why solver, not heuristics 
 Given a dynamic trace and a dynamic backward slice deduced from the logs of decorated execution, we would have a clear mapping between DOM operations and conditions; thus a logical approach would be to generate a DOM tree directly from the trace and backward slice.  
 However, an heuristic approach may not always work because a condition may have logical constraints that are interdependent on logical constraints in other conditions.  
@@ -67,9 +67,14 @@ In an obvious example, 2 of the conditions in Sample Code~\ref{domOr}, the 2 {\t
 Specifically, sub-conditions {\tt i} and {\tt ii} must be mutually exclusive because {\tt d} cannot be both a child and parent of {\tt a}.
 Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DOM specific solver is required to understand the unique policies of the DOM and make decisions accordingly for generating a proper satisfying HTML.
 
- \header{DOM mutations.}
+% \header{Implicit 2D Structure.}
+
+
+\header{DOM Mutations.}  
 % give update score as example
 % why conditional slicing
-Mutations to the DOM tree structure must be accounted for in both the backward slicing and the solver because changes to the HTML can happen any time during execution.
+% why 2D is more challenging than 1D
+% why XML solver is not used 
+Expressing the DOM for a solver is not as easy as expressing single dimensional numerical or string operations (e.g. additions and subtractions), because no solver supports 2D tree structures natively and DOM operations are more diverse.  
+Mutations to the DOM tree structure must also be accounted for in both the backward slicing and the solver because changes to the HTML can happen any time during execution.  
 Example mutations include adding or deleting a DOM element (e.g. in the use case of refreshing an email Inbox or deleting a message), or modifying the content or attributes within a DOM element.  
-Expressing DOM mutations can be more challenging than expressing numerical operations (e.g. additions and subtractions), because DOM mutations are more diverse, and the DOM is a tree structure.

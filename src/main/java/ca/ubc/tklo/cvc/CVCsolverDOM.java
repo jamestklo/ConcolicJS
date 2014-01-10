@@ -105,7 +105,7 @@ public class CVCsolverDOM {
     	csd.quit();
     	
     	// parse output of CVC, generate XML
-    	String xmlpath = prefix+ "cvc3-example1.xml";
+    	String xmlpath = prefix+ "cvc3-exampleD.xml";
 		XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
 		XMLgenerator.outXML(xmlg.getDocument(), System.out);
 		try {

@@ -1,36 +1,36 @@
 \section{DOM Solver}
 The DOM solver takes the constraints defined by the MapDeducer and attempts to generate a satisfiable DOM structure.  The solver is implemented as an extension of a SMT solver~\cite{cvc3} and would report anything not satisfiable.  
 
-\header{DOM tree \& DOM operations.}
-A major part of the DOM is its multi-children tree structure.  When generating a satisfiable DOM, we use the DOM operations executed to infer the overall DOM tree.    
-Each DOM operation in any line of code is like a piece of a puzzle describing a subset clue of the overall DOM tree.   
-For example {\tt a = elem.parentElement.nextElementSibling} implies 2 subset clues: {\tt elem} has a parent element, and the parent has a sibling.
-
-Yet, questions remain unanswered about exactly where does {\tt elem} fit in the overall DOM tree; and other DOM operations would provide clues for that.  The DOM solver would take all the clues and generate a satisfiable structure.   
-
 \begin{figure}
-\begin{lstlisting}[caption=Example extended from Sample Code ~\ref{domOr} to demonstrate capability of DOM solver to resolve more complex DOM operations and their interdependency with each other.,label=domOrExtended]  
+\begin{lstlisting}[caption=Example extended from Sample Code ~\ref{domOr} with more complex DOM operations and their interdependency with each other.  The added {\tt if} statements influence the solver to decide on {\tt i)} or {\tt ii)},label=domOrExtended]  
 // Interdependent logical constraints
 if (d === elem.firstElementChild // i)
  || d === b.lastElementChild) {}
 if (d === elem.parentElement // ii)
  || d === b.parentElement) {}
-  
+
 if (b.previousElementSibling === 
     c.firstElementChild) {}
-  
+
+// chained DOM operations 
 if (elem.parentElement.parentElement 
-    === c.lastElementChild.previousElementSibling) {}
-	  
+    === c.lastElementChild.previousElementSibling) {}  
 if (c.children[2] === 
     b.nextElementSibling) {}  
 }
 \end{lstlisting}
 \end{figure}
 
+\header{DOM tree \& DOM operations.}
+A major part of the DOM is its single parent, multi-children tree structure.  When generating a satisfiable DOM, we use the execution of DOM operations to infer the overall DOM tree.    
+Each DOM operation in any line of code is like a piece of a puzzle describing a subset clue of the overall DOM tree.   
+For example {\tt a = elem.parentElement.nextElementSibling} implies 2 subset clues: {\tt elem} has a parent element, and the parent has a sibling.  
+Note that if the condition is {\tt a = elem.parentElement.nextElementSibling === null}, then the clues become {\tt elem} has a parent element, yet the parent has no next sibling and thus is the last child.
+
+That said, questions remain unanswered about exactly where does {\tt elem} fit in or belong in the overall DOM tree; and other DOM operations would provide clues for that.  The DOM solver would take all the clues and generate a satisfiable structure.   
 
 \begin{figure}
-\begin{lstlisting}[caption=Condensed example extended from Sample Code ~\ref{domOr} demonstrating various DOM operations and their interdependency with each other.,label=domOrExtended]  
+\begin{lstlisting}[caption=HTML generated for going the all {\tt true} path in Sample Code ~\ref{domOrExtended}.  The all {\tt true} path is the execution path in which every condition goes to the {\tt true} branch.,label=htmlExtended]  
 <span id="c">
   <span/>
   <span id="b">
@@ -50,20 +50,102 @@ if (c.children[2] ===
 % SMT-lib language, swappable between CVC and Z3.
 	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
 	% future compatibility for multiple data types
+	
+\header{DOM operations into SMT functions.}	
+Each DOM operation is transformed into a SMT function in the solver.  We then use quantifiers (e.g. {\tt EXISTS}, {\tt FORALL}) to define how the SMT functions relate to each other.  
+Sample Code ~\ref{childrenLength} shows the boolean functions and integer functions we defined for supporting the {\tt elem.children.length} operation.  We first quantify the parent-child relationship: 
+\begin{compactitem} 
+\item a node cannot be a child of itself, see {\tt i)} and {\tt ii)} in Sample Code ~\ref{childrenLength}.
+\item a child of a node cannot be the node's parent at the same time: {\tt iii)}.
+\item a child can have only 1 parent: {\tt iv)}.
+\end{compactitem}
+Next, we define how children are ordered and quantify {\tt children.length}:
+\begin{compactitem} 
+\item first child starts at position or index 0: {\tt v)} and {\tt vi)}.
+\item last child has the largest child index: {\tt vii)}.
+\item {\tt children.length} equals to the child index of the last child: {\tt viii)}.
+\end{compactitem}
+The parent SMT functions are quantified as the inverse of the child SMT functions (e.g. {\tt ix}).  Similar to {\tt firstChild()} and {\tt lastChild()}, the sibling SMT functions are defined by extending {\tt children(x, y, j)}.  
+For example, the next sibling of a node has the same parent and child index {\tt j+1}, when the node has child index {\tt j}.
 
-\header{DOM operations into Boolean functions.}	
+\begin{figure}
+\begin{lstlisting}[caption=SMT functions for defining the children.length DOM operation.  We start with defining the parent-child relationships; then move on to the ordering of children; then use the child index of the last child to define and quantify the {\tt childrenLength()} boolean function,label=childrenLength]  
+% i) child(x, y): x is a child of y.
+child: (Node, Node) -> BOOLEAN;	
 
+% ii) x cannot be a child of itself
+ASSERT FORALL (x: Node):	
+  NOT(child(x,x));
+	
+% iii) when y is the parent of x
+% then y cannot be a child of x.  
+ASSERT FORALL (x, y: Node):
+  child(x,y) => NOT(child(y,x));
+  
+% iv) a child has only 1 parent
+ASSERT FORALL (x, y, z: Node):
+  (child(x,y) AND DISTINCT(y,z)) => NOT(child(x,z));
 
-\header{Solver Output into Heuristics.}
-Because CVC does not support strings natively, for now we map tag names into integers in CVC.  
-<span> is the default tag type because <span> is an inline element and not a block.
+  
+% v) x is the j-th child of y 
+children: (Node, Node, INT) -> BOOLEAN;
+ASSERT FORALL (x,y:Node, j:INT): 
+  children(x, y, j) => 
+    child(x, y) AND j >= 0;
 
+% vi) child index starts at 0.
+firstChild:		(Node, Node) -> BOOLEAN;
+ASSERT FORALL (x, y:Node):
+  firstChild(x, y) <=> 
+    children(x, y, 0);
 
-\header{Ordering Children.}
+% vii) no other child has a child index 
+% larger than the one of the last child
+lastChild: (Node, Node) -> BOOLEAN;	
+ASSERT FORALL (x, y:Node): 	
+  lastChild(x, y) => EXISTS(j:INT): 
+   ( j >= 0 AND children(x, y, j) AND 
+      (NOT(EXISTS (z: Node, k:INT): 
+	    children(z, y, k) AND k > j)) );
 
+% viii) children.length equals to the
+% child index of the last child.
+childrenLength:	(Node) -> INT;
+ASSERT FORALL (y:Node, j:INT):
+	childrenLength(y) = j <=> EXISTS(x:Node): lastChild(x, y) AND children(x, y, j);
 
-\header{DOM mutations.}
+% ix) example of inversion
+% y is the parent of x, is the same as 
+% x is a child of y
+parent: (Node, Node) -> BOOLEAN; 
+ASSERT FORALL (x, y: Node): 
+  parent(y, x) <=> child(y, x); 
+\end{lstlisting} 
+\end{figure}
 
+\header{Negation \& XPath.}
+We are using the CVC implementation of SMT, which natively supports booleans and integers by default.  
+While it is possible to define a customized data structure to mimic the DOM tree in CVC, the boolean/integer function approach is simple and convenient for negating conditions and going into different execution paths.
+Because Web browsers also support accessing the DOM tree via XPath~\cite{documentEvaluate}, we defined additional SMT functions: {\tt following\_sibling}, {\tt preceding\_sibling}, {\tt descendant} and {\tt ancestor}.
 
-\header{Conditional Slicing.}
+\header{Solver Output into HTML.}
+Because we used Boolean functions and Integer functions, CVC is only going to solve for the interdependent logic constraints and it does not directly yield a concrete DOM tree.  
+Instead, CVC only expands the quantifiers and outputs more {\tt ASSERT} statements that is valid for making the constraints satisfiable.  
 
+In Sample Code \ref{domOrExtended}, to solve ({\tt d === elem.firstElementChild || d === b.lastElementChild}), CVC would output "{\tt ASSERT lastChild(d, b)}" because it has decided on making ({\tt d === b.lastElementChild}) {\tt true}.
+
+To build the DOM tree, we built an API that parses the CVC output and builds a model for the DOM.  
+In the CVC output, CVC creates many temporary variable names, thus each DOM element can have more than one alias.  
+To consolidate the aliases, we start with DOM operations expressing the parent child relationship because each child can have only 1 parent.  We also used other deterministic DOM operations such as {\tt firstChild()} and {\tt lastChild()} to group aliases together.  
+
+Once the parent child relationship is built, our next step is to organizer the ordering of children.  
+Some DOM children have their positions explicit (e.g. {\tt firstChild(x, y)} and {\tt children(x, y, j)}), yet very often the child parent relationship is implied.  For example, {\tt nextSibling(x, z)} implies {\tt x} and {\tt z} share the same parent.  
+To calculate the ordering of children, we use the explicitly positioned children as anchors and we relate the anchors to other children by the sibling operations.  
+
+In case of any uncertainty, we would query the CVC model.  We have to do a binary search because querying the CVC model supports only {\tt true} or {\tt false} answers.  
+Because CVC does not support strings natively, for now we map tag names into integers in CVC.  <span> is the default tag type because <span> is an inline element and not a block.
+Once the DOM tree is defined, we search for the root of the DOM tree (the element without a parent) and generate HTML.  
+
+% \header{DOM mutations.}
+
+% \header{Conditional Slicing.}

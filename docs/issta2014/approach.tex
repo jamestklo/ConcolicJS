@@ -63,7 +63,6 @@ ASSERT DISTINCT(row0);
 
 % row.children.length === 10;
 ASSERT childrenLength(row0) = 10;
-
 \end{lstlisting}
 \end{figure}
 
@@ -72,7 +71,9 @@ For each instance that a condition is executed, the backward slicer would yield 
 Because each condition can get executed more than once at different time points, the MapDeducer would aggregate all executed conditions, map them according to their ID, and deduce constraints for the DOM solver to generate a satisfiable HTML.  
 The MapDeducer works like MapReduce.  So far everything is code-oriented in which we focus on each condition and its dynamic backward slice.  The MapDeducer would transition the focus to be DOM-oriented in which we assemble clues about the same part of the DOM tree that are scattered across multiple lines of code.  
 The MapDeducer would put together the processed clues across multiple parts of the DOM tree back together, into a single set of constraints for the DOM solver to generate a satisfiable HTML.
-Sample Code~\ref{constraints0} illustrates constraints deduced from a dynamic backward slice of Sample Code~\ref{dom0}. 
+
+Sample Code~\ref{constraints0} illustrates constraints for going to the {\tt true} branch of the {\tt if} statement in Sample Code~\ref{dom0}, resulting in Sample Code ~\ref{html0}.  
+If we want to go to the {\tt false} branch, e.g. {\tt ASSERT NOT(childrenLength(row0) = 10)}, then the solver would not put any child inside {\tt row0}.  
 %Recall the jQuery example from the Challenges section.  The MapDeducer would 
 
 \begin{figure}

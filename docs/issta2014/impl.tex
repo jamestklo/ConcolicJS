@@ -1,26 +1,29 @@
 \section{Implementation}
 
-\header{Components}
-Proxy: WebScarab, Java
-Abstract Syntax Tree: Google Closure compiler
-Backward Slicing: JavaScript library, analyze execution tree
-DOM Solver: .exe, use Java command line.  Java API to translate SMT output into XML.  
-Selenium: runs on multiple browsers, including headless browsers such as PhantomJS.  
-QUnit:  \tool is designed to be easily extensible to other testing frameworks including Jasmine and Mocha.
+\header{Instrumenting JavaScript.}  
+Our approach has to be generic, transparent and browser-independent.  Thus we use WebDriver~\cite{webdriver} to drive the test case execution and a proxy~\cite{webscarab} to intercept JavaScript for instrumentation.  WebDriver runs on multiple browsers, including headless browsers such as PhantomJS.  
+Google's Closure Compiler API~\cite{ClosureCompiler} is used to transform the original JavaScript into calls to the operator functions. 
+Both the Backward Slicer and MapDeducer are implemented as JavaScript APIs.  WebDriver calls the MapDeducer API, which returns the constraints in text.  
 
-\header{Indexing Functions.}
-% tinysort() as example, most of the existing frameworks for unit testing don't address this issue [phantomJS].  
-% drives the need for extracting functions
-% Go to Implementation
-% gives AST ID rather than function names, because it's common for functions to share the same name, or more commonly, to be anyonmous or have no name at all  (function () {});
+\header{DOM Solver.}  
+CVC allows writing the constraints in Java, yet we don't want to hardcode the constraints because the constraints are different in each execution path.  
+Thus we use Java's ProcessBuilder~\cite{} class to communicate with the executable (.exe) version of CVC.  We decided to use CVC3 rather than CVC4 because CVC3 is generally more stable during our experimentation.  
+The API that parses the CVC output is also implemented in Java, thus we used the W3C DOM API~\cite{DomAPI} for generating HTML.  
+QUnit provides a <div> called the fixture which can be set as the HTML for a test case.   Before execution, WebDriver would set the {\tt innerHTML} of the fixture element to the generated HTML.  
 
-\header{eval(), inlined JavaScript.}  
-% code inlined within HTML
+\header{Limited Path Coverage.}  
+Very often, we don't know how many times to execute a loop.  For example, in Sampe Code ~\ref{dom0}, there is no upper limit to the number of children that {\tt field} has.  
+In that case, we executed the loop only once.  Thus \tool would achieve limited path coverage rather than full path coverage.  
+
+\header{Indexing Functions.}  
+Most of the time JavaScript functions are defined inside closures and are not accessible~\cite{privatefunctions}.  
+When we instrument JavaScript code, we extract the functions by assigning them to an object that we have access to.  Because functions can have the same name, we use the node number in the JavaScript Abstract Syntax Tree as ID.
+
+\header{{\tt eval()} \& inline JavaScript.}  
+In addition to source files, JavaScript code can also be found within {\tt eval()} and inlined as attributes of a DOM element inside the HTML declaration (e.g. {\tt <body onload="runFunction()">}).
+We instrument each {\tt eval(code)} statement into {\tt eval(instrument(code))}.  We cannot override the native {\tt eval()}, because the native {\tt eval()} must be called inside the closure to give {\tt code} access to the closure's local variables.  
+The {\tt instrument()} function would send the {\tt code} to the proxy for instrumentation via a XMLHttpRequest.  
+
+To instrument inline JavaScript, we traverse the original HTML using the JSoup API~\cite{jsoup}.  Once we detect DOM attributes that contain JavaScript, we pass the JavaScript to ClosureCompiler for instrumentation.  
+For newly created elements, e.g. {\tt elem.innerHTML = text}, we use getters and setters to detect the new elements.  Once detected, we traverse the new elements, extract JavaScript and call the {\tt instrument()} function.  
 % Tudu
-% Go to Implementation
-
-\header{Integration with QUnit and Selenium.}
-
-
-\header{Limited Path Coverage.}
-

@@ -1,6 +1,5 @@
 tmpCVC, tetris, row0, row1: Node;
-ASSERT root(tmpCVC);
-ASSERT parent(tetris, row0);
 ASSERT DISTINCT(tetris);
+ASSERT childrenLength(tetris) > 0;
 ASSERT DISTINCT(row0);
-ASSERT DISTINCT(row1);
+ASSERT childrenLength(row0) = 10;
