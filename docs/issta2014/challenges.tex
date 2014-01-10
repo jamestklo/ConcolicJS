@@ -1,7 +1,7 @@
 \section{Challenges}
 While trying to generate satisfiable DOM trees, we had to resolve the following challenges:  
 
-\header{Partial Clues.}  
+\header{Single Clues are Incomplete.}  
 % why tracing 
 An intuitive approach would be to generate DOM elements "just in time"; however, such naive approach does not always work.  
 Just in time generation is to greedily create whatever DOM elements necessary for satisfying the current single DOM operation.  
@@ -18,6 +18,37 @@ If the generated DOM element is not a <div>, then the 2nd jQuery would return {\
 There can be many different possibilities for satisfying a single current DOM operation; and picking the correct answer out of the many possible ones requires collectively tracing relevant DOM operations.  
 
 
+\subsection{DOM Operations are Chained}
+In JavaScript, a DOM operation of a DOM element (e.g. {\tt elem.parentElement}) usually returns another DOM element.  Thus DOM operations can be chained: {\tt elem.parentElement.parentElement}.  
+Now consider we have multiple DOM operations.  What would the overall DOM tree look like?  How many children do {\tt b} and {\tt c} exactly have?  There are many possibilities, the search space of the solution is not small.    
+\begin{compactitem}
+\item {\tt elem.firstElementChild}: {\tt elem} has a first child.
+\item {\tt b.lastElementChild}: {\tt b} has a last child.
+\item {\tt b.parentElement}: {\tt b} has a parent.
+\item {\tt elem.parentElement}: {\tt elem} has a parent.
+\item {\tt elem.parentElement.parentElement}: {\tt elem} has a grandparent.
+\item {\tt c.lastElementChild.previousSibling}: {\tt c} has a last child.
+\item {\tt c.children[2]}: {\tt c} has 3 or more children.
+\item {\tt b.nextElementSibling}: {\tt b} has a next sibling. 
+\item ... etc.
+\end{compactitem}
+
+Because we need only one satisfiable DOM tree, it is possible to sort the DOM operations by element, and generate the DOM tree accordingly: 
+\begin{compactitem}
+\item {\tt elem.firstElementChild} 
+\item {\tt elem.parentElement}
+\item {\tt elem.parentElement.parentElement}
+\end{compactitem}
+\begin{compactitem}
+\item {\tt b.lastElementChild}: {\tt b} has a last child.
+\item {\tt b.parentElement}: {\tt b} has a parent.
+\item {\tt b.nextElementSibling}: {\tt b} has a next sibling. 
+\end{compactitem}
+\begin{compactitem}
+\item {\tt c.lastElementChild.previousSibling}: {\tt c} has a last child.
+\item {\tt c.children[2]}: {\tt c} has at least 2 children.
+\end{compactitem} 
+
 \header{Indirect Influence.}  
 % why backward slicing
 While executing JavaScript code would subtly or passively imply the DOM having a particular tree structure (as in the jQuery example), sometimes the structure of the DOM tree would actively determine which branch a condition would go into.  
@@ -27,7 +58,7 @@ For example, a condition may appear as a simple {\tt if(a)} in the code; yet the
 We have to backward slice variables so that we can accurately determine what DOM operations a condition may depend upon.  
 
 
-\header{Dynamic Typing.}  
+\header{Dynamic Typing \& Dynamic Precedence.}  
 % why dynamic analysis, not static analysis; why tracing and backward slicing both have to be dynamic.
 JavaScript variables are dynamically typed.  Thus given a variable, we won't know exactly what type its value represents until we actually run the code.  
 In our previous example, {\tt a} can be anything: an integer, a string, a boolean, or an object.  
@@ -35,27 +66,37 @@ Static analysis by itself is insufficient to detect which lines of code are DOM 
 Indeed, authors of existing JavaScript static techniques~\cite{staticJsWWW09, staticJsWWW11} reveal substantial gaps and false positives in their own work.  
 Thus the only way to discover whether a condition contains DOM operations is to run the code.  Both tracing and backward slicing have to be dynamic to accurately determine which conditions depend on the DOM, and which don't.  
 
-
-%\header{Nested Composition and Dynamic Precedence.}  
+Dynamic precedence is another reason for conducting a dynamic backward slice.   
 %What is the best and simplest way to incorporate dynamic tracing and dynamic backward slicing into the execution of JavaScript source code?  
 %After all, if we were to support concolic testing, we must be able to accurately guide execution towards an intended path and thus we must properly understand how a condition would result in the {\tt True} and {\tt False} branches.    
 %As stated in our contributions, our approach is generic, transparent, and browser independent; thus we cannot modify the source code of Web browsers and natively support slicing and tracing.  
 %This is why we instrument JavaScript as it gets downloaded to the browser.  
-% why decorated execution, not offline analysis
+% why decorated execution, not offline analysis 
 %Adding to the overall complexity, conditions are usually composed of sub-conditions linked by logical operators (e.g. {\tt or}'s, {\tt and}'s, {\tt not}'s) nested inside one another.
 %Executions of conditions can also have precedence.  For example, in an {\tt and}, when the first sub-condition is {\tt false}, the second sub-condition is never executed.  Similarly, an {\tt or} never executes the second sub-condition when the first returns {\tt true}.
 % how is this a challenge
 % drives the need for decorated execution, different from Jalangi
 
 \begin{figure}
-\begin{lstlisting}[caption=Example code showing conditions that have logical constraints interdependent with each other.  To make both of these {\tt if} statements true sub conditions i) and ii) become mutually exclusive: they cannot be true at the same time.  Thus a logic solver is required to generate a satisfiable DOM structure and HTML.,label=domOr]  
+\begin{lstlisting}[caption=Example code showing DOM operations that are chained and conditions that have logical constraints interdependent with each other.  To make both of these {\tt if} statements true sub conditions i) and ii) become mutually exclusive: they cannot be true at the same time.  Thus a logic solver is required to generate a satisfiable DOM structure and HTML.,label=domOr]  
 // ...
-if (d === a.firstElementChild // i)
+// Interdependent Logic Constraints
+if (d === elem.firstElementChild // i)
  || d === b.lastElementChild) {}
 // ... 
-if (d === a.parentElement // ii)
+if (d === elem.parentElement // ii)
  || d === b.parentElement) {}
 // ...
+
+if (b.previousElementSibling === 
+    c.firstElementChild) {}
+
+// Chained DOM operations 
+if (elem.parentElement.parentElement 
+    === c.lastElementChild.previousElementSibling) {}  
+if (c.children[2] === 
+    b.nextElementSibling) {}  
+}
 \end{lstlisting}
 \end{figure}
 
