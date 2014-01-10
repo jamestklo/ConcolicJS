@@ -7,7 +7,7 @@ Both the Backward Slicer and MapDeducer are implemented as JavaScript APIs.  Web
 
 \header{DOM Solver.}  
 CVC allows writing the constraints in Java, yet we don't want to hardcode the constraints because the constraints are different in each execution path.  
-Thus we use Java's ProcessBuilder~\cite{} class to communicate with the executable (.exe) version of CVC.  We decided to use CVC3 rather than CVC4 because CVC3 is generally more stable during our experimentation.  
+Thus we use Java's ProcessBuilder~\cite{processbuilder} class to communicate with the executable (.exe) version of CVC.  We decided to use CVC3 rather than CVC4~\cite{cvc4} because CVC3 is generally more stable during our experimentation.  
 The API that parses the CVC output is also implemented in Java, thus we used the W3C DOM API~\cite{DomAPI} for generating HTML.  
 QUnit provides a <div> called the fixture which can be set as the HTML for a test case.   Before execution, WebDriver would set the {\tt innerHTML} of the fixture element to the generated HTML.  
 

@@ -86,10 +86,11 @@ Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DO
 
 
 \header{2D Tree Structure \& Implicit Clues.}  
-The DOM solver also has to infer the 2D tree structure of the DOM.  For example, when {\tt b.previousElementSibling === c.firstElementChild}, the solver has to understand the subtlety that {\tt c} is the parent of {\tt b}.  
+% why quantifiers and not meshing tree pieces together
+The DOM solver must also be able to infer indirect clues based on the 2D tree structure of the DOM.  For example, when {\tt b.previousElementSibling === c.firstElementChild}, the solver has to understand the implication that {\tt c} is the parent of {\tt b}.  
 
 The DOM solver also has to consider the fact that the DOM clues can subtly overlap with each other.  DOM clues can overlap because DOM operations can be chained.  In JavaScript, a DOM operation of a DOM element (e.g. {\tt elem.parentElement}) returns another DOM element.  Thus DOM operations can be chained: {\tt elem.parentElement.parentElement}.  
-In Figure~\ref{trees}, when {\tt elem.parentElement.parentElement === c.lastElementChild.previousElementSibling}, the subtle implication is {\tt b.nextElementSibling} is {\tt c.lastElementChild}, because {\tt d === b.parentElement} and {\tt d === b.lastElementChild}.  
+In Figure~\ref{trees}, when {\tt elem.parentElement.parentElement === c.lastElementChild.previousElementSibling}, the subtle implication is that {\tt b.nextElementSibling} is {\tt c.lastElementChild}, because {\tt d === b.parentElement} and {\tt d === b.lastElementChild}.  
 
 Overlapping can become complex after the intermediate variables are resolved into a long dynamic backward slice.  The reason is that, there can be multiple long chains in both parental and sibling dimensions: e.g. {\tt elem.parentElement.parentElement.nextElementSibling.children[2]}.  
 The multiple long chains can overlap and weave with each other on multiple spots.

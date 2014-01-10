@@ -8,7 +8,7 @@ Whether the test inputs are manually, randomly (e.g. ~\cite{artemis}) or symboli
 %A major difference is that \tool solves for complex logic constraints (e.g. AND, OR conditions).
 
 
-\header{Concolic Execution}
+\header{Concolic Testing.}
 Concolic execution ~\cite{cute}, also known as dynamic symbolic execution, is a method of exhaustively executing the source code for maximizing path coverage. 
 A path is a sequential permutation of branches.  For example, each IF statement has 2 branches: True and False; each iteration within a loop also has 2 branches: Stay and Break. 
 Execution of branches is mutually exclusive: going to True implies not going to False.
@@ -20,3 +20,26 @@ Our work is also designed to run on multiple browsers, while Kudzu runs on only 
 %jalangi and Kudzu focuses on generating inputs, and did not address the problems of closures and making test cases runnable.
 
 Dynamic backward slicing first requires logging the runtime execution and our logging approach is similar to Jalangi~\cite{jalangi}'s shadow system, in which we encapsulate each data value into an object; the object contains the log (backward trace, in our case) in addition to the data’s current value. While it can also be used for concolic testing, Jalangi’s shadow system is mainly aimed at record and replay.  
+
+\header{Constraint Solvers.} 
+Constraint solvers (e.g. SAT solvers) solve for parameters that satisfy a set of predefined constraints.  
+Genevès et al. developed an XML solver~\cite{xmlsolver} that takes limited XPaths as inputs; then it outputs XML that would satisfy those XPath conditions. 
+However the XPaths that the XML solver supports are severely limited. Their solver does not support DOM node attributes and is not scalable to more than 5 unique nodes. 
+
+CVC~\cite{cvc3, cvc4} is more scalable and the constraints can be more expressive.  
+However, while used by ~\cite{cute} and ~\cite{jalangi}, CVC is a general SMT solver and does not natively support the tree structure defined in the DOM API.  
+Nevertheless, both solvers give only a description of the desired DOM tree (e.g. node A is child of node B) at most, rather than the actual XML/HTML. 
+In our case for testing JavaScript applications, we have to take an additional step to transform the solver’s output into HTML.
+
+
+\header{Feedback Directed Testing.}   
+Feedback Directed Testing is an adaptive testing approach that uses the outcome of executing an input, to determine what the next input should be for achieving a goal, mostly maximizing coverage. 
+Concolic testing is a form of feedback directed testing, in which it conducts dynamic backward slicing to generate inputs, and then uses the resulting executed path as feedback.  
+In contrast, Artemis~\cite{artemis}’s approach generates initial inputs randomly and uses the output of functions as feedback.  
+Pythia~\cite{pythia} also generates initial inputs randomly, their feedback is changes to a state flow graph model, and their goal is to maximize the number of functions being called. 
+In contrast to Artemis and our tool, Pythia is for regression testing; it requires a previous version of bug free software, and also mandates that the current version has zero change in both behavior and interface such that the same input always yields identical output. 
+When a software requires regression testing, it either has a bug fixed (violates the bug-free requirement) or has an improvement or a new feature implemented (may violate the zero change requirement).  
+An occasion when both external behavior and interface don’t change, is when a function’s internal implementation has changed for improving only performance. 
+Then, JavaScript applications are known to lack determinism~\cite{mugshot}, meaning the same source code is known to yield different outputs even for the same inputs.  
+Moreover, while we aim to infer an HTML input, Pythia uses the application’s existing HTML to unit test JavaScript functions.
+

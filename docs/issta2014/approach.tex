@@ -39,12 +39,12 @@ Another special case is the {\tt ++} and {\tt --} operators.  For operations lik
 \header{Backward Slicer.}
 % would a diagram be good?
 The data structure of the decorated objects can be seen as a nested or tree structure because the calls to the operator functions are nested inside one another.  For example, in Sample Code \ref{sheq}, the call to {\tt \_GET(..., "length")} is nested inside the call to {\tt \_SHEQ()}.  
-Therefore, if we simply put the name of the operator function (e.g. "\_GET", "\_SHEQ", ...), inside the taint data, we can easily generate a backward slice via a tree traversal.  
+Therefore, if we simply put the name of the operator function (e.g. "\_GET", "\_SHEQ", ...), inside the taint data, we can easily generate a backward slice via a post order tree traversal.  
 
 In Sample Code \ref{sheq}, the variable {\tt a} equals to ({\tt row.children.length === b}).  Thus {\tt a}'s backward slice must contain the backward slices of {\tt b} and {\tt row.children.length}, linked by the strict equal {\tt ===} operator.  
 At line 8, the decorated object returned by {\tt \_SHEQ()}, assigned to the variable {\tt a}, is the tree parent of 2 decorated objects: {\tt b}, and the decorated object returned by the {\tt \_GET()} call.  
-Because the tree children of a decorated object always come from earlier executions, e.g. {\tt \_GET(..., "children")} is executed before {\tt \_GET(..., "length")} before {\tt \_SHEQ(..., b)}, the tree's hierarchical structure is reversely proportional to the temporal order in which operator functions are executed.  
-The backward slicer traverses (e.g. post order) the decorated objects, yields a temporal history of the code's runtime execution, and generates a dynamic backward slice.  
+Because the tree children of a decorated object always come from earlier executions, e.g. {\tt \_GET(..., "children")} is executed before {\tt \_GET(..., "length")} before {\tt \_SHEQ(..., b)}, the tree's hierarchical structure is reversely proportional to the chaining order of the DOM operations.  
+Thus the backward slicer traverses the decorated objects in post order to follow the chaining order of the DOM operations, i.e. post order is to traverse the decorated objects bottom up from leaf to root and trace the DOM operation chains from head to tail.  
 
 During the traversal, we identify conditions that contain DOM operations and extract these DOM operations accordingly.  Each tree leaf represents an input or a constant.  
 For example, a dynamic backward slice of {\tt row} would lead us to the DOM element with ID {\tt "row"+i}, where {\tt "row"} is a constant string, and {\tt i} has a backward slice leading to {\tt field.children.length}, which would lead us to the DOM element with ID {\tt "field"}.  

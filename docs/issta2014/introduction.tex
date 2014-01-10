@@ -66,7 +66,7 @@ The following are the main contributions of our paper:
 \end {compactitem}
 
 \tool augments approaches that aim to generate tests automatically.  
-Random testing~\cite{artemis}, feedback directed testing~\cite{}, mutation testing~\cite{pythia}, concolic testing~\cite{cute}... to our best knowledge, almost all of existing research focused on generating input parameters for testing functions or HTML inputs\footnote{by HTML inputs we include inputs for HTML text fields, forms, buttons mouse clicks and key presses.} for testing apps.
+Random testing~\cite{artemis}, greedy feedback directed testing~\cite{}, mutation testing~\cite{pythia}, concolic testing~\cite{cute}... to our best knowledge, almost all of existing research focused on generating input parameters for testing functions or HTML inputs\footnote{by HTML inputs we include inputs for HTML text fields, forms, buttons mouse clicks and key presses.} for testing apps.
 However, having just function parameters and HTML inputs is often insufficient.  For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.\footnote{Another category of dependencies is closure variables.}
 Moreover, it should be noted that the {\tt function checkRows()} does not take any input parameters, and many functions are like that in JavaScript.
 Yet, these functions depend on, and would sometimes mutate, their dependencies such as the DOM.
