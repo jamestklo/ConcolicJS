@@ -1,4 +1,5 @@
 \section{Introduction}
+% make it shorter of why JavaScript is important.  
 JavaScript is increasingly a popular language for software implementation: %; and the World Wide Web is increasingly an attractive platform for delivering applications.
 For end users, HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to those implemented for traditional desktops.  
 The latest round of browser wars makes executing JavaScript more efficient, robust, secure and consistent.  
@@ -13,6 +14,10 @@ When JavaScript code runs, its runtime execution would encounter DOM operations 
 In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.  
 
 \subsection{Motivating Example}
+% want 1 example
+% keep language consistent: DOM (not HTML). 
+% give challenge numbers, approach solves challenge number say 1.  
+% how to deal with incomplete traces.  concolic testing, seed.  
 To further illustrate the necessity of having a satisfiable DOM structure, suppose the {\tt function checkRows()} in Sample Code~\ref{dom0} is being unit tested concolic-ly.  
 The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement the game Tetris.  
 Concolic testing~\cite{cute} executes the app in a way to maximize path coverage; to do so, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in Sample Code~\ref{dom0}.  
