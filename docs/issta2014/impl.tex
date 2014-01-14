@@ -1,7 +1,8 @@
 \section{Implementation}
 
 \header{Instrumenting JavaScript.}  
-Our approach has to be generic, transparent and browser-independent.  Thus we use WebDriver~\cite{webdriver} to drive the test case execution and a proxy~\cite{webscarab} to intercept JavaScript for instrumentation.  WebDriver runs on multiple browsers, including headless browsers such as PhantomJS.  
+Our approach has to be generic, transparent and browser-independent.  Thus we use WebDriver~\cite{webdriver} to drive the test case execution and a proxy~\cite{webscarab} to intercept JavaScript for instrumentation.  
+WebDriver runs on multiple browsers, including headless browsers such as PhantomJS~\cite{phantomjs}.  
 Google's Closure Compiler API~\cite{ClosureCompiler} is used to transform the original JavaScript into calls to the operator functions. 
 Both the Backward Slicer and MapDeducer are implemented as JavaScript APIs.  WebDriver calls the MapDeducer API, which returns the constraints in text.  
 
@@ -28,3 +29,7 @@ The {\tt instrument()} function would send the {\tt code} to the proxy for instr
 To instrument inline JavaScript, we traverse the original HTML using the JSoup API~\cite{jsoup}.  Once we detect DOM attributes that contain JavaScript, we pass the JavaScript to ClosureCompiler for instrumentation.  
 For newly created elements, e.g. {\tt elem.innerHTML = text}, we use getters and setters to detect the new elements.  Once detected, we traverse the new elements, extract JavaScript and call the {\tt instrument()} function.  
 % Tudu
+
+% \tool has integration with QUnit~\cite{qunit} so that existing test suites can automatically take advantage of \tool without additional manual effort.  
+% \tool is also extensible to be integrated with other test frameworks~\cite{jstests}.
+% Thus given a test case, be its inputs were generated manually or automatically, \tool can be used to help the test case and its assertions get fully utilized.

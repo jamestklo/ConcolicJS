@@ -10,7 +10,9 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 public class SeleniumDriver {
 
 	public static void main(String[] args) {
-		System.setProperty("webdriver.chrome.driver", "C:/Users/jtk1o/git/ConcolicJS/resources/chromedriver.exe");
+		//System.setProperty("webdriver.chrome.driver", "C:/Users/jtk1o/git/ConcolicJS/resources/chromedriver.exe");
+		System.setProperty("webdriver.chrome.driver", "/Users/tklo/git/ConcolicJS/resources/chromedriver");
+
 		// Create a new instance of the Firefox driver
 		// Notice that the remainder of the code relies on the interface, 
 		// not the implementation.
