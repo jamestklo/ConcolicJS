@@ -1,11 +1,13 @@
 package ca.ubc.tklo.cvc;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +20,8 @@ public class CVCsolverDOM {
 	protected Set<String> nodeIDs;
 	protected Set<String> tempIDs;
 	protected String sessionID;
-	public CVCsolverDOM(CVCemulatorWindows emulator, String cvc_dom, String cvc_slice) {    	
+
+	public CVCsolverDOM(CVCemulatorWindows emulator, String cvc_dom, String cvc_slice) {
     	this.emulator = emulator;
     	this.cvc_dom = cvc_dom;
     	this.cvc_slice = cvc_slice;
@@ -94,25 +97,42 @@ public class CVCsolverDOM {
 			}
 		}		
 		return null;
-	}	
-    public static void main(String[] args) {
-    	String prefix = "Z:/git/ConcolicJS/smt/";
-    	String cvcpath = prefix+ "cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive"; 
-    	String dompath = prefix+ "cvc3-DOM1.cvc";
+	}
+
+	public static String solve(String cvc_slice) {
+      String prefix = "/Users/tklo/git/ConcolicJS/smt/";
+	  String cvcpath = prefix + "cvc3-2.4.1-macosx-optimized-static/bin/cvc3 +interactive";
+	  String dompath = prefix+ "cvc3-DOM1.cvc";
+  	  CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
+  	  String output = csd.solve();
+  	  csd.quit();
+ 	  XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
+
+ 	  ByteArrayOutputStream outstream = new ByteArrayOutputStream();
+  	  XMLgenerator.outXML(xmlg.getDocument(), outstream);
+      return outstream.toString();
+	}
+
+	public static void main(String[] args) {
+    	//String prefix = "Z:/git/ConcolicJS/smt/";
+    	//String cvcpath = prefix+ "cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive"; 
+		String prefix = "/Users/tklo/git/ConcolicJS/smt/";
+		String cvcpath = prefix + "cvc3-2.4.1-macosx-optimized-static/bin/cvc3 +interactive";
+		String dompath = prefix+ "cvc3-DOM1.cvc";
     	String sespath = prefix+ "cvc3-example1.cvc";
     	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
     	String output = csd.solve();
     	csd.quit();
     	
     	// parse output of CVC, generate XML
-    	String xmlpath = prefix+ "cvc3-exampleD.xml";
+    	String xmlpath = prefix+ "cvc3-example1.xml";
 		XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
-		XMLgenerator.outXML(xmlg.getDocument(), System.out);
+		//XMLgenerator.outXML(xmlg.getDocument(), System.out);
 		try {
 			XMLgenerator.outXML(xmlg.getDocument(), new FileOutputStream(xmlpath));
 		}
 		catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} 			
-    }
+    } 
 }

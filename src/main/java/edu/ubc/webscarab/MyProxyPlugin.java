@@ -76,8 +76,11 @@ public class MyProxyPlugin extends ProxyPlugin {
 			if (href.contains("soundfont-ogg.js") || href.contains("data:audio") || href.contains("trazing")) {
 			  return response;				
 			}
-			if (href.contains(".js") == true) {
+			if (href.endsWith(".js")) {
 				response.setHeader("Content-Type", "application/javascript");
+			}
+			else if (href.endsWith(".html") || href.endsWith(".htm")) {
+				response.setHeader("Content-Type", "text/html");
 			}
 						
 			if(response != null) {

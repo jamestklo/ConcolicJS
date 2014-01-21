@@ -7,7 +7,8 @@ import java.util.ArrayList;
 public class InsertJScriptTransformer implements Transformer {
 	
 	// private static String host = "http://184.73.167.93/zzv2/client-js/";	 
-	private static String host = "http://www.ugrad.cs.ubc.ca/~k5r4/nbpAFZyrx5o/";
+	private static String host = "http://localhost:8000/";
+	//private static String host = "http://www.ugrad.cs.ubc.ca/~k5r4/nbpAFZyrx5o/";
 	// 6c03c3724338e041428613752dd5d40a		
 
 	// insert our own scripts
@@ -40,7 +41,7 @@ public class InsertJScriptTransformer implements Transformer {
 		if (index0 < 0) {
 			pattern = "<body>";
 			index0 = lowerCase.indexOf(pattern);		
-		} 
+		}
 
 		// web_page has neither <head> or <body>
 		if (index0 < 0) {
