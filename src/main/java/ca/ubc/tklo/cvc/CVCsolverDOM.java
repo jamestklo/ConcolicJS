@@ -95,13 +95,17 @@ public class CVCsolverDOM {
 			catch (IOException e) {
 				e.printStackTrace();
 			}
-		}		
+		}
 		return null;
 	}
 
-	public static String solve(String cvc_slice) {
-      String prefix = "/Users/tklo/git/ConcolicJS/smt/";
+	public static String solve(String cvc_slice, String solver) {
+      String prefix = "/Users/tklo/git/ConcolicJS/smt/";    
 	  String cvcpath = prefix + "cvc3-2.4.1-macosx-optimized-static/bin/cvc3 +interactive";
+	  switch(solver) {
+	    case("cvc4"): cvcpath = "/opt/local/bin/cvc4"; break;
+	  }
+	  System.out.println(cvcpath);
 	  String dompath = prefix+ "cvc3-DOM1.cvc";
   	  CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
   	  String output = csd.solve();
@@ -118,8 +122,8 @@ public class CVCsolverDOM {
     	//String cvcpath = prefix+ "cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive"; 
 		String prefix = "/Users/tklo/git/ConcolicJS/smt/";
 		String cvcpath = prefix + "cvc3-2.4.1-macosx-optimized-static/bin/cvc3 +interactive";
-		String dompath = prefix+ "cvc3-DOM1.cvc";
-    	String sespath = prefix+ "cvc3-example1.cvc";
+		String dompath = prefix + "cvc3-DOM1.cvc";
+    	String sespath = prefix + "cvc3-example1.cvc";
     	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
     	String output = csd.solve();
     	csd.quit();
@@ -133,6 +137,6 @@ public class CVCsolverDOM {
 		}
 		catch (FileNotFoundException e) {
 			e.printStackTrace();
-		} 			
+		}
     } 
 }

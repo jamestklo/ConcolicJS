@@ -48,7 +48,6 @@ public class XMLgenerator {
 				node.setAttribute(sessionID, tempID);
 			}			
 		}
-		
 	}
 	public String getDefaultTag() {
 		return "span";

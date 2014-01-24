@@ -48,6 +48,18 @@ public class MyProxyPlugin extends ProxyPlugin {
 		}
 		
 		//@Override 
+		/* (non-Javadoc)
+		 * @see org.owasp.webscarab.httpclient.HTTPClient#fetchResponse(org.owasp.webscarab.model.Request)
+		 */
+		/* (non-Javadoc)
+		 * @see org.owasp.webscarab.httpclient.HTTPClient#fetchResponse(org.owasp.webscarab.model.Request)
+		 */
+		/* (non-Javadoc)
+		 * @see org.owasp.webscarab.httpclient.HTTPClient#fetchResponse(org.owasp.webscarab.model.Request)
+		 */
+		/* (non-Javadoc)
+		 * @see org.owasp.webscarab.httpclient.HTTPClient#fetchResponse(org.owasp.webscarab.model.Request)
+		 */
 		public Response fetchResponse(Request request) throws IOException {
 			HttpUrl url = request.getURL();			
 			String href = "";
@@ -92,7 +104,11 @@ public class MyProxyPlugin extends ProxyPlugin {
 					}
 					try {
 						if (cType.contains("javascript") || cType.contains("text/x-js")) {
-							if (href.contains("zzv2") || href.contains("firebug-lite") || href.contains("fbug.googlecode.com")) {
+							if (href.contains("zzv2") 
+							 || href.contains("http://code.jquery.com:80/qunit/qunit-")
+							 || href.endsWith("-qunit.js")
+							 || href.contains("firebug-lite") 
+							 || href.contains("fbug.googlecode.com")) {
 								return response;
 							}
 							modifyResponse(href, response, charset, transformers.get("Trace"));
