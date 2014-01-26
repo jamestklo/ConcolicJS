@@ -20,6 +20,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 /*
  *  remains to be done
  *  	1) extending XMLgenerator.java to cover attributes, tag names, etc.
@@ -169,23 +170,31 @@ public class XMLgenerator {
 			e.printStackTrace();
 		}		
 	}	
-	private Document toDOM(Document document) {							
+	private Document toDOM(Document document) {
 		try {
 			if (document == null) {
 				document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 			}
 			// find root
-			Set<CVCnode> roots = new HashSet<CVCnode>();		
+			Set<CVCnode> branches = new HashSet<CVCnode>();
+			CVCnode root = null;
 			Iterator<CVCnode> itr_cvc = nameToNode.values().iterator();
 			while (itr_cvc.hasNext()) {
 				CVCnode node = itr_cvc.next();
 				if (node.getParent() == null) {					
-					roots.add(node);
+					if (node.aliases.contains("r")) {
+						root = node;
+					}
+					else {
+						branches.add(node);
+					}
 				}
 			}
-			itr_cvc = roots.iterator();		
+			Element rootElem = root.toDOM(document);
+			document.appendChild(rootElem);
+			itr_cvc = branches.iterator();
 			while (itr_cvc.hasNext()) {
-				document.appendChild(itr_cvc.next().toDOM(document));
+				rootElem.appendChild(itr_cvc.next().toDOM(document));
 			}
 		}
 		catch (ParserConfigurationException e) {

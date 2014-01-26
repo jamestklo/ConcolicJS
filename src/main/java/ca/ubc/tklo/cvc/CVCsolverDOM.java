@@ -124,14 +124,22 @@ public class CVCsolverDOM {
 		String cvcpath = prefix + "cvc3-2.4.1-macosx-optimized-static/bin/cvc3 +interactive";
 		String dompath = prefix + "cvc3-DOM1.cvc";
     	String sespath = prefix + "cvc3-example1.cvc";
-    	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
+    	String cvc_slice = ""
+        + "tmpCVC, tmpCVC000, tmpCVC001, row0, tetris, r: Node;\n"
+        + "ASSERT root(r);\n"
+        + "ASSERT children(tmpCVC000, row0, 9) AND DISTINCT(row0);\n"
+        + "ASSERT children(tmpCVC001, tetris, 0) AND DISTINCT(tetris);\n"
+    	+"";
+
+    	//CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
+    	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
     	String output = csd.solve();
     	csd.quit();
     	
     	// parse output of CVC, generate XML
     	String xmlpath = prefix+ "cvc3-example1.xml";
 		XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
-		//XMLgenerator.outXML(xmlg.getDocument(), System.out);
+		XMLgenerator.outXML(xmlg.getDocument(), System.out);
 		try {
 			XMLgenerator.outXML(xmlg.getDocument(), new FileOutputStream(xmlpath));
 		}

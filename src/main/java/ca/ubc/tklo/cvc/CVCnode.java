@@ -15,7 +15,7 @@ import org.w3c.dom.Element;
 
 public class CVCnode {
 	XMLgenerator xmlg;
-	
+
 	Set<String> aliases;
 	CVCnode parent;
 	Set<CVCnode> children;
@@ -147,7 +147,7 @@ public class CVCnode {
 			set2.add(itr_cvc.next());
 		}
 		itr_cvc = set2.iterator();
-		while (itr_cvc.hasNext()) {	
+		while (itr_cvc.hasNext()) {
 			CVCnode iterated = itr_cvc.next();
 			int position = iterated.position;			
 			if (position < 0) {				
@@ -167,6 +167,9 @@ public class CVCnode {
 			}
 		}
 		itr_cvc = remaining.iterator();
+		if (max == 1 && itr_cvc.hasNext()) {
+			map.put(1, itr_cvc.next());
+		}
 		while (itr_cvc.hasNext()) {
 			CVCnode iterated = itr_cvc.next();
 			int position = iterated.calPosition();
@@ -186,15 +189,12 @@ public class CVCnode {
 		List<CVCnode> ordered = new ArrayList<CVCnode>();		
 		for (int i=0; i <= max; i++) {
 			CVCnode node = map.get(i);
-			if (node instanceof CVCnode) {
-				ordered.add(map.get(i));
-			}
-			// fillers
-			else {
+			if (! (node instanceof CVCnode)) {
 				node = new CVCnode(this.xmlg);
 				node.parent = this;
 				node.position = i;
-			}			
+			}
+			ordered.add(node);
 		}
 		return ordered;
 	}

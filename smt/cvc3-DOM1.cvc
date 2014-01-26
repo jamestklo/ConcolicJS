@@ -33,7 +33,7 @@ ASSERT FORALL (x, y: Node):
 
 ASSERT FORALL (x, y, z: Node):
 	(child(x,y) AND DISTINCT(y,z)) => NOT(child(x,z));
-		
+
 ASSERT FORALL (x, y: Node):
 	descendant(x, y) <=> child(x, y) OR ( EXISTS (z: Node): descendant(x, z) AND child(z, y) );
 

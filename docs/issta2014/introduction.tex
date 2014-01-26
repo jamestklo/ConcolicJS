@@ -3,8 +3,8 @@
 JavaScript is increasingly a popular language for software implementation: %; and the World Wide Web is increasingly an attractive platform for delivering applications.
 For end users, HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to those implemented for traditional desktops.  
 The latest round of browser wars makes executing JavaScript more efficient, robust, secure and consistent.  
-For programmers, JavaScript does not have the burden of memory management and static typing; and more operating systems in both the desktop~\cite{windows8javascript, chromeApps} 
-and mobile~\cite{androidWebView, firefoxOS, tizen, blackberryWebWorks} actually now support installing and running JavaScript apps on the OS similar to native apps.
+For programmers, JavaScript does not have the burden of memory management and static typing; and more operating systems in both the desktop~\cite{chromeApps, windows8javascript} 
+and mobile~\cite{blackberryWebWorks, firefoxOS, androidWebView, tizen} actually now support installing and running JavaScript apps on the OS similar to native apps.
 The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware heterogeneity, 
 which also makes JavaScript apps\footnote{JavaScript apps are preferred in Web browsers because they are lighter weight than Java applets and they don't require installation of any proprietary plugins such as Flash and Silverlight} 
 a conveniently portable solution for delivering the application front end (e.g.~\cite{BNSFoffice365}).
@@ -21,23 +21,58 @@ In other words, when trying to run a test case, if the DOM structure does not sa
 % keep language consistent: DOM (not HTML). 
 % give challenge numbers, approach solves challenge number say 1.  
 % how to deal with incomplete traces.  concolic testing, seed.  
-To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic unit-testing on the {\tt function checkRows()} in Sample Code~\ref{dom0}.  
-The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement the game Tetris.  
-Concolic testing~\cite{cute} executes the app in a way to maximize path coverage; to do so, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in Sample Code~\ref{dom0}.  
+To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic testing on the {\tt function clearBoard()} in Sample Code~\ref{dom0}.  
+The function comes from a sample Web application written by Intel~\cite{mancala} for developing in the Tizen OS. 
+Tizen OS
+
+Concolic testing~\cite{cute} would execute an app in a way to maximize path coverage; to do so, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in Sample Code~\ref{dom0}.  
+%\begin{figure}
+%\begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
+%function checkRows() {
+%  var field = getElementById("tetris"); 
+%  var i, row;
+%  for (i=field.children.length; i--;) {
+%    row = getElementById("row"+i);
+%    if (row.children.length === 10) {
+%      // ... row filled, update score
+%    }
+%  }
+%}
+%\end{lstlisting}
+%\end{figure}
 \begin{figure}
-\begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
-function checkRows() {
-  var field = getElementById("tetris"); 
-  var i, row;
-  for (i=field.children.length; i--;) {
-    row = getElementById("row"+i);
-    if (row.children.length === 10) {
-      // ... row filled, update score
+\begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure., label=dom0]
+function clearBoard() {
+  //clear beads
+  var center = document.getElementById("center");
+  var beads  = document.getElementsByClassName("beads");
+  while(beads.length > 0) {
+    center.removeChild(beads[0]);
+    beads = document.getElementsByClassName("beads");
+  }
+
+  var beadNumber = parseInt(getBeadNumber());
+  //clear text
+  for(var holes=0; holes<14; holes++) {
+    if (holes == 6) {
+      document.getElementById("player1-score_text").innerHTML = getMessage("player_1_score")+" 0";
+    }
+    else if (holes == 13) {
+      document.getElementById("player2-score_text").innerHTML = getMessage("player_2_score")+" 0";
+    }
+    else {
+      document.getElementById("pit"+holes+"_count").innerText = beadNumber;
     }
   }
 }
 \end{lstlisting}
 \end{figure}
+
+\begin{figure*}[ht]
+\centerline{\scalebox{0.25}{\includegraphics[natwidth=3467,natheight=2063]{mancala.png}}}
+\caption[Mancala game]{}
+\label{trees}
+\end{figure*}
 
 To guide the {\tt if} statement going to the {\tt True} branch, the web page's HTML must yield a DOM structure satisfying many constraints:
 \begin {compactitem}
