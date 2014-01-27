@@ -109,11 +109,12 @@ public class CVCsolverDOM {
 	  String dompath = prefix+ "cvc3-DOM1.cvc";
   	  CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
   	  String output = csd.solve();
-  	  csd.quit();
- 	  XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
-
+ 	  
+  	  XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
  	  ByteArrayOutputStream outstream = new ByteArrayOutputStream();
   	  XMLgenerator.outXML(xmlg.getDocument(), outstream);
+  	  
+  	  csd.quit();
       return outstream.toString();
 	}
 
@@ -127,14 +128,13 @@ public class CVCsolverDOM {
     	String cvc_slice = ""
         + "tmpCVC, tmpCVC000, tmpCVC001, row0, tetris, r: Node;\n"
         + "ASSERT root(r);\n"
-        + "ASSERT children(tmpCVC000, row0, 9) AND DISTINCT(row0);\n"
+        + "ASSERT 10 = childrenLength(row0) AND DISTINCT(row0);\n"
         + "ASSERT children(tmpCVC001, tetris, 0) AND DISTINCT(tetris);\n"
     	+"";
 
     	//CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
     	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
     	String output = csd.solve();
-    	csd.quit();
     	
     	// parse output of CVC, generate XML
     	String xmlpath = prefix+ "cvc3-example1.xml";
@@ -146,5 +146,6 @@ public class CVCsolverDOM {
 		catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		csd.quit();
     } 
 }

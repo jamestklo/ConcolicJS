@@ -19,7 +19,7 @@ public class CVCnode {
 	Set<String> aliases;
 	CVCnode parent;
 	Set<CVCnode> children;
-	
+	int childrenLength;
 	String tag;
 	Map<String, String> attributes;
 	
@@ -29,6 +29,7 @@ public class CVCnode {
 		this.xmlg 		= xmlg;
 		this.aliases	= new HashSet<String>();
 		this.children 	= new HashSet<CVCnode>();
+		this.childrenLength = 0;
 		this.position 	= -2;
 		this.attributes = new HashMap<String, String>();
 	}
@@ -55,11 +56,21 @@ public class CVCnode {
 			parent.children.add(this);
 		}
 	}
-	
+	public void setChildrenLength(int len) {
+		this.childrenLength = len;
+	}
 	public int setPosition(int position) {
 		int oldPosition  = this.position;
-		if (position != oldPosition && oldPosition < 0 && position >= -1) {			
-			this.position = position;		
+		if (position != oldPosition && oldPosition < 0 && position >= -1) {
+			if (position == -1) {
+				this.position = this.parent.childrenLength-1;
+			}
+			else {
+				this.position = position;	
+			}
+		}
+		else if (position == -1) {
+			
 		}
 		return oldPosition;		
 	}
@@ -99,7 +110,7 @@ public class CVCnode {
 	public CVCnode getParent() {
 		return this.parent;
 	}
-			
+		
 	public void merge(CVCnode node) {
 		if (this.equals(node) || node.position==-3) {
 			return;
@@ -128,6 +139,10 @@ public class CVCnode {
 			this.tag = node.tag;
 		}
 		
+		if (this.childrenLength <= 0) {
+			this.childrenLength = node.childrenLength;
+		}
+		
 		itr_str = node.attributes.keySet().iterator();
 		while(itr_str.hasNext()) {
 			String key = itr_str.next();
@@ -138,7 +153,8 @@ public class CVCnode {
 	}
 
 	protected List<CVCnode> orderChildren() {
-		int max = -1;
+		int max = this.childrenLength-1;
+		System.out.println(this.aliases +" "+ max);
 		Map<Integer, CVCnode> map = new HashMap<Integer, CVCnode>();
 		Set<CVCnode> remaining = new HashSet<CVCnode>();
 		Iterator<CVCnode> itr_cvc = this.children.iterator();
@@ -149,7 +165,10 @@ public class CVCnode {
 		itr_cvc = set2.iterator();
 		while (itr_cvc.hasNext()) {
 			CVCnode iterated = itr_cvc.next();
-			int position = iterated.position;			
+			int position = iterated.position;	
+			if (position == -1) {
+				position = this.parent.childrenLength -1;
+			}
 			if (position < 0) {				
 				remaining.add(iterated);
 			}
@@ -238,7 +257,7 @@ public class CVCnode {
 			id = elem.getAttribute(sessionID);
 			if (id == null || id.length() == 0) {
 				elem.setAttribute(sessionID, getName());	
-			}					
+			}
 		}
 
 		ListIterator<CVCnode> itr = this.orderChildren().listIterator(); 

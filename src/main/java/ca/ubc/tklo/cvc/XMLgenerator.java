@@ -29,6 +29,7 @@ public class XMLgenerator {
 	protected Map<String, CVCnode> nameToNode = new HashMap<String, CVCnode>();
 	protected CVCsolverDOM cvc;
 	protected Document document;
+	protected CVCnode root;
 	public XMLgenerator(CVCsolverDOM cvc, BufferedReader reader) {
 		this.cvc = cvc;
 		parseSolverOutput(reader);
@@ -84,7 +85,17 @@ public class XMLgenerator {
 			return childNode;
 		}
 		return setParent(child, getNode(parent), at);
-	}	
+	}
+	protected CVCnode setRoot(String name) {
+		CVCnode node = getNode(name);
+		if (root instanceof CVCnode) {
+			root.merge(node);
+		}
+		else {
+			root = node;
+		}
+		return root;
+	}
 	protected CVCnode setParent(String child, CVCnode parent, int at) {
 		CVCnode childNode = getNode(child);
 		childNode.setParent(parent);
@@ -118,17 +129,29 @@ public class XMLgenerator {
 		//prevNode.setNext(nextNode);
 		//nextNode.setPrev(prevNode);
 	}
+	private int count(String str, String substr) {
+		int lastIndex = 0;
+		int count =0;
+		while(lastIndex != -1) {
+			lastIndex = str.indexOf(substr, lastIndex);
+			if( lastIndex != -1){
+				count ++;
+				lastIndex+=substr.length();
+			}
+	    }
+	    return count;
+	}
 	private void parseSolverOutput(BufferedReader br) {					
-		String regex0 = "(parent|child|children|firstChild|lastChild|nextSibling|previousSibling|following_sibling|preceding_sibling).*";
-		Pattern p0 = Pattern.compile("[\\(,\\s\\)]");
+		String regex0 = "(parent|child|children|firstChild|lastChild|nextSibling|previousSibling|following_sibling|preceding_sibling|childrenLength|root).*";
+		Pattern p0 = Pattern.compile("[\\(,\\s\\)=]");
 
 		//String regex1 = "\\(.* = .*\\);$";
 		//Pattern p1 = Pattern.compile("[\\(\\s=\\)]");					
 		try {
 			int i = 0;
 			for (String line; (line = br.readLine()) != null;) {
-				if (line.length() > 6 && line.substring(0, 6).equals("ASSERT")) {					
-					String relation = line.substring(7);
+				if (line.length() > 6 && line.substring(0, 6).equals("ASSERT")) {
+					String relation = (line.charAt(7) == '(')?line.substring(8):line.substring(7);
 					if (relation.matches(regex0)) {
 						String[] ary = p0.split(relation);
 						//System.out.println(i++ +" "+ relation +" "+ ary.length);
@@ -143,6 +166,9 @@ public class XMLgenerator {
 							case("children"):
 								setParent(ary[1], ary[3], new Integer(ary[5]));
 								break;
+							case("childrenLength"):
+							    getNode(ary[1]).childrenLength = new Integer(ary[5]);
+								break;
 							case("firstChild"):
 								setParent(ary[1], ary[3], 0);
 								break;
@@ -155,7 +181,10 @@ public class XMLgenerator {
 							case ("previousSibling"):
 								setSibling(ary[1], ary[3]);
 								break;
-							}							
+							case("root"):
+								setRoot(ary[1]);
+								break;
+							}
 						}
 					}
 					/*else if (relation.matches(regex1)) {

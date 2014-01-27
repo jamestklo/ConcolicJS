@@ -44,7 +44,7 @@ ASSERT FORALL (x:Node, j:INT):
 	(childIndex(x) = j)	<=> EXISTS (y: Node): ( children(x, y, j) );
 
 ASSERT FORALL (y:Node, j:INT):
-	(childrenLength(y) = j) => EXISTS(x:Node): children(x, y, j);
+	(childrenLength(y) = j) <=> EXISTS(x:Node): children(x, y, j-1) AND lastChild(x, y);
 		
 ASSERT FORALL (x, y:Node):
 	firstChild(x, y) <=> children(x, y, 0);
