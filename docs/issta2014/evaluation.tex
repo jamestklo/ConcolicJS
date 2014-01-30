@@ -82,7 +82,7 @@ In case when there are conditions that are driven by other data types, our solve
 \header{Discussion.}
 In the specific example of {\tt function checkRows()}, using only the existing HTML is sufficient to achieve high statement coverage (5/6 or 83\%) and high branch coverage (3/4 or 75\%).  
 
-Concolic testing often takes additional time, in our small example the DOM solver would take at most 15 seconds to generate each additional HTML.
+Concolic testing often takes additional time, in our small example the DOM solver would take about 15 to 30 seconds to generate each additional HTML.
 Thus whether concolic testing is worth it would depend on how much additional coverage the concolic approach would provide, and the benefits of having the additional coverage.  
 
 While \tool covers only 1 additional statement ({\tt line 7}) and only 1 additional branch ({\tt true} branch of the {\tt if} condition) compared to {\em Existing HTML}, 
