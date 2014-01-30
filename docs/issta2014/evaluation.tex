@@ -10,7 +10,7 @@ The 3 approaches being compared are:
 For each approach, we would follow the same methodology of loading and execution the function:
 \begin{compactitem}
 \item Load the target URL
-\item Load the HTML (for that load HTML)
+\item Load the HTML (except {\em Without HTML})
 \item Execute the target code
 \item Measure coverage
 \end{compactitem}
@@ -55,14 +55,13 @@ The following shows how the number of statements, branches and paths are counted
 \hline
 & \multicolumn{3}{c}{Count (Number Of)} \\	
 Approach & Statements & Branches & Paths \\ \hline
-{\em Without HTML} & 0 & 0 & 0 \\ 
+Optimal & 6 & 4 & 41 \\ \hline
+{\em Without HTML} & 1 & 0 & 0 \\ 
 {\em Existing HTML} & 5 & 3 & 1 \\ 
 \tool & 6 & 4 & 41 \\ \hline
-\hline
-Total Possible & 6 & 4 & 41 \\ \hline
 \end{tabular}
 }
-\caption{Statement, Branch and Path coverage of different approaches to testing the {\tt function checkRows()}.}
+\caption{Statement, Branch and Path coverage of different approaches to testing the {\tt function checkRows()}. The Optimal approach is used to reference what perfect coverage would look like.}
 \label{coverage}
 \end{figure}
 
