@@ -58,6 +58,8 @@ Approach & Statements & Branches & Paths \\ \hline
 {\em Without HTML} & 0 & 0 & 0 \\ 
 {\em Existing HTML} & 5 & 3 & 1 \\ 
 \tool & 6 & 4 & 41 \\ \hline
+\hline
+Total Possible & 6 & 4 & 41 \\ \hline
 \end{tabular}
 }
 \caption{Statement, Branch and Path coverage of different approaches to testing the {\tt function checkRows()}.}
@@ -71,8 +73,11 @@ The {\em Without HTML} approach cannot cover any statement because the first sta
 
 The {\em Existing HTML} approach is able to cover 5 statements inclusively from {\tt line 2} to {\tt line 6} because the original HTML already has 20 rows inside {\tt field}.  
 However the {\em Existing HTML} approach cannot cover the statement in {\tt line 7} because the rows do not have any children at the start of the game. 
-{\em Existing HTML} is able to cover 3 of the 4 possible branches: both the {\tt stay} and {\tt break} branches in the {\tt for} loop, and the {\tt false} branch in the {\tt if} condition.  
+{\em Existing HTML} is able to cover 3 of the 4 possible branches: both the {\tt stay} and {\tt break} branches in the {\tt for} loop, and the {\tt false} branch in the {\tt if} condition. 
+Yet, the {\em Existing HTML} approach is able to cover only one path because going through a different path in {\tt function checkRows()} requires another unique DOM tree structure.  
 
+\tool is able to cover all possible paths in {\tt function checkRows()} because all the conditions (the {\tt for} loop and the {\tt if} condition) inside the function are all driven by DOM operations.  
+In case when there are conditions that are driven by other data types, our solver would have to be extended to support these data types.    
 % yahoo
 % Tinysort
 %  http://tinysort.sjeiti.com/
