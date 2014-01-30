@@ -24,7 +24,7 @@ Being able to fully test JavaScript code that contain DOM operations would be cr
 % keep language consistent: DOM (not HTML). 
 % give challenge numbers, approach solves challenge number say 1.  
 % how to deal with incomplete traces.  concolic testing, seed.  
-To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic unit-testing on the {\tt function checkRows()} in Sample Code~\ref{dom0}.  
+To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic unit-testing on the {\tt function checkRows()} in Sample Code~ \ref{dom0}.  
 The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement the game Tetris.  
 %To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic testing on the {\tt function clearBoard()} in Sample Code~\ref{dom0}.  
 %The function comes from a sample Web application written by Intel~\cite{mancala} for developing in the Tizen OS. 
@@ -33,7 +33,7 @@ The function is simplified from a feature Chrome Experiment~\cite{domtris} that 
 Concolic testing~\cite{cute}, also known as dynamic symbolic testing, would execute the app in a way to maximize path coverage.
 A path is a sequential permutation of branches.  For example, each IF statement has 2 branches: True and False; each iteration within a loop also has 2 branches: Stay and Break.  
 Maximizing path coverage would be to generate and execute every possible permutation of available branches.  
-Therefore, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in {\tt function checkRows()} in Sample Code\ref{dom0}.
+Therefore, we must visit both the {\tt True} and {\tt False} branches of each {\tt if} statement in {\tt function checkRows()} in Sample Code \ref{dom0}.
 \begin{figure}
 \begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
 function checkRows() {
@@ -80,10 +80,10 @@ function checkRows() {
 %\begin{figure*}[ht]
 %\centerline{\scalebox{0.25}{\includegraphics[natwidth=3467,natheight=2063]{mancala.png}}}
 %\caption[Mancala game]{}
-%\label{trees}
+%\label{mancala}
 %\end{figure*}
 
-If we intend an execution path to visit the {\tt True} branch of the {\tt if} statement in {\tt line 6} of Sample Code\ref{dom0}, the web page's HTML must yield a DOM structure satisfying many constraints:
+If we intend an execution path to visit the {\tt True} branch of the {\tt if} statement in {\tt line 6} of Sample Code \ref{dom0}, the web page's HTML must yield a DOM structure satisfying many constraints:
 \begin {compactitem}
 \item There is an element with id {\tt "field"}.
 \item {\tt field} contains children elements, so that we can first enter the {\tt for} loop.

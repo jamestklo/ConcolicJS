@@ -1,12 +1,13 @@
 \section{Implementation}
-
+\label{impl}
 \header{Concolic Driver.}
 In the iterative process of concolic testing, we implemented a concolic driver that would repeatedly
 \begin {enumerate}
-\item Open the target url
+\item Open the target URL
 \item Load the generated html (initially empty html)
 \item Execute the target JavaScript code
-\item Call the MapDeducer, which returns the DOM constraints in text,
+\item Measure coverage, and decide which path to go next
+\item Call the MapDeducer, which returns the DOM constraints in text
 \item Send the constraints to the DOM solver, which returns a satisfiable DOM tree
 \item Go back to step 1 with the newly generated HTML.
 \end{enumerate}
