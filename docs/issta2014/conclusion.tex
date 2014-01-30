@@ -1,5 +1,18 @@
 \section{Future Work \& Conclusion}
 We presented a generic, transparent and cross browser approach to covering JavaScript code that contain DOM operations.  
+DOM operations are abundant in the JavaScript code of Web applications and the majority of JavaScript bugs are DOM related.  
 Our approach works in the JavaScript layer and supports the Document Object Model API defined by W3C the World Wide Web Consortium.  
-In the future we would like to extend our solver to support multiple data types (mostly integers and strings} so that \tool can cover more branches and paths.
+
+At this stage \tool covers DOM operations that navigate the parent-child and sibling relationships of a DOM tree.  
+In the future we would like to extend our solver to solve for mutations of the DOM tree, as well as integers and strings so that \tool can support solving for attributes of DOM nodes.    
+We also want to investigate if it is possible to design a smarter concolic driver so that the tester can achieve sufficient coverage without incurring the full costs of complete concolic execution.
+
+Another direction of future work is to extend \tool for fostering closer collaboration among designers and developers.
+As part of separating concerns, it is possible that designers of a development team may specialize mostly in the aesthetic aspects of an application while the programmers specialize in the technical aspects.  
+\tool generates reference HTML for satisfying code execution.
+Therefore, when a designer wants to update the UI of a Web application, \tool can help a designer to determine 
+which DOM elements can be modified, 
+which DOM elements can be renamed, 
+which DOM elements must have a certain structure, 
+and which lines of code to tell the programmer to pay attention to if the designer decides to change the DOM in a way that may break the original source code.  
 
