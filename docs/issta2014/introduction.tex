@@ -15,6 +15,9 @@ Yet, despite the language's promise and ubiquity, testing JavaScript is not easy
 For example, because HTML describes the graphical user interface of a Web app, considerable JavaScript code is written to access and mutate HTML through the Document Object Model (DOM) API.  
 When JavaScript code runs, its runtime execution would encounter DOM operations that would subtly imply the DOM tree (and thus the webpage's HTML) to have a particular structure.  
 In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.  
+Indeed, a recent empirical study of bug reports has concluded that a major of bugs in JavaScript Web applications are DOM related~\cite{frolin2013}.  
+Being able to fully test JavaScript code that contain DOM operations would be critical in assuring the quality of a Web application.  
+
 
 \subsection{Motivating Example}
 % want 1 example
@@ -34,7 +37,7 @@ Therefore, we must visit both the {\tt True} and {\tt False} branches of each {\
 \begin{figure}
 \begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
 function checkRows() {
-  var field = getElementById("tetris"); 
+  var field = getElementById("field"); 
   var i, row;
   for (i=field.children.length; i--;) {
     row = getElementById("row"+i);
@@ -82,10 +85,10 @@ function checkRows() {
 
 If we intend an execution path to visit the {\tt True} branch of the {\tt if} statement in {\tt line 6} of Sample Code\ref{dom0}, the web page's HTML must yield a DOM structure satisfying many constraints:
 \begin {compactitem}
-\item There is an element with id {\tt tetris}.
-\item {\tt tetris} contains children elements, so that we can first enter the {\tt for} loop.
+\item There is an element with id {\tt "field"}.
+\item {\tt field} contains children elements, so that we can first enter the {\tt for} loop.
 \item There are rows having id's in the nomenclature {\tt row0}, {\tt row1}, etc.
-\item The number of rows must be greater than or equal to the number of children that {\tt tetris} has.  The reason is that the ID of each {\tt row} is made distinct by {\tt i}.  According to the {\tt for} loop, {\tt i---} goes from {\tt field.children.length} to 1.
+\item The number of rows must be greater than or equal to the number of children that {\tt field} has.  The reason is that the ID of each {\tt row} is made distinct by {\tt i}.  According to the {\tt for} loop, {\tt i---} goes from {\tt field.children.length} to 1.
 \item At least one of the rows must have exactly 10 children.
 \end {compactitem}
 
@@ -131,7 +134,7 @@ Thus even when we have a test suite that is very well defined and can potentiall
 % cannot generate HTML for game, 
 %Note that the code does not imply the following, which we take for granted in a Tetris game.
 %\begin {compactitem}
-%\item Each {\tt row} is a child element of {\tt tetris}.
+%\item Each {\tt row} is a child element of {\tt field}.
 %\item Each {\tt row} is vertically stacked: {\tt row10} is right above {\tt row9}, which is also right on top of {\tt row8}, and so on.
 %\item Children of a {\tt row} are blocks that make up a piece.  
 %\item etc.

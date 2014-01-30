@@ -5,7 +5,7 @@
 \header{Concolic Testing.}
 % cute, jalangi, kudzu, eventConcolic
 %Having the constraints generated from a backward slice, concolic testing would use a constraint solver to generate input that would eventually drive the execution of each condition towards a specific branch.  
-While there have been numerous publications on concolic testing, Kudzu~\cite{kudzu} and Jalangi~\cite{jalangi} are the only two for concolic testing software that are written in a dynamically typed language; and both focus on JavaScript.  
+While there have been numerous publications on concolic testing (e.g. ~\cite{cute, klee, feedbackConcolic, eventConcolic}), Kudzu~\cite{kudzu} and Jalangi~\cite{jalangi} are the only two for concolic testing software that are written in a dynamically typed language; and both focus on JavaScript.  
 
 A main contribution of Kudzu is a string solver that can handle select regular expressions.  The solver is deployed to generate strings as UI inputs for detecting security vulnerabilities in JavaScript Web applications.   
 A main contribution of \tool is our DOM solver.  Our solver generates HTML for running and testing JavaScript code that contain DOM operations.    
@@ -30,7 +30,7 @@ Both CUTE~\cite{cute} and Jalangi use the CVC3~\cite{cvc3} solver for supporting
 
 
 % may move to Intro
-% \header{HTML Generation.}
+%\header{HTML Generation.}
 %\header{Emmet or Zen coding.}
 %Emmet (formerly Zen coding) \cite{ZenSjeiti, ZenCoding} generates DOM elements as output.  
 %Input to Emmet is the abbreviation of a CSS query that precisely specifies the DOM structure in a declarative manner.
