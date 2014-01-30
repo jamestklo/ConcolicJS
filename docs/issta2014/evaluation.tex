@@ -23,20 +23,6 @@ For {\tt function checkRows()}, we can simply call the function via {\tt checkRo
 \label{domtrisfield}
 \end{figure*}
 
-
-\header{Counting Number of Paths.}
-Figure \ref{paths} shows the number of statements, branches and paths that the function has.   
-When counting the number of paths in the {\tt function checkRows()} in Sample Code \ref{dom0}, 
-the original code does not pose an upper bound to the number of times the {\tt for} loop would get iterated because {\tt field.children.length} can be any value.
-Therefore, we would set {\tt field.children.length} to a specific number for calculating the total number of possible execution paths in the function.
-{\tt field} is set to have 20 children because the actual application always has 20 rows (Figure \ref{domtrisfield}). 
-The following shows how the number of statements, branches and paths are counted for the {\tt function checkRows()}:
-\begin{compactitem}
-\item {\em Statements}: 6, {\tt line 2} to {\tt line 7}, inclusive.
-\item {\em Branches}: 2 + 2. The {\tt for} loop has 2 branches: {\tt stay} and {\tt break}; plus the {\tt if} condition also has 2 branches: {\tt true} and {\tt false}. 
-\item {\em Paths}: 20 ({\tt stay} branch in for loop) * 2 ({\tt true} and {\tt false} branches in {\tt if} statement) + 1 ({\tt break} branch).
-\end{compactitem}
-
 \begin{figure}[h]
 \centerline{
 \begin{tabular}{*2l|*3c}
@@ -50,15 +36,19 @@ DOMtris & checkRows() & 6 & 4 & 41 \\ \hline
 \label{paths}
 \end{figure}
 
+\header{Counting Execution Paths.}
+Figure \ref{paths} shows the number of statements, branches and paths that the function has.   
+When counting the number of paths in the {\tt function checkRows()} in Sample Code \ref{dom0}, 
+the original code does not pose an upper bound to the number of times the {\tt for} loop would get iterated because {\tt field.children.length} can be any value.
+Therefore, we would set {\tt field.children.length} to a specific number for calculating the total number of possible execution paths in the function.
+{\tt field} is set to have 20 children because the actual application always has 20 rows (Figure \ref{domtrisfield}). 
+The following shows how the number of statements, branches and paths are counted for the {\tt function checkRows()}:
+\begin{compactitem}
+\item {\em Statements}: 6, {\tt line 2} to {\tt line 7}, inclusive.
+\item {\em Branches}: 2 + 2. The {\tt for} loop has 2 branches: {\tt stay} and {\tt break}; plus the {\tt if} condition also has 2 branches: {\tt true} and {\tt false}. 
+\item {\em Paths}: 20 ({\tt stay} branch in for loop) * 2 ({\tt true} and {\tt false} branches in {\tt if} statement) + 1 ({\tt break} branch).
+\end{compactitem}
 
-\header{Coverage Results.}
-Figure \ref{coverage} shows the coverage results of different approaches to testing the {\tt function checkRows()}.  
-
-The {\em Without HTML} approach cannot cover any statement because the first statement in the {\tt function checkRows()} is already a DOM operation requiring the existence of an element with {\tt id} {\tt "field"}.
-
-The {\em Existing HTML} approach is able to cover 5 statements inclusively from {\tt line 2} to {\tt line 6} because the original HTML already has 20 rows inside {\tt field}.  
-However the {\em Existing HTML} approach cannot cover the statement in {\tt line 7} because the rows do not have any children at the start of the game. 
-{\em Existing HTML} is able to cover 3 of the 4 possible branches: both the {\tt stay} and {\tt break} branches in the {\tt for} loop, and the {\tt false} branch in the {\tt if} condition.  
 \begin{figure}[h]
 \centerline{
 \begin{tabular}{l|*3c}
@@ -74,6 +64,14 @@ Approach & Statements & Branches & Paths \\ \hline
 \label{coverage}
 \end{figure}
 
+\header{Coverage Results.}
+Figure \ref{coverage} shows the coverage results of different approaches to testing the {\tt function checkRows()}.  
+
+The {\em Without HTML} approach cannot cover any statement because the first statement in the {\tt function checkRows()} is already a DOM operation requiring the existence of an element with {\tt id} {\tt "field"}.
+
+The {\em Existing HTML} approach is able to cover 5 statements inclusively from {\tt line 2} to {\tt line 6} because the original HTML already has 20 rows inside {\tt field}.  
+However the {\em Existing HTML} approach cannot cover the statement in {\tt line 7} because the rows do not have any children at the start of the game. 
+{\em Existing HTML} is able to cover 3 of the 4 possible branches: both the {\tt stay} and {\tt break} branches in the {\tt for} loop, and the {\tt false} branch in the {\tt if} condition.  
 
 % yahoo
 % Tinysort
