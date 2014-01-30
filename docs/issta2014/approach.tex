@@ -33,7 +33,7 @@ For example, {\tt row.children} becomes {\tt \_GET(row, "children")}.  {\tt \_SH
 Each operator function wraps (thus decorates) the actual computed value inside a decorated object that also contains data for tracing and slicing.   
 
 A special case happens when we transform the {\tt \&\&} and {\tt |}{\tt |} ({\tt or}) operators, in which we have to consider the precedence of the operator's left hand side.   
-For example, if the code is ({\tt a \&\& a.b}), the transformed version becomes {\tt \_AND(a, a.b)}; yet we don't want to execute {\tt a.b} when {\tt a} is {\tt null} or {\tt undefined}.  
+For example, if the code is ({\tt a \&\& a.b}), the transformed version becomes {\tt \_AND(a, a.b)}; yet we do not want to execute {\tt a.b} when {\tt a} is {\tt null} or {\tt undefined}.  
 A possible solution is to reuse {\tt a}: {\tt \_AND(a, a \&\& \_GET(a, "b")}.  
 However, the left hand side can be a call to a function that may change the internal state of the application: e.g. {\tt appendLog() \&\& update()}.
 Thus our solution is to assign the left hand side into a temporary variable, and then check the value of the temporary variable before executing the right hand side: 
@@ -71,13 +71,11 @@ Thus the data structure would appear more like a directed acyclic graph than a t
 \begin{figure}
 \begin{lstlisting}[caption=DOM constraints for generating an HTML that would satisfy for going the {\tt True} branch in the {\tt if} statement of Sample Code ~\ref{dom0}.  The constraints are shown in the input format for the CVC~\cite{cvc3} implementation of the SMT solver. {\tt \%} is the comment operator in CVC.,label=constraints0]
 % document.getElementById("tetris");
-ASSERT DISTINCT(tetris);
+% document.getElementById("row"+0);
+ASSERT DISTINCT(tetris, row0);
 
 % (tetris.children.length)--;
 ASSERT childrenLength(tetris) > 0;
-
-% document.getElementById("row"+0);
-ASSERT DISTINCT(row0);
 
 % row.children.length === 10;
 ASSERT childrenLength(row0) = 10;
@@ -91,7 +89,7 @@ The MapDeducer works like MapReduce~\cite{mapreduce}.  So far everything is code
 The MapDeducer would put together the processed clues across multiple parts of the DOM tree back together, into a single set of constraints for the DOM solver to generate a satisfiable HTML.
 
 Sample Code~\ref{constraints0} illustrates constraints for going to the {\tt true} branch of the {\tt if} statement in Sample Code~\ref{dom0}, resulting in Sample Code ~\ref{html0}.  
-If we want to go to the {\tt false} branch, e.g. {\tt ASSERT NOT(childrenLength(row0) = 10)}, then the solver would not put any child inside {\tt row0}.  
+If we want to go to the {\tt false} branch, e.g. {\tt ASSERT NOT(childrenLength(row0) = 10)}, then the solver would generate a number of children not equal to 10 for {\tt row0}.  The exact number of children has not been deterministic based on our experiments: sometimes {\tt row0} has 2 children, sometimes {\tt row0} has none.  
 %Recall the jQuery example from the Challenges section.  The MapDeducer would 
 
 \begin{figure}

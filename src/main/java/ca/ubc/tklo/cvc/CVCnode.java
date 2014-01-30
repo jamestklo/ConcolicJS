@@ -22,9 +22,10 @@ public class CVCnode {
 	int childrenLength;
 	String tag;
 	Map<String, String> attributes;
-	
+
 	int position;
-		
+	Element elem = null;
+	
 	public CVCnode(XMLgenerator xmlg) {
 		this.xmlg 		= xmlg;
 		this.aliases	= new HashSet<String>();
@@ -56,8 +57,12 @@ public class CVCnode {
 			parent.children.add(this);
 		}
 	}
-	public void setChildrenLength(int len) {
-		this.childrenLength = len;
+	public int setChildrenLength(int len) {
+		int old = childrenLength;
+		if (len > old) {
+			this.childrenLength = len;	
+		}
+		return old;
 	}
 	public int setPosition(int position) {
 		int oldPosition  = this.position;
@@ -68,9 +73,6 @@ public class CVCnode {
 			else {
 				this.position = position;	
 			}
-		}
-		else if (position == -1) {
-			
 		}
 		return oldPosition;		
 	}
@@ -94,6 +96,9 @@ public class CVCnode {
 		return this.getAlias(0);
 	}
 	
+	public String getAttribute(String key) {
+		return attributes.get(key);
+	}
 	public String getAlias(int index) {
 		if (index < 0) {
 			return this.attributes.get("id");
@@ -153,28 +158,29 @@ public class CVCnode {
 	}
 
 	protected List<CVCnode> orderChildren() {
-		int max = this.childrenLength-1;
-		System.out.println(this.aliases +" "+ max);
+		int max = this.childrenLength;
 		Map<Integer, CVCnode> map = new HashMap<Integer, CVCnode>();
+
 		Set<CVCnode> remaining = new HashSet<CVCnode>();
 		Iterator<CVCnode> itr_cvc = this.children.iterator();
-		Set<CVCnode> set2 = new HashSet<CVCnode>();
 		while (itr_cvc.hasNext()) {
-			set2.add(itr_cvc.next());
+			remaining.add(itr_cvc.next());
 		}
-		itr_cvc = set2.iterator();
+		
+		itr_cvc = remaining.iterator();
+		remaining = new HashSet<CVCnode>();
 		while (itr_cvc.hasNext()) {
 			CVCnode iterated = itr_cvc.next();
 			int position = iterated.position;	
 			if (position == -1) {
 				position = this.parent.childrenLength -1;
 			}
-			if (position < 0) {				
+			if (position < -1) {
 				remaining.add(iterated);
 			}
 			else {
-				if (position > max) {
-					max = position;
+				if (position >= max) {
+					max = position+1;
 				}
 				CVCnode node = map.get(position);
 				if (node instanceof CVCnode) {
@@ -185,66 +191,93 @@ public class CVCnode {
 				}				
 			}
 		}
+		
 		itr_cvc = remaining.iterator();
-		if (max == 1 && itr_cvc.hasNext()) {
-			map.put(1, itr_cvc.next());
-		}
+		remaining = new HashSet<CVCnode>();
 		while (itr_cvc.hasNext()) {
 			CVCnode iterated = itr_cvc.next();
 			int position = iterated.calPosition();
-			if (position > max) {
-				max = position;
-			}
-			iterated.setPosition(position);
-			CVCnode node = map.get(position);
-			if (node instanceof CVCnode) {
-				node.merge(iterated);					
+			if (position < -1) {
+				remaining.add(iterated);
 			}
 			else {
-				map.put(position, iterated);
-			}			
+				if (position >= max) {
+					max = position+1;
+				}
+				iterated.setPosition(position);
+				CVCnode node = map.get(position);
+				if (node instanceof CVCnode) {
+					node.merge(iterated);					
+				}
+				else {
+					map.put(position, iterated);
+				}
+			}
 		}
 		
+		max = Math.max(max, remaining.size());
+		itr_cvc = remaining.iterator();
 		List<CVCnode> ordered = new ArrayList<CVCnode>();		
-		for (int i=0; i <= max; i++) {
+		for (int i=0; i < max; ++i) {
 			CVCnode node = map.get(i);
 			if (! (node instanceof CVCnode)) {
-				node = new CVCnode(this.xmlg);
-				node.parent = this;
+				if (itr_cvc.hasNext()) {
+					node = itr_cvc.next();
+				}
+				else {
+					node = new CVCnode(this.xmlg);
+					node.parent = this;
+				}
 				node.position = i;
 			}
 			ordered.add(node);
+		}
+		while(itr_cvc.hasNext()) {
+			ordered.add(itr_cvc.next());
+		}
+		CVCnode lastChild = map.get(-1);
+		if (lastChild instanceof CVCnode) {
+			ordered.add(lastChild);
 		}
 		return ordered;
 	}
 	
 	protected int calPosition() {
-		if (this.position >= 0) {
-			return this.position;
+		if (position >= 0) {
+			return position;
 		}
 		CVCnode parent = this.parent;
 		if (parent == null) {
 			return 0;
 		}
 		
-		int m=0, l=0, h=this.parent.children.size()-1;
+		int m=0, l=0, h=(parent.childrenLength > 0)?parent.childrenLength:parent.children.size();
+		--h;
+		
+		String nodeName = this.getName();
 	    while (l < h) {
 			m = l + (h-l)/2;
-			if (xmlg.getCVC().childIndexEQ(this.getName(), m)) {
+			if (xmlg.getCVC().childIndexEQ(nodeName, m)) {
 				return m;
 			}
-			else if (xmlg.getCVC().childIndexGT(this.getName(), m)) {
+			else if (xmlg.getCVC().childIndexGT(nodeName, m)) {
 				l = m + 1;
 			}
 			else {
 				h = m - 1;
 			}
 		}
-		return m;
+	    if (xmlg.getCVC().childIndexEQ(nodeName, m)) {
+		  return m;
+		}
+	    return position;
 	}
 	
-	public Element toDOM(Document document) {	
-		Element elem = document.createElement(this.getTag());
+	public Element toDOM(Document document) {
+		if (elem != null) {
+			return elem;
+		}
+		elem = document.createElement(this.getTag());
 		Iterator<String> itr_str = attributes.keySet().iterator();
 		while (itr_str.hasNext()) {
 			String key = itr_str.next();

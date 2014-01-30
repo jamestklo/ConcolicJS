@@ -12,7 +12,7 @@ public abstract class WindowsProcessEmulator  {
     protected BufferedWriter out;
     protected BufferedReader input;
     
-    public String process(String str) {    	
+    public String process(String str) {
 		try {
 			out.write(str);
 			out.newLine();
@@ -28,7 +28,7 @@ public abstract class WindowsProcessEmulator  {
 		} 
 		catch (Exception e) {
 			e.printStackTrace();
-		}				   
+		}		
 		return null;
     }
     public void quit() {

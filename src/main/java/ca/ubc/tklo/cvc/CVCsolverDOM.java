@@ -34,9 +34,9 @@ public class CVCsolverDOM {
 				nodeIDs = new HashSet<String>();
 				tempIDs = new HashSet<String>();
 				String[] line = buf.readLine().split("[,\\s:]");
-				sessionID = line[0];
-				int sessionID_length = sessionID.length();				
-				for (int i=1; i < line.length; ++i) {
+				sessionID = line[line.length-2];
+				int sessionID_length = sessionID.length();	
+				for (int i=line.length-1; i-- > 0; ) {
 					String token = line[i];
 					if (token.length() > 0) {
 						if (token.length() >= sessionID_length && token.substring(0, sessionID_length).equals(sessionID)) {
@@ -54,7 +54,7 @@ public class CVCsolverDOM {
 			input.append(cvc_slice);
 			input.append("\rCHECKSAT;");
 			input.append("\rWHERE;");		
-			System.out.println("CVC input "+ input.length() +"<< "+ input);		
+			//System.out.println("CVC input "+ input.length() +"<< "+ input);		
 			output = emulator.process(input.toString());
 	    	System.out.println("CVC output "+ output.length() +">> "+ output);
 		}
@@ -73,10 +73,12 @@ public class CVCsolverDOM {
 		this.emulator.quit();
 	}
 	protected boolean childIndexEQ(String nodeName, int index) {
-		return (emulator.process("QUERY childIndex("+ nodeName +") ="+ index +";").equals("Valid.\n"));
+		String output = emulator.process("QUERY childIndex("+ nodeName +") ="+ index +";");
+		return output.equals("Valid.\n");
 	}
 	protected boolean childIndexGT(String nodeName, int index) {
-		return (emulator.process("QUERY childIndex("+ nodeName +") >"+ index +";").equals("Valid.\n"));
+		String output = emulator.process("QUERY childIndex("+ nodeName +") >"+ index +";");
+		return output.equals("Valid.\n");
 	}
 	protected static String readWholeFile(String filepath) {
 		File file = new File(filepath);
@@ -107,14 +109,20 @@ public class CVCsolverDOM {
 	  }
 	  System.out.println(cvcpath);
 	  String dompath = prefix+ "cvc3-DOM1.cvc";
-  	  CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
-  	  String output = csd.solve();
- 	  
-  	  XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
- 	  ByteArrayOutputStream outstream = new ByteArrayOutputStream();
-  	  XMLgenerator.outXML(xmlg.getDocument(), outstream);
-  	  
-  	  csd.quit();
+
+	  CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
+	  ByteArrayOutputStream outstream = new ByteArrayOutputStream();
+	  try {
+  	    String output = csd.solve(); 	  
+  	    XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
+  	    XMLgenerator.outXML(xmlg.getDocument(), outstream);
+	  }
+	  catch (Exception e) {
+		  e.printStackTrace();
+	  }
+	  finally {
+		  csd.quit();
+	  }
       return outstream.toString();
 	}
 
@@ -126,26 +134,30 @@ public class CVCsolverDOM {
 		String dompath = prefix + "cvc3-DOM1.cvc";
     	String sespath = prefix + "cvc3-example1.cvc";
     	String cvc_slice = ""
-        + "tmpCVC, tmpCVC000, tmpCVC001, row0, tetris, r: Node;\n"
-        + "ASSERT root(r);\n"
-        + "ASSERT 10 = childrenLength(row0) AND DISTINCT(row0);\n"
-        + "ASSERT children(tmpCVC001, tetris, 0) AND DISTINCT(tetris);\n"
+        + "row0, tetris, tmpCVC:Node;\n"
+      	+ "ASSERT DISTINCT(row0, tetris, tmpCVC);\n"
+        + "ASSERT root(tmpCVC);\n"
+        + "ASSERT childrenLength(row0) != 10;\n"
+        + "ASSERT 0 < childrenLength(tetris);\n"
+        //+ "ASSERT child(row0, tetris);\n"
     	+"";
 
-    	//CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
-    	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
-    	String output = csd.solve();
-    	
     	// parse output of CVC, generate XML
     	String xmlpath = prefix+ "cvc3-example1.xml";
-		XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
-		XMLgenerator.outXML(xmlg.getDocument(), System.out);
+    	CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), cvc_slice);
 		try {
-			XMLgenerator.outXML(xmlg.getDocument(), new FileOutputStream(xmlpath));
+		   	//CVCsolverDOM csd = new CVCsolverDOM(new CVCemulatorWindows(cvcpath), readWholeFile(dompath), readWholeFile(sespath));
+	    	String output = csd.solve();
+	 
+			XMLgenerator xmlg = new XMLgenerator(csd, new BufferedReader(new StringReader(output)) );
+			XMLgenerator.outXML(xmlg.getDocument(), System.out);
+			//XMLgenerator.outXML(xmlg.getDocument(), new FileOutputStream(xmlpath));
 		}
-		catch (FileNotFoundException e) {
+		catch (Exception e) {
 			e.printStackTrace();
 		}
-		csd.quit();
+		finally {
+			csd.quit();
+		}
     } 
 }

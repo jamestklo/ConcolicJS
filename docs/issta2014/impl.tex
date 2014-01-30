@@ -1,25 +1,46 @@
 \section{Implementation}
 
-\header{Instrumenting JavaScript.}  
-Our approach has to be generic, transparent and browser-independent.  Thus we use WebDriver~\cite{webdriver} to drive the test case execution and a proxy~\cite{webscarab} to intercept JavaScript for instrumentation.  
-WebDriver runs on multiple browsers, including headless browsers such as PhantomJS~\cite{phantomjs}.  
-Google's Closure Compiler API~\cite{ClosureCompiler} is used to transform the original JavaScript into calls to the operator functions. 
-Both the Backward Slicer and MapDeducer are implemented as JavaScript APIs.  WebDriver calls the MapDeducer API, which returns the constraints in text.  
+\header{Concolic Driver.}
+In the iterative process of concolic testing, we implemented a concolic driver that would repeatedly
+\begin {enumerate}
+\item Open the target url
+\item Load the generated html (initially empty html)
+\item Execute the target JavaScript code
+\item Call the MapDeducer, which returns the DOM constraints in text,
+\item Send the constraints to the DOM solver, which returns a satisfiable DOM tree
+\item Go back to step 1 with the newly generated HTML.
+\end{enumerate}
+The concolic driver would iterate the cycle until it has reached a certain point, which can be configured to be a specific number of iterations (e.g. 1,000 DOM trees generated), a certain level of coverage (e.g. 100\% branch coverage), or both. 
+
+
+\header{Instrumenting and Executing JavaScript.}  
+Our approach has to be generic, transparent and browser-independent.  
+We use Selenium's WebDriver\cite{webdriverjs} to drive Web browsers for executing JavaScript.  WebDriver runs on multiple browsers, including headless browsers such as PhantomJS~\cite{phantomjs}.  
+
+When JavaScript is getting downloaded onto a Web browser, we use the WebScarab proxy to intercept the download and to instrumenting code.  
+The proxy passes intercepted JavaScript code to the Google Closure Compiler API~\cite{ClosureCompiler} for transforming JavaScript into calls to the operator functions. 
+
+Both the Backward Slicer and MapDeducer are implemented as JavaScript APIs, and WebDriver natively supports calling JavaScript functions within the browser.  
+Thus our approach is entirely transparent and can be applied to multiple brands of Web browsers.    
+
 
 \header{DOM Solver.}  
-CVC allows writing the constraints in Java, yet we don't want to hardcode the constraints because the constraints are different in each execution path.  
+CVC allows writing the constraints in Java, yet we do not want to hardcode the constraints because the constraints are different in each execution path.  
 Thus we use Java's ProcessBuilder~\cite{processbuilder} class to communicate with the executable (.exe) version of CVC.  We decided to use CVC3 rather than CVC4~\cite{cvc4} because CVC3 is generally more stable during our experimentation.  
 The API that parses the CVC output is also implemented in Java, thus we used the W3C DOM API~\cite{DomAPI} for generating HTML.  
-QUnit provides a <div> called the fixture which can be set as the HTML for a test case.   Before execution, WebDriver would set the {\tt innerHTML} of the fixture element to the generated HTML.  
+%QUnit provides a <div> called the fixture which can be set as the HTML for a test case.   Before execution, WebDriver would set the {\tt innerHTML} of the fixture element to the generated HTML.  
+
 
 \header{Limited Path Coverage.}  
 % zero, 1 and n.
-Very often, we don't know how many times to execute a loop.  For example, in Sampe Code ~\ref{dom0}, there is no upper limit to the number of children that {\tt field} has.  
-In that case, we executed the loop only once.  Thus \tool would achieve limited path coverage rather than full path coverage.  
+Very often we would not know how many times to execute a loop.  For example, in Sampe Code ~\ref{dom0}, there is no upper limit to the number of children that {\tt field} can have.  
+\tool would execute loops zero, one, and {\tt n} times, where {\tt n} can be configured for a particular loops or for all loops.  Thus \tool would achieve limited path coverage rather than full path coverage.  
+
 
 \header{Indexing Functions.}  
 Most of the time JavaScript functions are defined inside closures and are not accessible~\cite{privatefunctions}.  
 When we instrument JavaScript code, we extract the functions by assigning them to an object that we have access to.  Because functions can have the same name, we use the node number in the JavaScript Abstract Syntax Tree as ID.
+
 
 \header{{\tt eval()} \& inline JavaScript.}  
 In addition to source files, JavaScript code can also be found within {\tt eval()} and inlined as attributes of a DOM element inside the HTML declaration (e.g. {\tt <body onload="runFunction()">}).
@@ -30,6 +51,7 @@ To instrument inline JavaScript, we traverse the original HTML using the JSoup A
 For newly created elements, e.g. {\tt elem.innerHTML = text}, we use getters and setters to detect the new elements.  Once detected, we traverse the new elements, extract JavaScript and call the {\tt instrument()} function.  
 % Tudu
 
-% \tool has integration with QUnit~\cite{qunit} so that existing test suites can automatically take advantage of \tool without additional manual effort.  
+%\header{QUnit}
+%\tool has integration with QUnit~\cite{qunit} so that existing test suites can automatically take advantage of \tool without additional manual effort.  
 % \tool is also extensible to be integrated with other test frameworks~\cite{jstests}.
 % Thus given a test case, be its inputs were generated manually or automatically, \tool can be used to help the test case and its assertions get fully utilized.

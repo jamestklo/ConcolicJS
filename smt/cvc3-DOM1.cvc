@@ -16,11 +16,16 @@ preceding_sibling: 	(Node, Node) -> BOOLEAN;
 descendant:		(Node, Node) -> BOOLEAN;
 ancestor:		(Node, Node) -> BOOLEAN;
 
-firstChild:		(Node, Node) -> BOOLEAN;	
+firstChild:		(Node, Node) -> BOOLEAN;
 lastChild:		(Node, Node) -> BOOLEAN;
 
 nextSibling:		(Node, Node) -> BOOLEAN;
 previousSibling:	(Node, Node) -> BOOLEAN;
+
+String: TYPE;
+attributes: (Node) -> ARRAY String OF String;
+classList: (Node) -> String;
+
 
 ASSERT FORALL (x, y: Node):	
 	(root(y) AND DISTINCT(x,y)) => descendant(x,y);	
@@ -44,13 +49,13 @@ ASSERT FORALL (x:Node, j:INT):
 	(childIndex(x) = j)	<=> EXISTS (y: Node): ( children(x, y, j) );
 
 ASSERT FORALL (y:Node, j:INT):
-	(childrenLength(y) = j) <=> EXISTS(x:Node): children(x, y, j-1) AND lastChild(x, y);
+	(childrenLength(y) = j) <=> EXISTS(x:Node): (children(x, y, j-1) AND lastChild(x, y));
 		
 ASSERT FORALL (x, y:Node):
 	firstChild(x, y) <=> children(x, y, 0);
 
 ASSERT FORALL (x, y:Node): 	
-	lastChild(x, y) => EXISTS(j:INT): ( j >= 0 AND children(x, y, j) AND (NOT(EXISTS (z: Node, k:INT): children(z, y, k) AND k > j)) );
+	lastChild(x, y) => EXISTS(j:INT): children(x, y, j) AND (FORCALL(z:Node, k:INT): (children(z, y, k) AND DISTINCT(z, x)) => k < j);
 
 ASSERT FORALL (x: Node):
 	NOT(following_sibling(x, x));

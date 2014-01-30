@@ -53,7 +53,7 @@ Both tracing and backward slicing have to be dynamic to accurately determine whi
 % drives the need for decorated execution, different from Jalangi
 
 \begin{figure}
-\begin{lstlisting}[caption=Example code showing how DOM operations can have logical constraints that are interdependent with each other: {\tt line 3} and {\tt line 6}.  To make all these {\tt if} statements {\tt true} the sub conditions in {\tt line 3} and {\tt line 6} become mutually exclusive: they cannot be {\tt true} at the same time because {\tt d} cannot be both a parent and a child of the same DOM element {\tt elem}.  A logic solver is required to generate a satisfiable DOM tree.  Note that the final 2 conditions ({\tt line 9} and {\tt line 12}) would collectively influence the DOM solver to decide which of {\tt line 3} and {\tt line 6} to make	 {\tt true}.,label=domOr]  
+\begin{lstlisting}[caption=Example code showing how DOM operations can have logical constraints that are interdependent with each other: {\tt line 3} and {\tt line 6}.  To make all these {\tt if} statements {\tt true} the sub conditions in {\tt line 3} and {\tt line 6} become mutually exclusive: they cannot be {\tt true} at the same time because {\tt d} cannot be both a parent and a child of the same DOM element {\tt elem}.  A logic solver is required to generate a satisfiable DOM tree.  Note that the final 2 conditions ({\tt line 9} and {\tt line 12}) would collectively influence the DOM solver to decide which sub condition ({\tt line 3} vs. {\tt line 6}) to become {\tt true}.,label=domOr]  
 // Interdependent Logic
 // ...
 if (d === elem.firstElementChild

@@ -41,11 +41,11 @@ Sample Code ~\ref{childrenLength} shows the boolean functions and integer functi
 \end{compactitem}
 Next, we define how children are ordered and quantify {\tt children.length}:
 \begin{compactitem} 
-\item first child starts at position or index 0: {\tt line 17} and {\tt line 23}.
-\item last child has the largest child index: {\tt line 29}.
-\item {\tt children.length} equals to the child index of the last child: {\tt line 38}.
+\item first child starts at position or index 0: {\tt line 18} and {\tt line 24}.
+\item last child has the largest child index: {\tt line 30}.
+\item {\tt children.length} equals to one plus the child index of the last child, because the first child starts at position 0: {\tt line 40}.
 \end{compactitem}
-The parent SMT functions are quantified as the inverse of the child SMT functions (e.g. {\tt line 44}).  Similar to {\tt firstChild()} and {\tt lastChild()}, the sibling SMT functions are defined by extending {\tt children(x, y, j)}.  
+The parent SMT functions are quantified as the inverse of the child SMT functions (e.g. {\tt line 48}).  Similar to {\tt firstChild()} and {\tt lastChild()}, the sibling SMT functions are defined by extending {\tt children(x, y, j)}.  
 For example, the next sibling of a node has the same parent and child index {\tt j+1}, when the node has child index {\tt j}.
 
 \begin{figure}
@@ -64,7 +64,8 @@ ASSERT FORALL (x, y: Node):
   
 % a child has only 1 parent.
 ASSERT FORALL (x, y, z: Node):
-  (child(x,y) AND DISTINCT(y,z)) => NOT(child(x,z));
+  (child(x,y) AND DISTINCT(y,z)) 
+    => NOT(child(x,z));
 
 % x is the j-th child of y.
 children: (Node, Node, INT) -> BOOLEAN;
@@ -78,20 +79,23 @@ ASSERT FORALL (x, y:Node):
   firstChild(x, y) <=> 
     children(x, y, 0);
 
-% no other child has a child index 
-% larger than that of the last child.
+% every other child must have an index 
+% smaller than that of the last child.
 lastChild: (Node, Node) -> BOOLEAN;	
 ASSERT FORALL (x, y:Node): 	
-  lastChild(x, y) => EXISTS(j:INT): 
-   ( j >= 0 AND children(x, y, j) AND 
-      (NOT(EXISTS (z: Node, k:INT): 
-	    children(z, y, k) AND k > j)) );
+	lastChild(x, y) => EXISTS(j:INT): 
+	  children(x, y, j) AND 
+	  (FORCALL(z:Node, k:INT): 
+	    (children(z, y, k) AND 
+	    DISTINCT(z, x)) => k < j);
 
 % children.length equals to the
 % child index of the last child.
 childrenLength:	(Node) -> INT;
 ASSERT FORALL (y:Node, j:INT):
-	childrenLength(y) = j <=> EXISTS(x:Node): lastChild(x, y) AND children(x, y, j);
+	childrenLength(y) = j <=> 
+	  EXISTS(x:Node): (lastChild(x, y) 
+	    AND children(x, y, j-1));
 
 % example of inversion
 % y is the parent of x, is the same as 
@@ -102,7 +106,7 @@ ASSERT FORALL (x, y: Node):
 \end{lstlisting} 
 \end{figure}
 
-\header{Negation \& XPath.}
+\header{Negation.}
 We use the CVC implementation of SMT, which natively supports booleans and integers by default.  
 While it is possible to define a customized data structure to mimic the DOM tree in CVC, the boolean/integer function approach is simple and convenient for negating conditions and going into different execution paths.
 %Because Web browsers also support accessing the DOM tree via XPath~\cite{documentEvaluate}, we defined additional SMT functions: {\tt following\_sibling}, {\tt preceding\_sibling}, {\tt descendant} and {\tt ancestor}.
@@ -123,9 +127,9 @@ Once the parent child relationship is established, our next step is to organize 
 Some DOM children have their positions explicit (e.g. {\tt firstChild(x, y)}, {\tt lastChild(x, y)} and {\tt children(x, y, j)}), yet very often the child parent relationship is implied.  For example, {\tt nextSibling(x, z)} implies {\tt x} and {\tt z} share the same parent.  
 To calculate the ordering of children, we use the explicitly positioned children as anchors and we relate the anchors to other children by the sibling operations.  
 
-In case of any uncertainty, we would query the CVC model.  We have to do a binary search because querying the CVC model supports only {\tt true} or {\tt false} answers.  
-Because CVC does not support strings natively, for now we map tag names into integers in CVC.  <span> is the default tag type because <span> is an inline element and not a block.
-Once the DOM tree is defined, we search for the root of the DOM tree (the element without a parent) and generate HTML.  
+%In case of any uncertainty, we would query the CVC model.  We have to do a binary search because querying the CVC model supports only {\tt true} or {\tt false} answers.  
+%Because CVC does not support strings natively, for now we map tag names into integers in CVC.  <span> is the default tag type because <span> is an inline element and not a block.
+%Once the DOM tree is defined, we search for the root of the DOM tree (the element without a parent) and generate HTML.  
 
 % \header{DOM mutations.}
 
