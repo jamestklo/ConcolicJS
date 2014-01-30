@@ -107,6 +107,13 @@ Ali Mesbah\\
 
 \maketitle
 \begin{abstract}
+While Web applications are increasingly popular and abundant, testing them remains a challenge because 
+the execution of different parts of JavaScript code often requires different background tree structures of the application's Document Object Model. 
+When a line of DOM related JavaScript code fails, the entire execution can halt and the test case cannot conintue.  
+In this paper we present our approach to generating DOM trees for testing Web applications.  
+Our approach is designed to be automatic because the number of unique DOM trees can grow exponentially as the number of possible execution paths.
+Our approach is also systematic that it can tailor the DOM tree to target precise parts of the code.  
+We conducted a case study on the DOMtris application in which we will show how only our approach can cover a part of JavaScript code that implements a core functionality of the application.
 \end{abstract}
 
 % A category with only the three required fields

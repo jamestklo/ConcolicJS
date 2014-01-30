@@ -5,7 +5,7 @@
 \header{Concolic Testing.}
 % cute, jalangi, kudzu, eventConcolic
 %Having the constraints generated from a backward slice, concolic testing would use a constraint solver to generate input that would eventually drive the execution of each condition towards a specific branch.  
-While there have been numerous publications on concolic testing (e.g. ~\cite{cute, klee, feedbackConcolic, eventConcolic}), Kudzu~\cite{kudzu} and Jalangi~\cite{jalangi} are the only two for concolic testing software that are written in a dynamically typed language; and both focus on JavaScript.  
+While there have been numerous publications on concolic testing (e.g. ~\cite{cute, klee, eventConcolic}), Kudzu~\cite{kudzu} and Jalangi~\cite{jalangi} are the only two for concolic testing software that are written in a dynamically typed language; and both focus on JavaScript.  
 
 A main contribution of Kudzu is a string solver that can handle select regular expressions.  The solver is deployed to generate strings as UI inputs for detecting security vulnerabilities in JavaScript Web applications.   
 A main contribution of \tool is our DOM solver.  Our solver generates HTML for running and testing JavaScript code that contain DOM operations.    

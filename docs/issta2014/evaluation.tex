@@ -82,7 +82,7 @@ In case when there are conditions that are driven by other data types, our solve
 \header{Discussion.}
 In the specific example of {\tt function checkRows()}, using only the existing HTML is sufficient to achieve high statement coverage (5/6 or 83\%) and high branch coverage (3/4 or 75\%).  
 
-Concolic testing often takes additional time, in our small example the DOM solver would take about 15 to 30 seconds to generate each additional HTML.
+Concolic testing often takes additional time, in our small example the DOM solver would take about 15 to 30 seconds to generate each additional HTML on a MacBook pro with a 2.0GHz quad core Intel i7 processor and 16GB RAM.
 Thus whether concolic testing is worth it would depend on how much additional coverage the concolic approach would provide, and the benefits of having the additional coverage.  
 
 While \tool covers only 1 additional statement ({\tt line 7}) and only 1 additional branch ({\tt true} branch of the {\tt if} condition) compared to {\em Existing HTML}, 
@@ -92,7 +92,7 @@ Another benefit of \tool is that it covers all the different paths that generate
 Our current concolic driver is primitive in the sense that it exhaustively tries to cover all execution paths possible.  
 In the future, it may be worth investigating if it is possible to design a smarter concolic driver that can give priority to execution paths that would yield the highest marginal benefit of additional coverage: 
 e.g. highest additional branch coverage, the most diverse permutation of increasing the score, etc.  
-That way the tester can exercise concolic testing partially, combine concolic testing with other less expensive testing methods, and still achieve certain desired outcomes without incurring the full costs associated with complete concolic execution.  
+That way the tester can exercise concolic testing partially, combine concolic testing with other less expensive testing methods (e.g. ~\cite{hybridconcolic}), and still achieve certain desired outcomes without incurring the full costs associated with complete concolic execution.  
 Thus having a prioritized concolic engine would give the tester greater control to manage the costs and benefits of the testing life cycle.  
 
 % yahoo
