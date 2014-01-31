@@ -5,22 +5,29 @@
 \header{Concolic Testing.}
 % cute, jalangi, kudzu, eventConcolic
 %Having the constraints generated from a backward slice, concolic testing would use a constraint solver to generate input that would eventually drive the execution of each condition towards a specific branch.  
-While there have been numerous publications on concolic testing (e.g. ~\cite{cute, klee, eventConcolic}), Kudzu~\cite{kudzu} and Jalangi~\cite{jalangi} are the only two for concolic testing software that are written in a dynamically typed language; and both focus on JavaScript.  
+While there have been numerous publications on concolic testing (e.g. ~\cite{cute, klee, eventConcolic}), 
+Kudzu~\cite{kudzu} and Jalangi~\cite{jalangi} are the only two for concolic testing software that are written in a dynamically typed language; and both focus on JavaScript.  
 
-A main contribution of Kudzu is a string solver that can handle select regular expressions.  The solver is deployed to generate strings as UI inputs for detecting security vulnerabilities in JavaScript Web applications.   
+A main contribution of Kudzu is a string solver that can handle select regular expressions.  
+The solver is deployed to generate strings as UI inputs for detecting security vulnerabilities in JavaScript Web applications.   
 A main contribution of \tool is our DOM solver.  Our solver generates HTML for running and testing JavaScript code that contain DOM operations.    
 While HTML are usually represented in string form, designing a DOM solver is different from designing a regex string solver.
 As discussed in the Challenges section, the main reasons are that the DOM solver has to support a 2D hierarchical tree structure while strings are usually single dimensional.  
 Moreover, inferring implicit clues from DOM operations is also different from inferring regex patterns.  
 In addition, the architecture of \tool is implemented to run on multiple Web browsers, while Kudzu runs on only the single browser that supports its component~\cite{flax} for tracing and slicing.    
 
-A main contribution of Jalangi is their system of shadow values for selective record and replay.  In the shadow system, they encapsulate each data value into an object; the encapsulated object can contain any metadata (the shadow) about the actual data value.  
-While our system of decorated execution is similar to Jalangi's shadow system, a test engineer using Jalangi would manually identify which variables are inputs and would manually specify each input's type.  
-Jalangi then generates inputs for those variables manually identified by the test engineer.  In contrast, \tool uses post-order tree traversal for automatically identifying possible inputs.  
+A main contribution of Jalangi is their system of shadow values for selective record and replay.  
+In the shadow system, they encapsulate each data value into an object; the encapsulated object can contain any metadata (the shadow) about the actual data value.  
+While our system of decorated execution is similar to Jalangi's shadow system, a tester using Jalangi would manually identify which variables are inputs and would manually specify each input's type.  
+Jalangi then generates various input values for those variables that are manually identified by the tester.  
+In contrast, \tool uses post-order tree traversal for automatically identifying possible inputs.  
 
-When \tool instruments JavaScript, it would label each constant value as a constant: e.g. the JavaScript statement {\tt var x = "string";} would be instrumented into {\tt var x = \_CONST("string");}.
+When \tool instruments JavaScript, it would label each constant value as a constant.
+For example, the JavaScript statement {\tt var x = "string";} would be instrumented into {\tt var x = \_CONST("string");}.  
   
-Therefore, during the post order traversal, if a tree leaf of the decorated objects tree is not labelled, the variable inside the leaf would be identified as a candidate input, because the data value does not come from within the code.  
+Therefore, during the post order traversal, if a tree leaf of the decorated objects tree is not labelled, the variable inside the leaf would be identified as a candidate input, 
+because the data value does not come from within the code.  
+\tool generates a dynamic backward slice and thus executes the code, therefore the data type of candidate inputs can easily determined from the actual data value.  
 
 Another differentiation is that for supporting the DOM we designed a Trace MapDeducer for extracting and transforming code-centric backward slice into DOM-centric constraints for the DOM solver.  
 Both CUTE~\cite{cute} and Jalangi use the CVC3~\cite{cvc3} solver for supporting integers and strings.  
@@ -43,10 +50,13 @@ Both CUTE~\cite{cute} and Jalangi use the CVC3~\cite{cvc3} solver for supporting
 Constraint solvers (e.g. SAT solvers) solve for parameters that satisfy a set of predefined constraints.  
 
 Genev\`{e}s et al. developed an XML solver~\cite{xmlsolver} that takes limited XPaths as inputs; then it outputs XML that would satisfy those XPath conditions. 
-Initially we intended to extending the XML solver.  However, after experimentations, we find it difficult to encode DOM node attributes into the XML solver and the XML solver is not scalable to more than 5 unique nodes. 
+Initially we intended to extending the XML solver.  However, after experimentations, we find it difficult to encode DOM node attributes into the XML solver and 
+more importantly the XML solver is not scalable to more than 5 unique nodes. 
 
-CVC~\cite{cvc3, cvc4} is a general purpose SMT solver and it is more scalable.  However, being a general purpose solver also means that CVC does not natively support the tree structure defined in the DOM API.  
-Our DOM solver uses quantifiers to encode and model the DOM within CVC.  Nevertheless, the output of CVC yields only a description of the desired DOM tree (e.g. node A is child of node B), rather than the actual XML/HTML. 
+CVC~\cite{cvc3, cvc4} is a general purpose SMT solver and it is more scalable.  
+However, being a general purpose solver also means that CVC does not natively support the tree structure defined in the DOM API.  
+Our DOM solver uses quantifiers to encode and model the DOM within CVC.  
+Nevertheless, the output of CVC yields only a description of the desired DOM tree (e.g. node A is child of node B), rather than the actual XML/HTML. 
 Thus we have to take additional steps to transform CVC outputs into HTML.
 
 
@@ -56,9 +66,12 @@ Random testing and concolic testing are two major formats of feedback directed t
 Concolic testing is a form of feedback directed testing because it conducts backward slicing to generate inputs, and then it uses the resulting executed path as feedback for generating new inputs.  
 
 In random testing for JavaScript Web applications, Artemis~\cite{artemis} randomly generates initial inputs and uses the output of functions (rather than executed paths) as feedback, for increasing coverage.  
-Pythia~\cite{pythia} also generates initial inputs randomly, their feedback is changes to a state flow graph model, and their goal is to maximize the number of functions being called.  The number of functions being called is directly proportional to the number of lines covered.  
-For covering JavaScript code that contain DOM operations, Pythia would use a Web application's existing HTML if such HTML is available.  Thus Pythia does not generate new HTML for covering execution paths that conflict with the existing HTML.  
-For example, when the {\tt true} branch of an {\tt if} statement requires a DOM element having 10 children.  Pythia would never enter the {\tt true} branch if the existing HTML does not contain 10 children for that DOM element.
+Pythia~\cite{pythia} also generates initial inputs randomly, their feedback is changes to a state flow graph model, and their goal is to maximize the number of functions being called.  
+The number of functions being called is directly proportional to the number of lines covered.  
+For covering JavaScript code that contain DOM operations, Pythia would use a Web application's existing HTML if such HTML is available.  
+Thus Pythia does not generate new HTML for covering execution paths that conflict with the existing HTML.  
+For example, when the {\tt true} branch of an {\tt if} statement requires a DOM element having 10 children, 
+Pythia would never enter the {\tt true} branch if the existing HTML does not contain 10 children for that DOM element.
 
 %In contrast to Artemis and our tool, Pythia is for regression testing; it requires a previous version of bug free software, and also mandates that the current version has zero change in both behavior and interface such that the same input always yields identical output. 
 %When a software requires regression testing, it either has a bug fixed (violates the bug-free requirement) or has an improvement or a new feature implemented (may violate the zero change requirement).  
