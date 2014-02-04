@@ -10,7 +10,7 @@ Note that if the condition is {\tt a = elem.parentElement.nextElementSibling ===
 That said, questions remain unanswered about exactly where does {\tt elem} fit in or belong in the overall DOM tree; and other DOM operations would provide clues for that.  The DOM solver would take all the clues and generate a satisfiable structure.   
 
 \begin{figure}
-\begin{lstlisting}[caption=HTML generated for going the all {\tt true} path in Sample Code ~\ref{domOr}.  The all {\tt true} path is the execution path in which every condition goes to the {\tt true} branch.,label=htmlExtended]  
+\begin{lstlisting}[caption=HTML generated for guiding the execution to follow the {\tt true} branch in the {\tt if} statement in Sample Code\ref{dom0}.label=htmlExtended]  
 <span id="c">
   <span/>
   <span id="b">
@@ -30,11 +30,11 @@ That said, questions remain unanswered about exactly where does {\tt elem} fit i
 % SMT-lib language, swappable between CVC and Z3.
 	% take advantage of Moore's law in terms of hardware performance and breakthroughs in constraint solvers
 	% future compatibility for multiple data types
-	
+
 \header{DOM Operations into SMT Quantifiers.}	
 In the solver we transform each DOM operation into a SMT function.  We then use quantifiers (e.g. {\tt EXISTS}, {\tt FORALL}) to define how the SMT functions relate to each other.  
 Sample Code ~\ref{childrenLength} shows the boolean functions and integer functions we defined for supporting the {\tt elem.children.length} operation.  We first quantify the parent-child relationship: 
-\begin{compactitem} 
+\begin{compactitem}
 \item a node cannot be a child of itself, see {\tt line 1} and {\tt line 4} in Sample Code ~\ref{childrenLength}.
 \item a child of a node cannot be the node's parent at the same time: {\tt line 8}.
 \item a child can have only 1 parent: {\tt line 13}.
@@ -108,14 +108,19 @@ ASSERT FORALL (x, y: Node):
 
 \header{Negation.}
 We use the CVC implementation of SMT, which natively supports booleans and integers by default.  
-While it is possible to define a customized data structure to mimic the DOM tree in CVC, the boolean/integer function approach is simple and convenient for negating conditions and going into different execution paths.
+%While it is possible to define a customized data structure to mimic the DOM tree in CVC, the boolean/integer function approach is simple and convenient for negating conditions and going into different execution paths.
 %Because Web browsers also support accessing the DOM tree via XPath~\cite{documentEvaluate}, we defined additional SMT functions: {\tt following\_sibling}, {\tt preceding\_sibling}, {\tt descendant} and {\tt ancestor}.
 
 \header{Solver Output into HTML.}
 Because we used Boolean functions and Integer functions, CVC is only going to solve for the interdependent logic constraints and it does not directly yield a concrete DOM tree.  
-Instead, CVC only expands the quantifiers and it outputs more {\tt ASSERT} statements that is valid for making the constraints satisfiable.  
+Instead, CVC only expands the quantifiers and it outputs more {\tt ASSERT} statements for making the constraints satisfiable.  
 
-In Sample Code \ref{domOr}, to solve ({\tt d === elem.firstElementChild || d === b.lastElementChild}), CVC would output {\tt "ASSERT lastChild(d, b)"} because it has decided on making ({\tt d === b.lastElementChild}) {\tt true}.
+In Sample Code \ref{domOr}, the condition inside the first {\tt if} statement has 2 sub conditions: 
+\begin{compactitem}
+\item {\tt d===elem.firstElementChild} ({\tt line 3}), and 
+\item {\tt d===b.lastElementChild} ({\tt line 4}).
+\end{compactitem}
+When the DOM solver solves this {\tt if} statement for going to the {\tt true} branch, it would output {\tt "ASSERT lastChild(d, b);"} because it has decided on making the second sub condition ({\tt line 4}) {\tt true}.
 
 To build the DOM tree, we built an API that parses the CVC output and builds a model for the DOM.  
 In the CVC output, CVC creates many temporary variable names, thus each DOM element can have more than one alias.  

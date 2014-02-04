@@ -11,7 +11,7 @@ Therefore, in this case study we will call the {\tt function checkRows()} in the
 
 For each approach, we would follow the same methodology of loading and execution the function:
 \begin{compactitem}
-\item Open the target URL on the Web browser
+\item Open the target URL in the Web browser
 \item Load the HTML (except {\em Without HTML})
 \item Execute the target code
 \item Measure coverage
@@ -74,7 +74,7 @@ Optimal & 6 & 4 & 41 \\ \hline
 \header{Coverage Results.}
 Figure \ref{coverage} shows the coverage results of different approaches to testing the {\tt function checkRows()}.  
 
-The {\em Without HTML} approach cannot cover any statement because the first statement in the {\tt function checkRows()} is already a DOM operation requiring the existence of an element with {\tt id} {\tt "field"}.
+The {\em Without HTML} approach cannot cover any statement because the first statement in the {\tt function checkRows()} is already a DOM operation requiring the existence of an element with ID {\tt "field"}.
 
 The {\em Existing HTML} approach is able to cover 5 statements inclusively from {\tt line 2} to {\tt line 6} because the original HTML already has 20 rows inside {\tt field}.  
 However the {\em Existing HTML} approach cannot cover the statement in {\tt line 7} because the rows do not have any children at the start of the game. 
@@ -98,7 +98,7 @@ Another benefit of \tool is that it covers all the different paths that generate
 Our current concolic driver is primitive in the sense that it exhaustively tries to cover all execution paths possible.  
 In the future, it may be worth investigating if it is possible to design a smarter concolic driver that can give priority to execution paths that would yield the highest marginal benefit of additional coverage: 
 e.g. highest additional branch coverage, the most diverse permutation of increasing the score, etc.  
-That way the tester can exercise concolic testing partially, combine concolic testing with other less expensive testing methods (e.g. ~\cite{hybridconcolic}), and still achieve certain desired outcomes without incurring the full costs associated with complete concolic execution.  
+That way the tester can exercise concolic testing partially, combine concolic testing with other less expensive testing methods (e.g. ~\cite{feedbackConcolic, hybridconcolic}), and still achieve certain desired outcomes without incurring the full costs associated with complete concolic execution.  
 Thus having a prioritized concolic engine would give the tester greater control to manage the costs and benefits of the testing life cycle.  
 
 % yahoo

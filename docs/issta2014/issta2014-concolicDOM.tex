@@ -75,7 +75,7 @@
 \begin{document}
 
 % --- Author Metadata here ---
-\conferenceinfo{ISSTA 2014, Jul 21-26, 2014}{San Jose, California}
+%\conferenceinfo{ISSTA 2014, Jul 21-26, 2014}{San Jose, California}
 %\CopyrightYear{2014} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
 %\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
 % --- End of Author Metadata ---
@@ -103,19 +103,16 @@ Ali Mesbah\\
        \affaddr{Vancouver, Canada}\\
        \email{amesbah@ece.ubc.ca}
 }
-\date{24 January 2014}
+%\date{24 January 2014}
 
 \maketitle
 \begin{abstract}
 Web applications are increasingly popular and abundant, and concolic testing is an emerging method for maximizing coverage.  
-However, concolic testing Web applications remains a challenge because 
-executing different parts of JavaScript code often requires different yet precise background tree structures of the application's Document Object Model.
-When a line of DOM related JavaScript code fails, the entire execution can halt and the test case cannot conintue.  
-In this paper we present our approach to generating background DOM trees for concolic testing JavaScript Web applications.  
-Our approach is designed to be automatic because the number of unique DOM trees can grow exponentially with the number of possible execution paths.
-Our approach is also systematic that it can tailor the DOM tree to target precise subsets of the code base.  
-We conducted a case study on the DOMtris application in which we will show how our approach significantly improves path coverage that 
-includes a part of JavaScript code that implements a core functionality of the application.
+Considerable JavaScript code is written to access and update a Web application's user interface through the Document Object Model API.  The DOM models the UI in a tree structure.  In this paper we present our generic and browser indepdendent approach for generating DOM trees for concolic testing JavaScript Web applications.
+Concolic testing Web applications remains a challenge because executing different parts of JavaScript code requires different yet specifically precise DOM tree structures.
+To overcome these challenges, we designed a DOM solver to support the 2D structure of the DOM tree, to infer implicit clues from DOM operations that are partial and incomplete, and to tailor the DOM tree for targeting precise subsets of the code base.
+We also implemented an end to end automatic system from deducing constraints to generating HTML and driving test execution because the number of unique DOM trees can grow as exponentially as the number of execution paths.
+We conducted a case study on the DOMtris application in which we will show how our approach significantly improves path coverage that includes a part of JavaScript code that implements a core functionality of the application.
 \end{abstract}
 
 % A category with only the three required fields

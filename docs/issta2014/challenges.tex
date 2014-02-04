@@ -1,44 +1,67 @@
 \section{Challenges}
-Our preference is always to aim for the simplest solution.  Yet, we encountered and had to resolve several challenges while trying to generate a satisfiable DOM:
+We encountered and had to resolve several challenges while trying to generate satisfiable DOM trees:
 
-\header{1. Single DOM Clues are Incomplete.}  
+
+\header{1. Single Constraints are Partial and Incomplete.}  
 % why tracing, not greedy
-Each DOM operation provides a clue to the overall DOM tree.  An intuitive approach would be to generate DOM elements {\tt "}just in time{\tt "}.  
-However, such na\"ive approach does not always work because each clue by itself is insufficient.  
+Each DOM operation provides a single constraint or clue to a subset of the DOM tree's overall structure.  An intuitive approach would be to generate DOM elements {\tt "}just in time{\tt "}.  
+However, such na\"ive approach does not always work because each single partial clue is insufficient.  
 
-Just in time generation is to greedily create whatever DOM elements necessary for satisfying the current single DOM clue.  
-For example, in Sample Code \ref{dom0}, whenever {\tt getElementById()} is called, we could just create and return an ad-hoc DOM element having the corresponding id.  
-When we see {\tt (row.children.length === 10)}, we could additionally create 10 ad-hoc children for the {\tt row}.  
+A DOM operation is an operation on the DOM API.  In the JavaScript language, a DOM operation is a property access or a method call to a JavaScript object that is associated with the DOM.  
+For example, the method call {\tt document.getElementById("field")} is a DOM operation to get the element having ID {\tt "field"} from the DOM tree.  
 
-The problem is that other DOM operations may contradict the ad-hoc DOM tree.  
+The actual constraint or clue of the DOM operation would depend on the branch that we intend the execution to follow.  
+For example, if there is a condition checking {\tt if (field===null)}, and we intend the execution to follow the {\tt true} branch of this condition,  
+then the constraint is that the DOM tree must not have a DOM element having ID {\tt field}.  
+
+More often, the code would have other DOM operations that passively imply the requirement of {\tt field}.  
+For example, when the code has a property access ({\tt field.children}) somewhere in the code after ({\tt var field = document.getElementById("field")}), 
+the code is indirectly implying a clue that it expects {\tt field} to be an actual DOM element rather than {\tt null}.  
+Otherwise, e.g. when {\tt field} is not a DOM element, executing the DOM operation {\tt field.children} would return a {\tt Type Error} and would terminate the program prematurely.    
+Therefore, given a path that we intend the execution to follow, each DOM operation would directly or indirectly yield a subset clue about the structure of the overall DOM tree.  
+
+Just in time generation is to greedily create whatever DOM elements necessary for satisfying the current single DOM operation and intended execution path.    
+For example, any time we encounter {\tt document.getElementById()}, we could just create and return an ad-hoc DOM element satisfying the corresponding ID.  
+When we see {\tt (row.children === 10)}, we could additionally create 10 ad-hoc children for {\tt row}.  
+
+\sloppy{
+The problem is the ad-hoc DOM tree may contradict DOM operations in other parts of the code.  
 A counter example we discovered very early was by just loading Wikipedia~\cite{wikipedia}.  
-While loading the webpage, it executes the jQuery code {\tt \$("\#B13\_120517\_dwrNode\_enYY")} to get an element by a specific id.  
-Then, some time later, the webpage calls {\tt \$("div\#B13\_120517\_dwrNode\_enYY")}, which is to get a <div> element by the exact same id.  
-While the two jQueries may be written by different developers, we can easily see that the greedy approach does not work because it does not consider DOM operations in other parts of the code.  
+While loading the webpage, the execution calls the jQuery function {\tt \$("\#B13\_120517\_dwrNode\_enYY")}.
+Calling the {\tt \$()} function with the {\tt \#} sign is to get an element by ID.  In this case, the ID is {\tt "B13\_120517\_dwrNode\_enYY"}. 
+Thus {\tt document.getElementById("B13\_120517\_dwrNode\_enYY")} would eventually get called.    
+}
 
-While each DOM clue is incomplete, there can also be many different possibilities for satisfying a single DOM clue.  
-When trying to satisfy {\tt \$("\#B13\_120517\_dwrNode\_enYY")}, the DOM has so many tag types, how do we know <div> is the correct tag in the first place?  
-The consequence for an incorrect tag type is that the 2nd jQuery would not return any DOM element, leading to an error.  
-Thus DOM operations have to be collectively traced for complete analysis and for generating a correct answer.  
+\sloppy{
+To satisfy this DOM operation, we can simply create a DOM element with ID {\tt "B13\_120517\_dwrNode\_enYY"}.  
+However, as the webpage continues to load, some time later the execution would call {\tt \$("div\#B13\_120517\_dwrNode\_enYY")}.  
+This time the output is expected to be a <div> element by the exact same ID.  
+}
 
+The second DOM operation can be satisfied {\em only} if we created a <div> element at the first place.  
+There are many tag types to choose when trying to create a DOM element; any tag type other than <div> would make the ad-hoc DOM tree contradict the second DOM operation.  
+The reason is that the tag type cannot be changed once a DOM element has been created.  
+In this case, the two different calls to the {\tt \$()} jQuery function come from different parts of the code and may be written by different developers at different times.  
+Thus the {\tt "}just in time{\tt "} greedy approach does not work because it does not consider DOM operations in other parts of the code.  
 
-\header{2. Indirect Influence \& Intermediate Variables.}  
+Similarly, there can be many different possibilities when trying to satisfy a single DOM clue, and multiple DOM operations have to be collectively traced for complete analysis and overall tree generation.   
+
+\header{2. Indirect Influence from Intermediate Variables.}  
 % why backward slicing
-While executing JavaScript code would subtly or passively imply the DOM having a particular tree structure, sometimes the structure of the DOM tree would actively determine which branch a condition would go into.  
-For example, in Sample Code~\ref{dom0}, we see that whether a {\tt row} has 10 children would actively determine whether the {\tt if} condition would go into the {\tt true} or {\tt false} branch.
-While the DOM dependence is obvious in Sample Code~\ref{dom0}, very often DOM operations may not directly appear inside a condition: 
-the result of different DOM operations may get assigned to multiple variables at various execution stages prior to the condition, either within the same function or up in the runtime stack.  
-For example, a condition may appear as a simple {\tt if(a)} in the code; yet the variable {\tt a} can be {\tt (row.children.length === 10)} or compositions of more complex operations, 
-containing the result of multiple statements executed throughout the code.  
-We have to backward slice variables so that we can accurately determine what DOM operations a condition may depend upon.  
+Assigning execution results to variables is a common practice in programming.  
+In the code, it is possible that a condition may appear as a simple {\tt if(a)}; yet the variable {\tt a} can be the result of {\tt (row.children.length === 10)}, or a more complex composition of prior executions. 
+Adding to the complexity, these prior executions can happen anywhere at multiple lines scattered throughout the code.  
+They can come from within the same function, or another function somewhere up in the runtime stack.
 
+While the dependence on the DOM is directly obvious in the conditions of Sample Code \ref{dom0}, very often DOM operations may come from intermediate variables rather than directly appearing inside a condition.  
+We have to backward slice variables so that we can accurately trace and precisely determine which DOM operations a condition may depend upon.  
 
 \header{3. Dynamic Typing.}  
 % why dynamic analysis, not static analysis; why tracing and backward slicing both have to be dynamic.
-JavaScript variables are dynamically typed.  Thus given a variable, we would not exactly know what type its value represents until we actually run the code.  
+JavaScript variables are dynamically typed.  Thus given a variable, we would not exactly know what type the variable value represents until we actually run the code.  
 In our previous example, {\tt a} can be anything: an integer, a string, a boolean, or an object.  
-Static analysis by itself is insufficient to detect which lines of code are DOM related.
-Indeed, authors of existing JavaScript static techniques~\cite{staticJsWWW09, staticJsWWW11} reveal substantial gaps and false positives in their own work.  
+Therefore, static analysis by itself is insufficient to detect which lines of code are DOM related.  
+Indeed, authors of existing static techniques~\cite{staticJsWWW09, staticJsWWW11} of analyzing JavaScript code reveal substantial gaps and false positives in their own work.  
 Thus the only way to discover whether a condition contains DOM operations is to run the code.  
 Both tracing and backward slicing have to be dynamic to accurately determine which conditions depend on the DOM, and which do not.  
 
@@ -74,12 +97,14 @@ if (elem.parentElement.parentElement
 
 \header{4. Interdependent Logic.}  
 % why solver, not heuristics 
-Given a dynamic trace and a dynamic backward slice deduced from the logs of decorated execution, we would have a clear mapping between DOM operations and conditions; 
+Given a dynamic trace and a dynamic backward slice, we would have a clear mapping between DOM operations and conditions; 
 thus a logical approach would be to generate a DOM tree directly from the trace and backward slice.  
-However, an heuristic approach may not always work because a condition may have logical constraints that are interdependent on logical constraints in other conditions.  
-In an obvious example, 2 of the conditions in Sample Code~\ref{domOr}, the 2 {\tt if} statements, inter-depend on each other because of the DOM policy that a DOM element cannot be both a child and a parent of another DOM element.  
-Specifically, the 2 sub-conditions in {\tt line 3} and {\tt line 6} must be mutually exclusive because {\tt d} cannot be both a child and parent of {\tt a}.
-Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DOM specific solver is required to understand the unique policies of the DOM and make decisions accordingly for generating a proper satisfying HTML.
+However, an heuristic approach may not always work because a condition may have logical constraints that are interdependent on logical constraints from other conditions.  
+To compose an obvious example, we made 2 of the {\tt if} conditions in Sample Code~\ref{domOr} inter-depend on each other.
+Specifically, the 2 sub-conditions in {\tt line 3} and {\tt line 6} must be mutually exclusive because of the DOM policy that a DOM element (e.g. {\tt d}) cannot be both a child and parent of the same DOM element (e.g. {\tt a}).  
+Therefore, when we intend an execution path to follow the {\tt true} branch of both of these {\tt if} conditions, we have to deploy a logic solver.  
+The logic solver must know which of {\tt line 3} and {\tt line 6} to make {\tt true}.  
+To do so the solver must be able to understand the unique policies of the DOM API and to make logic decisions accordingly for properly generating a satisfiable DOM tree.  
 
 
 \begin{figure*}[ht]
@@ -91,21 +116,31 @@ Therefore, when we want both of these {\tt if} conditions to be {\tt true}, a DO
 
 \header{5. 2D Tree Structure \& Implicit Clues.}  
 % why quantifiers and not meshing tree pieces together
-While many solvers support single dimensional data types such as numbers and strings, most do not natively solve the DOM's 2D tree structure.    
-A reason why solving for a 2D structure is challenging is because the DOM solver must be able to resolve policies and operations defined in the W3C DOM API~\cite{w3dom}.  
-An example is inferring indirect clues.  Here, when {\tt b.previousElementSibling === c.firstElementChild}, the solver has to understand the implication that {\tt c} is the parent of {\tt b}.  
+While many logic solvers natively support single dimensional data types (integers, real numbers and strings), most do not natively support the Document Object Model's 2D tree structure.
+A challenge for designing a DOM solver is that the DOM solver must infer indirect or implicit clues before constructing the overall DOM tree.  
+For example, when {\tt b.previousElementSibling === c.firstElementChild}, the solver must infer that {\tt c} is the parent of {\tt b}.  
 
-Another example is the fact that the DOM clues can subtly overlap with each other.  DOM clues can overlap because DOM operations can be chained.  
-In JavaScript, a DOM operation of a DOM element (e.g. {\tt elem.parentElement}) returns another DOM element.  Thus DOM operations can be chained: {\tt elem.parentElement.parentElement} returns the grandparent of {\tt elem}.
+\sloppy{
+This type of aliasing can get more complex because DOM operations can be chained.
+In JavaScript, a DOM operation on a DOM element (e.g. {\tt elem.parentElement}) returns another DOM element. 
+Thus chaining occurs when more DOM operations build on an existing DOM chain.
+For example, when we extend the chain {\tt elem.parentElement} with another {\tt .parentElement} DOM operation, {\tt elem.parentElement.parentElement} returns the grandparent of {\tt elem}.
+}
 
-In Figure~\ref{trees}, when {\tt elem.parentElement.parentElement === c.lastElementChild.previousElementSibling}, 
-the subtle implication is that {\tt b.nextElementSibling} is {\tt c.lastElementChild}, because {\tt d === b.parentElement} and {\tt d === b.lastElementChild}.  
+\sloppy{
+In Sample Code \ref{domOr}, {\tt elem.parentElement.parentElement === c.lastElementChild.previousElementSibling} ({\tt line 12}).
+Therefore, the solver has to infer that {\tt b.nextElementSibling} is also {\tt c.lastElementChild} (Figure \ref{trees} Solved DOM), because the code also stated that ({\tt d === b.lastElementChild}) and ({\tt d === elem.parentElement}).  
+}
 
-Overlapping can become complex after the intermediate variables are resolved into a long dynamic backward slice.  
-The reason is that, there can be multiple long chains in both parental and sibling dimensions: e.g. {\tt elem.parentElement.parentElement.nextElementSibling.children[2]}.  
+\sloppy{
+Once intermediate variables are resolved, the actual length of DOM chains can be observed and chains can span in both parental and sibling dimensions: e.g. {\tt elem.parentElement.parentElement.nextElementSibling}
+{\tt .children[2].previousElementSibling}.  
+}
 
-The multiple long chains can overlap and interweave with each other on multiple spots.  Thus the 2D structure and indirect clues are another reason for requiring a DOM specific solver.  
-A non-solver approach would simply not work when it tries to generate a na\"{i}ve tree (Na\"{i}ve DOM in Figure \ref{trees}) by grouping the DOM operations and then connecting the individual tree pieces to a master root (the dashed lines in Figure \ref{trees}).  
+A dynamic backward slice can contain multiple long chains.  
+Aliasing can become complex because multiple sub-chains of varying length can refer or alias to the same DOM element.  
+Thus the DOM tree's 2D structure and implicit clues are another reason for requiring a DOM specific solver.  
+A non-solver approach would simply not work when it tries to generate a na\"{i}ve tree (Figure \ref{trees} Na\"{i}ve DOM) by grouping individual DOM chains and connecting them na\"{i}vely to a master root (the dashed lines in Figure \ref{trees}).  
 
 
 % \header{DOM Mutations}  

@@ -10,8 +10,8 @@ Kudzu~\cite{kudzu} and Jalangi~\cite{jalangi} are the only two for concolic test
 
 A main contribution of Kudzu is a string solver that can handle select regular expressions.  
 The solver is deployed to generate strings as UI inputs for detecting security vulnerabilities in JavaScript Web applications.   
-A main contribution of \tool is our DOM solver.  Our solver generates HTML for running and testing JavaScript code that contain DOM operations.    
-While HTML are usually represented in string form, designing a DOM solver is different from designing a regex string solver.
+A main contribution of \tool is our DOM solver.  Our solver generates HTML for running and testing JavaScript code that contains DOM operations.    
+While DOM trees are usually represented in HTML string form, designing a DOM solver is different from designing a regex string solver.
 As discussed in the Challenges section, the main reasons are that the DOM solver has to support a 2D hierarchical tree structure while strings are usually single dimensional.  
 Moreover, inferring implicit clues from DOM operations is also different from inferring regex patterns.  
 In addition, the architecture of \tool is implemented to run on multiple Web browsers, while Kudzu runs on only the single browser that supports its component~\cite{flax} for tracing and slicing.    
@@ -68,7 +68,7 @@ Concolic testing is a form of feedback directed testing because it conducts back
 In random testing for JavaScript Web applications, Artemis~\cite{artemis} randomly generates initial inputs and uses the output of functions (rather than executed paths) as feedback, for increasing coverage.  
 Pythia~\cite{pythia} also generates initial inputs randomly, their feedback is changes to a state flow graph model, and their goal is to maximize the number of functions being called.  
 The number of functions being called is directly proportional to the number of lines covered.  
-For covering JavaScript code that contain DOM operations, Pythia would use a Web application's existing HTML if such HTML is available.  
+For covering JavaScript code that contains DOM operations, Pythia would use a Web application's existing HTML if such HTML is available.  
 Thus Pythia does not generate new HTML for covering execution paths that conflict with the existing HTML.  
 For example, when the {\tt true} branch of an {\tt if} statement requires a DOM element having 10 children, 
 Pythia would never enter the {\tt true} branch if the existing HTML does not contain 10 children for that DOM element.
