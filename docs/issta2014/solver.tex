@@ -2,12 +2,13 @@
 The DOM solver takes the constraints defined by the MapDeducer and attempts to generate a satisfiable DOM structure.  The solver is implemented as an extension of a SMT solver~\cite{cvc3} and would report anything not satisfiable.  
 
 \header{DOM Tree \& DOM Operations.}
-A major part of the DOM is its single parent, multi-children tree structure.  When generating a satisfiable DOM, we use the execution of DOM operations to infer the overall DOM tree.    
+Recall a major part of the DOM is its single parent, multi-children tree structure.  When generating a satisfiable DOM, we use the execution of DOM operations to infer the overall DOM tree.    
 Each DOM operation in any line of code is like a piece of a puzzle describing a subset clue of the overall DOM tree.   
 For example {\tt a = elem.parentElement.nextElementSibling} implies 2 subset clues: {\tt elem} has a parent element, and the parent has a sibling.  
-Note that if the condition is {\tt a = elem.parentElement.nextElementSibling === null}, then the clues become {\tt elem} has a parent element, yet the parent has no next sibling and thus is the last child.
+Note that when the condition is {\tt a = elem.parentElement.nextElementSibling === null}, then the clues become {\tt elem} has a parent element, yet the parent has no next sibling and thus is the last child.
 
-That said, questions remain unanswered about exactly where does {\tt elem} fit in or belong in the overall DOM tree; and other DOM operations would provide clues for that.  The DOM solver would take all the clues and generate a satisfiable structure.   
+That said, questions remain unanswered about exactly where does {\tt elem} fit in or belong in the overall DOM tree; and other DOM operations would provide clues for that.  
+The DOM solver would take all the clues and generate a satisfiable tree structure.   
 
 \begin{figure}
 \begin{lstlisting}[caption=HTML generated for guiding the execution to follow the {\tt true} branch in the {\tt if} statement in Sample Code\ref{dom0}.label=htmlExtended]  
