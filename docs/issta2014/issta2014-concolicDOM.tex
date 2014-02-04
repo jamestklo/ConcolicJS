@@ -107,8 +107,9 @@ Ali Mesbah\\
 
 \maketitle
 \begin{abstract}
-Web applications are increasingly popular and abundant, and concolic testing is an emerging method for maximizing coverage.  
-Considerable JavaScript code is written to access and update a Web application's user interface through the Document Object Model API.  The DOM models the UI in a tree structure.  In this paper we present our generic and browser indepdendent approach for generating DOM trees for concolic testing JavaScript Web applications.
+As Web applications become more prevalent in our daily lives, quality assurance of Web applications has also become more important.  
+Concolic testing is an emerging method for maximizing coverage, and considerable JavaScript code is written to access and update a Web application's user interface through the Document Object Model API.  The DOM models the UI in a tree structure.  
+In this paper we present our generic and browser indepdendent approach for generating DOM trees for concolic testing JavaScript Web applications.
 Concolic testing Web applications remains a challenge because executing different parts of JavaScript code requires different yet specifically precise DOM tree structures.
 To overcome these challenges, we designed a DOM solver to support the 2D structure of the DOM tree, to infer implicit clues from DOM operations that are partial and incomplete, and to tailor the DOM tree for targeting precise subsets of the code base.
 We also implemented an end to end automatic system from deducing constraints to generating HTML and driving test execution because the number of unique DOM trees can grow as exponentially as the number of execution paths.
