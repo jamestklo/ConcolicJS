@@ -104,7 +104,7 @@ To compose an obvious example, we made 2 of the {\tt if} conditions in Sample Co
 Specifically, the 2 sub-conditions in {\tt line 3} and {\tt line 6} must be mutually exclusive because of the DOM policy that a DOM element (e.g. {\tt d}) cannot be both a child and parent of the same DOM element (e.g. {\tt a}).  
 Therefore, when we intend an execution path to follow the {\tt true} branch of both of these {\tt if} conditions, we have to deploy a logic solver.  
 The logic solver must know which of {\tt line 3} and {\tt line 6} to make {\tt true}.  
-To do so the solver must be able to understand the unique policies of the DOM API and to make logic decisions accordingly for properly generating a satisfiable DOM tree.  
+To do so, the solver must be able to understand the unique policies of the DOM API and to make logic decisions accordingly for properly generating a satisfiable DOM tree.  
 
 
 \begin{figure*}[ht]

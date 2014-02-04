@@ -3,7 +3,7 @@
 JavaScript is increasingly a popular language for software implementation: %; and the World Wide Web is increasingly an attractive platform for delivering applications.
 For end users, HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to those implemented for traditional desktops.  
 The latest round of browser wars makes executing JavaScript more efficient, robust, secure and consistent.  
-For programmers, JavaScript is relatively easy to adopt, and does not have the burden of memory management and static typing.
+For programmers, JavaScript is relatively easy to adopt, and JavaScript does not have the burden of memory management and static typing.
 More operating systems in both the desktop~\cite{chromeApps, windows8javascript} and mobile~\cite{apacheCordova, iosWebView, blackberryWebWorks, firefoxOS, androidWebView, tizen} actually now support installing and running JavaScript apps on the OS similar to native apps.
 The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware heterogeneity, 
 which also makes JavaScript apps\footnote{JavaScript apps are preferred in Web browsers because they are lighter weight than Java applets and they do not require installation of any proprietary plugins such as Flash and Silverlight} 
@@ -31,10 +31,10 @@ The function is simplified from a feature Chrome Experiment~\cite{domtris} that 
 %Tizen OS
 
 Concolic testing~\cite{cute}, also known as dynamic symbolic testing, would execute the app in a way to maximize path coverage.
-A path is a sequential permutation of branches.  For example, an {\tt If} statement has at least a {\tt True} branch and a {\tt False} branch.  
+A path is a sequential permutation of branches.  For example, an {\tt if} statement has at least a {\tt True} branch and a {\tt False} branch.  
 A loop has 2 branches, {\tt Stay} and {\tt Break}.  The condition inside the statement or loop decides which branch the execution would follow.  
 Maximizing path coverage would be to generate inputs for executing every possible permutation of condition branches.  
-In the {\tt function checkRows()} in Sample Code \ref{dom0}, we must visit both the {\tt True} and {\tt False} branches of the {\tt If} statement.
+In the {\tt function checkRows()} in Sample Code \ref{dom0}, we must visit both the {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}.
 \begin{figure}
 \begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
 function checkRows() {
@@ -88,11 +88,11 @@ function checkRows() {
 If we intend an execution path to visit the {\tt True} branch of the {\tt if} statement at {\tt line 6} of Sample Code \ref{dom0}, 
 the web application must have a DOM tree structure satisfying many constraints:
 \begin {compactitem}
-\item There is an element with ID {\tt "field"}.
-\item {\tt field} contains children elements, so that we can first enter the {\tt for} loop.
-\item There are rows having ID's in the nomenclature {\tt row0}, {\tt row1}, etc.
-\item The number of rows must be greater than or equal to the number of children that {\tt field} has.  The reason is that the ID of each {\tt row} is made distinct by {\tt i}.  According to the {\tt for} loop, {\tt i---} goes from {\tt field.children.length} to 1.
-\item At least one of the rows must have exactly 10 children.
+\item There is an element with ID {\tt "field"} ({\tt line 2}).
+\item {\tt field} contains children elements, so that we can first enter the {\tt for} loop ({\tt line 4}).
+\item There are rows having ID's in the nomenclature {\tt row0}, {\tt row1}, etc ({\tt line 5}).
+\item The number of rows must be greater than or equal to the number of children that {\tt field} has.  The reason is that the ID of each {\tt row} is made distinct by {\tt i} ({\tt line 5}).  According to the {\tt for} loop, {\tt i---} goes from {\tt field.children.length} to 1 ({\tt line 4}).
+\item At least one of the rows must have exactly 10 children ({\tt line 6}).
 \end {compactitem}
 }
 
@@ -107,7 +107,7 @@ For example, to go to the {\tt False} branch of the above {\tt if} statement, ro
 Therefore, to cover both the {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}, we must generate 2 unique DOM trees.  
 Generally for an {\tt if} statement, we have to consider generating an unique DOM tree for each of the {\tt true} branch,  all {\tt else if} branches, and the {\tt else} branch.  
 Loops are more difficult for achieving path coverage, because generally it is not easy to determine what the upper limit is for iterating a loop.  
-For example, {\tt field} can have any number of children in in Sample Code ~\ref{dom0}.  Thus the loop can get iterated any number of times.  
+For example, {\tt field} can have any number of children in Sample Code ~\ref{dom0}.  Thus the loop can get iterated any number of times.  
 
 %Overall, covering an additional conditional statement, be it an {\tt if}, a {\tt switch} or a loop, would potentially multiply the number of unique DOM trees.  
 
@@ -128,7 +128,7 @@ The following are the main contributions of the Research Proficiency Evaluation 
 \end {compactitem}
 
 \tool augments approaches that aim to generate tests automatically.  
-Random testing(e.g.~\cite{artemis}), mutation testing (e.g.~\cite{pythia}), concolic testing (e.g.~\cite{eventConcolic, feedbackConcolic, kudzu, jalangi, cute})... 
+Random testing (e.g.~\cite{artemis}), mutation testing (e.g.~\cite{pythia}), concolic testing (e.g.~\cite{eventConcolic, feedbackConcolic, kudzu, jalangi, cute})... 
 to our best knowledge, almost all of existing research on test generation focused on generating 1) function arguments for unit testing, or 2) events and UI inputs (e.g strings for text fields and forms; mouse clicks for buttons and selection boxes; and key presses) for application-level testing.  
 However, having just the function arguments, events and UI inputs is often insufficient.  
 For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.  

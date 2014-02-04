@@ -14,7 +14,7 @@ A main contribution of \tool is our DOM solver.  Our solver generates HTML for r
 While DOM trees are usually represented in HTML string form, designing a DOM solver is different from designing a regex string solver.
 As discussed in the Challenges section, the main reasons are that the DOM solver has to support a 2D hierarchical tree structure while strings are usually single dimensional.  
 Moreover, inferring implicit clues from DOM operations is also different from inferring regex patterns.  
-In addition, the architecture of \tool is implemented to run on multiple Web browsers, while Kudzu runs on only the single browser that supports its component~\cite{flax} for tracing and slicing.    
+In addition, the architecture of \tool is implemented to run on multiple Web browsers, while Kudzu runs only on their single proprietary browser that supports Kudzu's component~\cite{flax} for tracing and slicing.    
 
 A main contribution of Jalangi is their system of shadow values for selective record and replay.  
 In the shadow system, they encapsulate each data value into an object; the encapsulated object can contain any metadata (the shadow) about the actual data value.  
