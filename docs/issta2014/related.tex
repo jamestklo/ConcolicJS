@@ -27,7 +27,7 @@ For example, the JavaScript statement {\tt var x = "string";} would be instrumen
   
 Therefore, during the post order traversal, if a tree leaf of the decorated objects tree is not labelled, the variable inside the leaf would be identified as a candidate input, 
 because the data value does not come from within the code.  
-\tool generates a dynamic backward slice and thus executes the code, therefore the data type of candidate inputs can easily determined from the actual data value.  
+\tool generates a dynamic backward slice and thus executes the code, therefore the data type of candidate inputs can easily be determined from the actual data value.  
 
 Another differentiation is that for supporting the DOM we designed a Trace MapDeducer for extracting and transforming code-centric backward slice into DOM-centric constraints for the DOM solver.  
 Both CUTE~\cite{cute} and Jalangi use the CVC3~\cite{cvc3} solver for supporting integers and strings.  

@@ -1,7 +1,7 @@
 \section{Evaluation}
 Our evaluation would take the form of a case study in which we compare different approaches to testing the {\tt function checkRows()} in Sample Code \ref{dom0}, and measure how much coverage each approach can achieve.
 Existing approaches to concolic testing JavaScript~\cite{kudzu, jalangi} focus on generating input parameters.  
-Yet the {\tt function checkRows()} does not take any input arguments.  Thus these approaches would likely execute the function by simply calling {\tt checkRows}.
+Yet the {\tt function checkRows()} does not take any input arguments.  Thus these approaches would likely execute the function by simply calling {\tt checkRows()}.
 Therefore, in this case study we will call the {\tt function checkRows()} in the following 3 scenarios and measure how much code is covered in each case.  
 \begin{compactitem}
 \item {\em Without HTML}

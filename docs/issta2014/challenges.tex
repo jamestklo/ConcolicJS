@@ -1,6 +1,6 @@
 \section{Challenges}
-We encountered and had to resolve several challenges while trying to generate satisfiable DOM trees:
-
+%We encountered and had to resolve several challenges while trying to generate satisfiable DOM trees:
+The challenges we encountered motivate us to pursue a concolic approach for generating satisfiable DOM trees:  
 
 \header{1. Single Constraints are Partial and Incomplete.}  
 % why tracing, not greedy
@@ -95,7 +95,7 @@ if (elem.parentElement.parentElement
 \end{figure}
 
 
-\header{4. Interdependent Logic.}  
+\header{4. Logic Constraints can be Interdependent.}  
 % why solver, not heuristics 
 Given a dynamic trace and a dynamic backward slice, we would have a clear mapping between DOM operations and conditions; 
 thus a logical approach would be to generate a DOM tree directly from the trace and backward slice.  

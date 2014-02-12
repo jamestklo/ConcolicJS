@@ -25,6 +25,7 @@ if (__cond("IF_NAME filename.js 1", a)){}
 \end{lstlisting}
 \end{figure}
 
+
 \header{Decorated Execution.}
 Decorated execution is where we instrument the JavaScript code so that the execution of each JavaScript operator can be captured and decorated with additional data for producing a dynamic trace and a dynamic backward slice.  
 Sample code \ref{sheq} illustrates the semantics of decorated execution.  
@@ -81,6 +82,7 @@ ASSERT childrenLength(field) > 0;
 ASSERT childrenLength(row0) = 10;
 \end{lstlisting}
 \end{figure}
+
 
 \header {Trace Mapper \& Constraints Deducer.} 
 For each instance that a condition is executed, the backward slicer would yield what DOM operations the instance has and how these DOM operations are related or interdependent on one another.  

@@ -108,7 +108,7 @@ ASSERT FORALL (x, y: Node):
 \end{figure}
 
 \header{Negation.}
-We use the CVC implementation of SMT, which natively supports booleans and integers by default.  
+Negations are supported by SMT solvers by default.  To negate a constraint we wrap the constraint with {\tt NOT()}.
 %While it is possible to define a customized data structure to mimic the DOM tree in CVC, the boolean/integer function approach is simple and convenient for negating conditions and going into different execution paths.
 %Because Web browsers also support accessing the DOM tree via XPath~\cite{documentEvaluate}, we defined additional SMT functions: {\tt following\_sibling}, {\tt preceding\_sibling}, {\tt descendant} and {\tt ancestor}.
 
@@ -118,12 +118,12 @@ Instead, CVC only expands the quantifiers and it outputs more {\tt ASSERT} state
 
 In Sample Code \ref{domOr}, the condition inside the first {\tt if} statement has 2 sub conditions: 
 \begin{compactitem}
-\item {\tt d===elem.firstElementChild} ({\tt line 3}), and 
-\item {\tt d===b.lastElementChild} ({\tt line 4}).
+\item {\tt d === elem.firstElementChild} ({\tt line 3}), and 
+\item {\tt d === b.lastElementChild} ({\tt line 4}).
 \end{compactitem}
 When the DOM solver solves this {\tt if} statement for going to the {\tt true} branch, it would output {\tt "ASSERT lastChild(d, b);"} because it has decided on making the second sub condition ({\tt line 4}) {\tt true}.
 
-To build the DOM tree, we built an API that parses the CVC output and builds a model for the DOM.  
+To build the DOM tree, we built an API that parses the CVC output text and builds a model for the DOM.  
 In the CVC output, CVC creates many temporary variable names, thus each DOM element can have more than one alias.  
 To consolidate the aliases, we start with DOM operations expressing the parent child relationship because each child can have only 1 parent.  
 We also used other deterministic DOM operations such as {\tt firstChild()} and {\tt lastChild()} to group aliases together.  

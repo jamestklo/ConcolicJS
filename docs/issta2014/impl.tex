@@ -16,11 +16,11 @@ The concolic driver would iterate the cycle until it has reached a certain point
 
 \header{Instrumenting and Executing JavaScript.}  
 Our approach has to be generic, transparent and browser-independent.  
-We use Selenium's WebDriver\cite{webdriverjs} to drive Web browsers for executing JavaScript.  
+We use Selenium's WebDriver \cite{webdriverjs} to drive Web browsers for executing JavaScript.  
 WebDriver runs on multiple browsers, thus using WebDriver meets our design goal of being browser-independent.  
 
-When JavaScript is getting downloaded onto a Web browser, we use the WebScarab proxy to intercept the download and to instrumenting code.  
-The proxy passes intercepted JavaScript code to the Google Closure Compiler API~\cite{ClosureCompiler} for transforming JavaScript into calls to the operator functions. 
+When JavaScript is getting downloaded onto a Web browser, we use the WebScarab proxy \cite{webscarab} to intercept the download and to instrument code.  
+The proxy passes intercepted JavaScript code to the Google Closure Compiler API \cite{ClosureCompiler}, which transforms JavaScript into calls to the operator functions. 
 
 Both the Backward Slicer and MapDeducer are implemented as JavaScript APIs, and WebDriver natively supports calling JavaScript functions within the browser.  
 Thus our approach is entirely transparent and can be applied to multiple brands of Web browsers.    
@@ -28,18 +28,19 @@ Thus our approach is entirely transparent and can be applied to multiple brands 
 
 \header{Inline JavaScript \& {\tt eval()}.}  
 In addition to source files, JavaScript code can also be found within {\tt eval()} and inlined as attributes of a DOM element inside the HTML declaration (e.g. {\tt <body onload="runFunction()">}).
-We instrument each {\tt eval(code)} statement into {\tt eval(instrument(code))}.  We cannot override the native {\tt eval()}, because the native {\tt eval()} must be called inside the closure to give {\tt code} access to the closure's local variables.  
+We instrument each {\tt eval(code)} statement into {\tt eval(instrument(code))}.  We do not override the native {\tt eval()}, because the native {\tt eval()} must be called inside the closure to give {\tt code} access to the closure's local variables.  
 The {\tt instrument()} function would send the {\tt code} to the proxy for instrumentation via a XMLHttpRequest.  
 
-To instrument inline JavaScript, we traverse the webpage's original existing HTML using the JSoup API~\cite{jsoup}.  Once we detect DOM attributes that contain JavaScript, we pass the JavaScript to ClosureCompiler for instrumentation.  
+To instrument inline JavaScript, we traverse the webpage's original existing HTML using the JSoup API~\cite{jsoup}.  
+Once we detect DOM attributes that contain JavaScript, we pass the JavaScript to the Google Closure Compiler API for instrumentation.  
 For newly created elements, e.g. {\tt elem.innerHTML = text}, we use getters and setters to detect the new elements.  
 Once detected, we traverse the new elements, extract JavaScript and call the {\tt instrument()} function.  
 % Tudu
 
 
 \header{DOM Solver.}  
-CVC allows writing the constraints in Java, yet we do not want to hardcode the constraints because the constraints are different in each execution path.  
-Thus we use Java's ProcessBuilder~\cite{processbuilder} class to communicate with the executable (.exe) version of CVC.  We decided to use CVC3 rather than CVC4~\cite{cvc4} because CVC3 is generally more stable during our experimentation.  
+CVC allows writing the constraints in Java, yet we do not want to hardcode the constraints because the constraints are different for each execution path.  
+Thus we use Java's ProcessBuilder~\cite{processbuilder} class to communicate with the executable (.exe) version of CVC.  We decided to use CVC3 \cite{cvc3} rather than CVC4~\cite{cvc4} because CVC3 is generally more stable during our experimentation.  
 The API that parses the CVC output is also implemented in Java, thus we used the W3C DOM API~\cite{DomAPI} for building a satisfiable DOM tree and generating HTML.  
 %QUnit provides a <div> called the fixture which can be set as the HTML for a test case.   Before execution, WebDriver would set the {\tt innerHTML} of the fixture element to the generated HTML.  
 
@@ -47,7 +48,7 @@ The API that parses the CVC output is also implemented in Java, thus we used the
 \header{Limited Path Coverage.}  
 % zero, 1 and n.
 Very often we would not know how many times to execute a loop.  For example, in Sample Code ~\ref{dom0}, there is no upper limit to the number of children that {\tt field} can have.  
-\tool would execute loops zero, one, and {\tt n} times, where {\tt n} can be configured for a particular loops or for all loops.  Thus \tool would achieve limited path coverage rather than full path coverage.  
+\tool would execute loops zero, one, and {\tt n} times, where {\tt n} can be configured for a particular loop or for all loops.  Thus \tool would achieve limited path coverage rather than full path coverage.  
 
 
 %\header{Indexing Functions.}  

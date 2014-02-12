@@ -114,7 +114,7 @@ In this paper we present our generic and browser indepdendent approach for conco
 Testing Web applications remains a challenge because executing different parts of JavaScript code requires different yet specifically precise DOM tree structures.
 If there is any mismatch between the code and the DOM, e.g. when a DOM operation fails, entire code execution would eventually halt and the test would terminate prematurely.  
 To overcome these challenges, we apply concolic techniques to generate HTML.  
-We designed a DOM solver to support the 2D structure of the DOM tree, to infer implicit clues from DOM operations that are partial and incomplete, and to tailor the DOM tree for targeting precise subsets of the code base.
+We designed a DOM solver to support the 2D structure of the DOM tree, to infer implicit clues from DOM operations that are partial and incomplete, and to tailor the DOM tree for targeting precise subsets of the code base.  
 We also implemented an end to end automatic system from deducing constraints to generating HTML and driving test execution because the number of unique DOM trees can grow as exponentially as the number of execution paths.
 We conducted a case study on the DOMtris application in which we will show how our approach significantly improves path coverage that includes a part of JavaScript code that implements a core functionality of the application.
 \end{abstract}
@@ -124,7 +124,7 @@ We conducted a case study on the DOMtris application in which we will show how o
 %A category including the fourth, optional field follows...
 \category{D.3.2}{Software}{Programming Languages}[JavaScript]
 
-\keywords{Test runnability, applied concolic execution, JavaScript, HTML, DOM}
+\keywords{Test runnability, applied concolic execution, Document Object Model (DOM), JavaScript, HTML}
 
 \input{introduction}
 \input{challenges}
