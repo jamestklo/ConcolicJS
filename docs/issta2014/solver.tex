@@ -90,8 +90,8 @@ ASSERT FORALL (x, y:Node):
 	    (children(z, y, k) AND 
 	    DISTINCT(z, x)) => k < j);
 
-% children.length equals to the
-% child index of the last child.
+% children.length equals to 1 plus
+% the child index of the last child.
 childrenLength:	(Node) -> INT;
 ASSERT FORALL (y:Node, j:INT):
 	childrenLength(y) = j <=> 

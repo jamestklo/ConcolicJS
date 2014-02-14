@@ -311,19 +311,12 @@ public class TraceCondVisitor implements Callback {
 		call.addChildrenToFront(Node.newString(Token.NAME, "_"+ Token.name(ntype)));
 		call.addChildrenToBack(comma);
 		
-		Node andor = new Node(Token.AND);
+		Node andor = new Node(ntype);
 		call.addChildrenToBack(andor);
 		Node call1 = new Node(Token.CALL);		
 		call1.addChildrenToFront(Node.newString(Token.NAME, "__getValue"));
 		call1.addChildrenToBack(temp1.cloneTree());
-		if (ntype==Token.OR) {
-			Node not = new Node(Token.NOT);
-			andor.addChildrenToFront(not);
-			not.addChildrenToFront(call1);
-		}
-		else {
-			andor.addChildrenToFront(call1);
-		}
+		andor.addChildrenToFront(call1);
 		
 		Node n2 = n.getLastChild();		
 		Node c2 = n2.cloneTree();
@@ -581,6 +574,9 @@ public class TraceCondVisitor implements Callback {
 				visitConst(t, n, parent);
 			}
 		}
+		else if (ntype == Token.THIS) {
+			visitConst(t, n, parent);
+		}
 		else if (ntype==Token.FOR) {
 			if (n.getChildAtIndex(2).getType() == Token.BLOCK) {
 				visitForIn(t, n, parent);
@@ -588,6 +584,9 @@ public class TraceCondVisitor implements Callback {
 			else if (n.getChildAtIndex(1).getType() != Token.EMPTY) {
 				visitCond(t, n.getChildAtIndex(1), n);
 			}
+		}
+		else if (ntype==Token.DO) {
+			visitCond(t, n.getChildAtIndex(1), n);
 		}
 		else if (ntype==Token.THROW) {
 			visitThrow(t, n, parent);

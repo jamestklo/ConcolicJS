@@ -47,7 +47,6 @@ public class TraceTransformer implements Transformer {
 		traversal.traverse(node);
 
 		rnt.commit(false);
-
 		return compiler.toSource();
 	}
 	
