@@ -555,7 +555,7 @@ public class TraceCondVisitor implements Callback {
 			  || ntype==Token.NOT	|| ntype==Token.SHEQ|| ntype==Token.SHNE || ntype==Token.EQ || ntype==Token.NE // === !== == != 
 			  || ntype==Token.GT	|| ntype==Token.GE	|| ntype==Token.LT || ntype==Token.LE // > >= < <=
 			  || ntype==Token.POS	|| ntype==Token.NEG
-			  || ntype==Token.INSTANCEOF) {
+			  || ntype==Token.IN || ntype==Token.INSTANCEOF) {
 			visitOps(t, n, parent);
 		}
 		else if (ntype==Token.TYPEOF) {

@@ -22,10 +22,10 @@ lastChild:		(Node, Node) -> BOOLEAN;
 nextSibling:		(Node, Node) -> BOOLEAN;
 previousSibling:	(Node, Node) -> BOOLEAN;
 
-String: TYPE;
-attributes: (Node) -> ARRAY String OF String;
-classList: (Node) -> String;
-
+String: TYPE = ARRAY INT OF INT;
+attribute: (Node, String) -> String;
+hasClass: (Node, String) -> BOOLEAN;
+tagName: (Node) -> String;
 
 ASSERT FORALL (x, y: Node):	
 	(root(y) AND DISTINCT(x,y)) => descendant(x,y);	
@@ -59,9 +59,9 @@ ASSERT FORALL (x, y:Node):
 
 ASSERT FORALL (x: Node):
 	NOT(following_sibling(x, x));
-	
+		
 ASSERT FORALL (x, z: Node): 
-	following_sibling(x, z) <=> EXISTS (y: Node, i, j:INT): (children(x, y, i) AND children(z, y, j) AND i > j);
+		following_sibling(x, z) <=> EXISTS (y: Node, i, j:INT): (children(x, y, i) AND children(z, y, j) AND i > j);
 
 ASSERT FORALL (x: Node):
 	NOT(nextSibling(x, x));
@@ -94,4 +94,3 @@ ASSERT FORALL (x, z: Node):
 	
 ASSERT FORALL (x, z: Node):
 	previousSibling(z, x) => NOT(previousSibling(x, z));
-

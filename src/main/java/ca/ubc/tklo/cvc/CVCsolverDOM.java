@@ -130,10 +130,11 @@ public class CVCsolverDOM {
     	//String prefix = "Z:/git/ConcolicJS/smt/";
     	//String cvcpath = prefix+ "cvc3-2.4.1-win32-optimized/bin/cvc3.exe +interactive"; 
 		String prefix = "/Users/tklo/git/ConcolicJS/smt/";
-		String cvcpath = prefix + "cvc3-2.4.1-macosx-optimized-static/bin/cvc3 +interactive";
+		//String cvcpath = prefix + "cvc3-2.4.1-macosx-optimized-static/bin/cvc3 +interactive";
+		String cvcpath = "/opt/local/bin/cvc4";
 		String dompath = prefix + "cvc3-DOM1.cvc";
     	String sespath = prefix + "cvc3-example1.cvc";
-    	String cvc_slice = ""
+    	String cvc_slice = ""		
         + "row0, tetris, tmpCVC:Node;\n"
       	+ "ASSERT DISTINCT(row0, tetris, tmpCVC);\n"
         + "ASSERT root(tmpCVC);\n"
