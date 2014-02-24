@@ -14,7 +14,7 @@
 \usepackage{pgfplots}
 
 \clubpenalty=10000
-	\widowpenalty = 10000
+\widowpenalty = 10000
 
 \definecolor{lightgray}{rgb}{.9,.9,.9}
 \definecolor{darkgray}{rgb}{.4,.4,.4}
@@ -52,7 +52,10 @@
    xleftmargin=4.0ex
 }
 
+% How about DOMColic for the tool name?
+%\newcommand{\tool}{\textsc{DOMColic}\xspace}
 \newcommand{\tool}{\textsc{ConcolicDOM}\xspace}
+
 \newcommand{\code}[1]{{\texttt{#1}}}
 \newcommand{\header}[1]{\par\smallskip\noindent\textbf{#1}}
 
@@ -86,19 +89,19 @@
 \author{
 \alignauthor
 James Lo\\	
-       \affaddr{Department of Computer Science}\\
+       \affaddr{Computer Science}\\
        \affaddr{University of British Columbia}\\	   
        \affaddr{Vancouver, Canada}\\
        \email{tklo@cs.ubc.ca}
 \alignauthor
 Eric Wohlstadter\\
-       \affaddr{Department of Computer Science}\\
+       \affaddr{Computer Science}\\
        \affaddr{University of British Columbia}\\	   
        \affaddr{Vancouver, Canada}\\
        \email{wohlstad@cs.ubc.ca}
 \alignauthor
 Ali Mesbah\\
-       \affaddr{Department of Electrical and Computer Engineering}\\
+       \affaddr{Elec. and Comp. Engineering}\\
        \affaddr{University of British Columbia}\\	   
        \affaddr{Vancouver, Canada}\\
        \email{amesbah@ece.ubc.ca}
@@ -110,7 +113,7 @@ Ali Mesbah\\
 As Web applications become more prevalent in our daily lives, quality assurance of Web applications has also become more important.  
 Considerable JavaScript code is written to access and update a Web application's user interface through the Document Object Model API.  
 The DOM models the UI in a tree structure.  
-In this paper we present our generic and browser indepdendent approach for concolic generation of DOM trees for testing JavaScript Web applications.
+In this paper we present our generic and browser independent approach for concolic generation of DOM trees for testing JavaScript Web applications.
 Testing Web applications remains a challenge because executing different parts of JavaScript code requires different yet specifically precise DOM tree structures.
 If there is any mismatch between the code and the DOM, e.g. when a DOM operation fails, entire code execution would eventually halt and the test would terminate prematurely.  
 To overcome these challenges, we apply concolic techniques to generate HTML.  
@@ -120,11 +123,13 @@ We conducted a case study on the DOMtris application in which we will show how o
 \end{abstract}
 
 % A category with only the three required fields
-\category{D.2.5}{Software Engineering}{Testing and Debugging}[Symbolic execution, Test coverage of code, Test execution]
+\category{D.2.5}{Software Engineering}{Testing and Debugging}%[Symbolic execution, Test coverage of code, Test execution]
 %A category including the fourth, optional field follows...
-\category{D.3.2}{Software}{Programming Languages}[JavaScript]
+%\category{D.3.2}{Software}{Programming Languages}[JavaScript]
 
-\keywords{Test runnability, applied concolic execution, Document Object Model (DOM), JavaScript, HTML}
+\terms{Design, Algorithms, Experimentation}
+
+\keywords{Testing, concolic execution, DOM, JavaScript}
 
 \input{introduction}
 \input{challenges}
