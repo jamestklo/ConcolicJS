@@ -20,103 +20,6 @@ Indeed, a recent empirical study~\cite{frolin2013} of bug reports has concluded 
 Being able to fully test JavaScript code that contain DOM operations would be critical in assuring the quality of a Web application.  
 
 
-\header{Motivating Example.}
-% want 1 example
-% keep language consistent: DOM (not HTML). 
-% give challenge numbers, approach solves challenge number say 1.  
-% how to deal with incomplete traces.  concolic testing, seed.  
-To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic unit-testing on the {\tt function checkRows()} in Sample Code \ref{dom0}.  
-The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement the game Tetris.  
-%To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic testing on the {\tt function clearBoard()} in Sample Code \ref{dom0}.  
-%The function comes from a sample Web application written by Intel~\cite{mancala} for developing in the Tizen OS. 
-%Tizen OS
-
-Concolic testing~\cite{cute}, also known as dynamic symbolic testing, would execute the app in a way to maximize path coverage.
-A path is a sequential permutation of branches.  For example, an {\tt if} statement has at least a {\tt True} branch and a {\tt False} branch.  
-A loop has 2 branches, {\tt Stay} and {\tt Break}.  The condition inside the statement or loop decides which branch the execution would follow.  
-Maximizing path coverage would be to generate inputs for executing every possible permutation of condition branches.  
-In the {\tt function checkRows()} in Sample Code \ref{dom0}, we must visit both the {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}.
-\begin{figure}
-\begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure. {\tt getElementById()} is equivalent to {\tt document.getElementById()}.,label=dom0]
-function checkRows() {
-  var field = getElementById("field"); 
-  var i, row;
-  for (i=field.children.length; i--;) {
-    row = getElementById("row"+i);
-    if (row.children.length === 10) {
-      ++score;
-      // ... row filled, update score
-    }
-  }
-}
-\end{lstlisting}
-\end{figure}
-%\begin{figure}
-%\begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure., label=dom0]
-%function clearBoard() {
-%  //clear beads
-%  var center = document.getElementById("center");
-%  var beads  = document.getElementsByClassName("beads");
-%  while(beads.length > 0) {
-%    center.removeChild(beads[0]);
-%    beads = document.getElementsByClassName("beads");
-%  }
-
-%  var beadNumber = parseInt(getBeadNumber());
-%  //clear text
-%  for(var holes=0; holes<14; holes++) {
-%    if (holes == 6) {
-%      document.getElementById("player1-score_text").innerHTML = getMessage("player_1_score")+" 0";
-%    }
-%    else if (holes == 13) {
-%      document.getElementById("player2-score_text").innerHTML = getMessage("player_2_score")+" 0";
-%    }
-%    else {
-%      document.getElementById("pit"+holes+"_count").innerText = beadNumber;
-%    }
-%  }
-%}
-%\end{lstlisting}
-%\end{figure}
-
-%\begin{figure*}[ht]
-%\centerline{\scalebox{0.25}{\includegraphics[natwidth=3467,natheight=2063]{mancala.png}}}
-%\caption[Mancala game]{}
-%\label{mancala}
-%\end{figure*}
-
-\sloppy {
-If we intend an execution path to visit the {\tt True} branch of the {\tt if} statement at {\tt line 6} of Sample Code \ref{dom0}, 
-the Web application must have a DOM tree structure satisfying many constraints:
-\begin {compactitem}
-\item There is an element with ID {\tt "field"} ({\tt line 2}).
-\item {\tt field} contains children elements, so that we can first enter the {\tt for} loop ({\tt line 4}).
-\item There are rows having ID's in the nomenclature {\tt row0}, {\tt row1}, etc ({\tt line 5}).
-\item The number of rows must be greater than or equal to the number of children that {\tt field} has.  The reason is that the ID of each {\tt row} is made distinct by {\tt i} ({\tt line 5}).  According to the {\tt for} loop, {\tt i---} goes from {\tt field.children.length} to 1 ({\tt line 4}).
-\item At least one of the rows must have exactly 10 children ({\tt line 6}).
-\end {compactitem}
-}
-
-Until all of the above constraints are satisfied, the function's execution would likely lean towards an unintended path or would even halt.
-For example, when the DOM tree does not have an element with ID {\tt "field"}, the variable {\tt field} would have a {\tt null} value.
-Consequently, the property access {\tt field.children} would result in a {\tt Type Error} and the rest of the function cannot be run or tested.
-Thus a satisfying DOM tree must be generated so that the function's execution would not crash and would visit the specific path that we intend.  
-
-While manual generation of DOM trees is possible, the manual approach would quickly become tedious and not scalable.  
-The reason is that a unique structure of the DOM tree is required for going through a different execution path.  
-For example, to go to the {\tt False} branch of the above {\tt if} statement, rows cannot have 10 children.
-Therefore, to cover both the {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}, we must generate 2 unique DOM trees.  
-Generally for an {\tt if} statement, we have to consider generating an unique DOM tree for each of the {\tt true} branch,  all {\tt else if} branches, and the {\tt else} branch.  
-Loops are more difficult for achieving path coverage, because generally it is not easy to determine what the upper limit is for iterating a loop.  
-For example, {\tt field} can have any number of children in Sample Code ~\ref{dom0}.  Thus the loop can get iterated any number of times.  
-
-%Overall, covering an additional conditional statement, be it an {\tt if}, a {\tt switch} or a loop, would potentially multiply the number of unique DOM trees.  
-
-Nevertheless, the number of unique DOM structures would at least double whenever we try to cover an additional DOM-dependent condition, be the condition is inside an {\tt if}, a {\tt switch} or a loop.  
-Moreover, manual generation can become complex as DOM-dependent conditions can get scattered across multiple files in the code, making it labor intensive to accurately trace all of the DOM elements and relevant constraints.  
-Random generation is simply not desirable because the required DOM tree may have a structure too precise for a random tree to match by chance.  
-Thus the desired approach has to be automated, systematic and precisely targeted.
-
 
 \header{Contributions.}
 The following are the main contributions of the Research Proficiency Evaluation (RPE) report:
@@ -134,11 +37,6 @@ to our best knowledge, almost all of existing research on test generation focuse
 However, having just the function arguments, events and UI inputs is often insufficient.  
 For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.  
 
-Moreover, it should be noted that the {\tt function checkRows()} does not take any input arguments; and functions without input arguments are common in JavaScript.
-Yet, these functions depend on major dependencies such as the DOM.
-Thus even when we have a test suite that is very well defined and can potentially yield a very high coverage, whether through manual or automatic generation, 
-considerable JavaScript code cannot get properly tested or covered unless the corresponding DOM structure is properly defined.  
-\tool provides an automated and systematic solution for generating satisfiable DOM trees in HTML form.  
 
 % present emprical results
 

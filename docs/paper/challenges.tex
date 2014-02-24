@@ -1,9 +1,119 @@
-\section{Challenges}
+\section{Motivation and Challenges}
 %We encountered and had to resolve several challenges while trying to generate satisfiable DOM trees:
+\subsection{Motivating Example}
+% want 1 example
+% keep language consistent: DOM (not HTML). 
+% give challenge numbers, approach solves challenge number say 1.  
+% how to deal with incomplete traces.  concolic testing, seed.  
+To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic unit-testing on the {\tt function checkRows()} in \autoref{dom0}.  
+The function is simplified from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement the game Tetris.  
+%To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic testing on the {\tt function clearBoard()} in Sample Code \ref{dom0}.  
+%The function comes from a sample Web application written by Intel~\cite{mancala} for developing in the Tizen OS. 
+%Tizen OS
+
+Concolic testing~\cite{cute}, also known as dynamic symbolic testing, would execute the app in a way to maximize path coverage.
+A path is a sequential permutation of branches.  For example, an {\tt if} statement has at least a {\tt True} branch and a {\tt False} branch.  
+A loop has 2 branches, {\tt Stay} and {\tt Break}.  The condition inside the statement or loop decides which branch the execution would follow.  
+Maximizing path coverage would be to generate inputs for executing every possible permutation of condition branches.  
+In the {\tt function checkRows()} in \autoref{dom0}, we must visit both the {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}.
+
+\begin{figure}[t]
+\centering
+\begin{lstlisting}[caption=DOM structure dependent \js execution paths. 
+%{\tt getElementById()} is equivalent to {\tt document.getElementById()}.
+,label=dom0]
+function checkRows() {
+  var field = getElementById("field"); 
+  var i, row;
+  for (i=field.children.length; i--;) {
+    row = getElementById("row"+i);
+    if (row.children.length === 10) {
+      ++score;
+      // ... row filled, update score
+    }
+  }
+}
+\end{lstlisting}
+\end{figure}
+%\begin{figure}
+%\begin{lstlisting}[caption=Example code whose tests and execution depend on the Document Object Model having a precise tree structure., label=dom0]
+%function clearBoard() {
+%  //clear beads
+%  var center = document.getElementById("center");
+%  var beads  = document.getElementsByClassName("beads");
+%  while(beads.length > 0) {
+%    center.removeChild(beads[0]);
+%    beads = document.getElementsByClassName("beads");
+%  }
+
+%  var beadNumber = parseInt(getBeadNumber());
+%  //clear text
+%  for(var holes=0; holes<14; holes++) {
+%    if (holes == 6) {
+%      document.getElementById("player1-score_text").innerHTML = getMessage("player_1_score")+" 0";
+%    }
+%    else if (holes == 13) {
+%      document.getElementById("player2-score_text").innerHTML = getMessage("player_2_score")+" 0";
+%    }
+%    else {
+%      document.getElementById("pit"+holes+"_count").innerText = beadNumber;
+%    }
+%  }
+%}
+%\end{lstlisting}
+%\end{figure}
+
+%\begin{figure*}[ht]
+%\centerline{\scalebox{0.25}{\includegraphics[natwidth=3467,natheight=2063]{mancala.png}}}
+%\caption[Mancala game]{}
+%\label{mancala}
+%\end{figure*}
+
+\sloppy {
+If we intend an execution path to visit the {\tt True} branch of the {\tt if} statement at {\tt line 6} of \autoref{dom0}, 
+the Web application must have a DOM tree structure satisfying many constraints:
+\begin {compactitem}
+\item There is an element with ID {\tt "field"} ({\tt line 2}).
+\item {\tt field} contains children elements, so that we can first enter the {\tt for} loop ({\tt line 4}).
+\item There are rows having ID's in the nomenclature {\tt row0}, {\tt row1}, etc ({\tt line 5}).
+\item The number of rows must be greater than or equal to the number of children that {\tt field} has.  The reason is that the ID of each {\tt row} is made distinct by {\tt i} ({\tt line 5}).  According to the {\tt for} loop, {\tt i---} goes from {\tt field.children.length} to 1 ({\tt line 4}).
+\item At least one of the rows must have exactly 10 children ({\tt line 6}).
+\end {compactitem}
+}
+
+Until all of the above constraints are satisfied, the function's execution would likely lean towards an unintended path or would even halt.
+For example, when the DOM tree does not have an element with ID {\tt "field"}, the variable {\tt field} would have a {\tt null} value.
+Consequently, the property access {\tt field.children} would result in a {\tt Type Error} and the rest of the function cannot be run or tested.
+Thus a satisfying DOM tree must be generated so that the function's execution would not crash and would visit the specific path that we intend.  
+
+While manual generation of DOM trees is possible, the manual approach would quickly become tedious and not scalable.  
+The reason is that a unique structure of the DOM tree is required for going through a different execution path.  
+For example, to go to the {\tt False} branch of the above {\tt if} statement, rows cannot have 10 children.
+Therefore, to cover both the {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}, we must generate 2 unique DOM trees.  
+Generally for an {\tt if} statement, we have to consider generating an unique DOM tree for each of the {\tt true} branch,  all {\tt else if} branches, and the {\tt else} branch.  
+Loops are more difficult for achieving path coverage, because generally it is not easy to determine what the upper limit is for iterating a loop.  
+For example, {\tt field} can have any number of children in \autoref{dom0}.  Thus the loop can get iterated any number of times.  
+
+%Overall, covering an additional conditional statement, be it an {\tt if}, a {\tt switch} or a loop, would potentially multiply the number of unique DOM trees.  
+
+Nevertheless, the number of unique DOM structures would at least double whenever we try to cover an additional DOM-dependent condition, be the condition is inside an {\tt if}, a {\tt switch} or a loop.  
+Moreover, manual generation can become complex as DOM-dependent conditions can get scattered across multiple files in the code, making it labor intensive to accurately trace all of the DOM elements and relevant constraints.  
+Random generation is simply not desirable because the required DOM tree may have a structure too precise for a random tree to match by chance.  
+Thus the desired approach has to be automated, systematic and precisely targeted.
+
+Further, it should be noted that the {\tt function checkRows()} does not take any input arguments; and functions without input arguments are common in JavaScript.
+Yet, these functions depend on major dependencies such as the DOM.
+Thus even when we have a test suite that is very well defined and can potentially yield a very high coverage, whether through manual or automatic generation, 
+considerable JavaScript code cannot get properly tested or covered unless the corresponding DOM structure is properly defined.  
+\tool provides an automated and systematic solution for generating satisfiable DOM trees in HTML form.  
+
+
+
+\subsection{Challenges}
 While trying to generate satisfiable DOM trees, we encountered challenges that motivate us to pursue a concolic approach.  
 In the concolic approach, we also had to resolve challenges that are associated with supporting the 2D tree structure of the DOM.  
 
-\header{1. Single Constraints are Partial and Incomplete.}  
+\challenge{Single Constraints are Partial and Incomplete}  
 % why tracing, not greedy
 Each DOM operation provides a single constraint or clue to a subset of the overall DOM tree structure.  An intuitive approach would be to generate DOM elements {\tt "}just in time{\tt "}.  
 However, such na\"ive approach does not always work because each single partial clue is insufficient.  
@@ -47,17 +157,17 @@ Thus the {\tt "}just in time{\tt "} greedy approach does not work because it doe
 
 Similarly, there can be many different possibilities when trying to satisfy a single DOM clue, and multiple DOM operations have to be collectively traced for complete analysis and overall tree generation.   
 
-\header{2. Indirect Influence from Intermediate Variables.}  
+\challenge{Indirect Influence from Intermediate Variables}  
 % why backward slicing
 Assigning execution results to variables is a common practice in programming.  
 In the code, it is possible that a condition may appear as a simple {\tt if(a)}; yet the variable {\tt a} can be the result of {\tt (row.children.length === 10)}, or a more complex composition of prior executions. 
 Adding to the complexity, these prior executions can happen anywhere at multiple lines scattered throughout the code.  
 They can come from within the same function, or another function somewhere up in the runtime stack.
 
-While the dependence on the DOM is directly obvious in the conditions of Sample Code \ref{dom0}, very often DOM operations may come from intermediate variables rather than directly appearing inside a condition.  
+While the dependence on the DOM is directly obvious in the conditions of\autoref{dom0}, very often DOM operations may come from intermediate variables rather than directly appearing inside a condition.  
 We have to backward slice variables so that we can accurately trace and precisely determine which DOM operations a condition may depend upon.  
 
-\header{3. Dynamic Typing.}  
+\challenge{Dynamic Typing}  
 % why dynamic analysis, not static analysis; why tracing and backward slicing both have to be dynamic.
 JavaScript variables are dynamically typed.  Thus given a variable, we would not exactly know what type the variable value represents until we actually run the code.  
 In our previous example, {\tt a} can be anything: an integer, a string, a boolean, or an object.  
@@ -75,6 +185,7 @@ Both tracing and backward slicing have to be dynamic to accurately determine whi
 %Executions of conditions can also have precedence.  For example, in an {\tt and}, when the first sub-condition is {\tt false}, the second sub-condition is never executed.  Similarly, an {\tt or} never executes the second sub-condition when the first returns {\tt true}.
 % how is this a challenge
 % drives the need for decorated execution, different from Jalangi
+
 
 \begin{figure}
 \begin{lstlisting}[caption=Example code showing how DOM operations can have logical constraints that are interdependent with each other: {\tt line 3} and {\tt line 6}.  To make all these {\tt if} statements {\tt true} the sub conditions in {\tt line 3} and {\tt line 6} become mutually exclusive: they cannot be {\tt true} at the same time because {\tt d} cannot be both a parent and a child of the same DOM element {\tt elem}.  A logic solver is required to generate a satisfiable DOM tree.  Note that the final 2 conditions ({\tt line 9} and {\tt line 12}) would collectively influence the DOM solver to decide which sub condition ({\tt line 3} vs. {\tt line 6}) to become {\tt true}.,label=domOr]  
@@ -96,12 +207,12 @@ if (elem.parentElement.parentElement
 \end{figure}
 
 
-\header{4. Logic Constraints can be Interdependent.}  
+\challenge{Logic Constraints can be Interdependent}  
 % why solver, not heuristics 
 Given a dynamic trace and a dynamic backward slice, we would have a clear mapping between DOM operations and conditions; 
 thus a logical approach would be to generate a DOM tree directly from the trace and backward slice.  
 However, an heuristic approach may not always work because a condition may have logical constraints that are interdependent on logical constraints from other conditions.  
-To compose an obvious example, we made 2 of the {\tt if} conditions in Sample Code~\ref{domOr} inter-depend on each other.
+To compose an obvious example, we made 2 of the {\tt if} conditions in~\autoref{domOr} inter-depend on each other.
 Specifically, the 2 sub-conditions in {\tt line 3} and {\tt line 6} must be mutually exclusive because of the DOM policy that a DOM element (e.g. {\tt d}) cannot be both a child and parent of the same DOM element (e.g. {\tt a}).  
 Therefore, when we intend an execution path to follow the {\tt true} branch of both of these {\tt if} conditions, we have to deploy a logic solver.  
 The logic solver must know which of {\tt line 3} and {\tt line 6} to make {\tt true}.  
@@ -110,12 +221,12 @@ To do so, the solver must be able to understand the unique policies of the DOM A
 
 \begin{figure*}[ht]
 \centerline{\scalebox{1.0}{\includegraphics[natwidth=654,natheight=341]{trees.jpg}}}
-\caption[Naive vs. Solved DOM trees]{An na\"{i}ve and the solver approach to generating a satisfiable DOM.  The na\"{i}ve DOM attempts and fails to satisfy the DOM operations by simply grouping individual DOM clues and connecting them with a single root (dashed lines).  In the Solved DOM {\tt b} is both child 1 (seocnd child) and child -2 (last child's previous sibling).  {\tt elem} does not have any child because {\tt elem.firstElementChild} is actually in an {\tt or} clause (Sample Code ~\ref{domOr}), in which the solver has decided to make the other sub clause {\tt true}.}
+\caption[Naive vs. Solved DOM trees]{An na\"{i}ve and the solver approach to generating a satisfiable DOM.  The na\"{i}ve DOM attempts and fails to satisfy the DOM operations by simply grouping individual DOM clues and connecting them with a single root (dashed lines).  In the Solved DOM {\tt b} is both child 1 (seocnd child) and child -2 (last child's previous sibling).  {\tt elem} does not have any child because {\tt elem.firstElementChild} is actually in an {\tt or} clause (\autoref{domOr}), in which the solver has decided to make the other sub clause {\tt true}.}
 \label{trees}
 \end{figure*}
 
 
-\header{5. 2D Tree Structure \& Implicit Clues.}  
+\challenge{2D Tree Structure \& Implicit Clues}  
 % why quantifiers and not meshing tree pieces together
 While many logic solvers natively support single dimensional data types (integers, real numbers and strings), most do not natively support the Document Object Model's 2D tree structure.
 A challenge for designing a DOM solver is that the DOM solver must infer indirect or implicit clues before constructing the overall DOM tree.  
@@ -129,8 +240,8 @@ For example, when we extend the chain {\tt elem.parentElement} with another {\tt
 }
 
 \sloppy{
-In Sample Code \ref{domOr}, {\tt elem.parentElement.parentElement === c.lastElementChild.previousElementSibling} ({\tt line 12}).
-Therefore, the solver has to infer that {\tt b.nextElementSibling} is also {\tt c.lastElementChild} (Figure \ref{trees} Solved DOM), because the code also stated that ({\tt d === b.lastElementChild}) and ({\tt d === elem.parentElement}).  
+In \autoref{domOr}, {\tt elem.parentElement.parentElement === c.lastElementChild.previousElementSibling} ({\tt line 12}).
+Therefore, the solver has to infer that {\tt b.nextElementSibling} is also {\tt c.lastElementChild} (\autoref{trees} Solved DOM), because the code also stated that ({\tt d === b.lastElementChild}) and ({\tt d === elem.parentElement}).  
 }
 
 \sloppy{
@@ -141,7 +252,7 @@ Once intermediate variables are resolved, the actual length of DOM chains can be
 A dynamic backward slice can contain multiple long chains.  
 Aliasing can become complex because multiple sub-chains of varying length can refer or alias to the same DOM element.  
 Thus the DOM tree's 2D structure and implicit clues are another reason for requiring a DOM specific solver.  
-A non-solver approach would simply not work when it tries to generate a na\"{i}ve tree (Figure \ref{trees} Na\"{i}ve DOM) by grouping individual DOM chains and connecting them na\"{i}vely to a master root (the dashed lines in Figure \ref{trees}).  
+A non-solver approach would simply not work when it tries to generate a na\"{i}ve tree (\autoref{trees} Na\"{i}ve DOM) by grouping individual DOM chains and connecting them na\"{i}vely to a master root (the dashed lines in \autoref{trees}).  
 
 
 % \header{DOM Mutations}  
