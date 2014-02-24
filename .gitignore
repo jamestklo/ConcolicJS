@@ -3,6 +3,7 @@
 .keystore
 .project
 /.settings
+paper.pdf
 *.log
 *.acn
 *.acr
