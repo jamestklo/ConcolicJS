@@ -1,10 +1,14 @@
 \documentclass{sig-alternate}
 \pdfpagewidth=8.5in
 \pdfpageheight=11in
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[font=bf]{caption}
 \usepackage{listings}
 \lstset{language=Python}
 \usepackage{color}
 \usepackage{xspace}
+\usepackage{hyperref}
 \usepackage{url,moreverb,graphicx}
 \usepackage{ifthen}
 \usepackage{paralist}
@@ -57,7 +61,7 @@
 \newcommand{\tool}{\textsc{ConcolicDOM}\xspace}
 
 \newcommand{\code}[1]{{\texttt{#1}}}
-\newcommand{\header}[1]{\par\smallskip\noindent\textbf{#1}}
+\newcommand{\js}{{Java\-Script}\xspace}\newcommand{\header}[1]{\par\smallskip\noindent\textbf{#1}}
 
 \newboolean{showcomments}
 \setboolean{showcomments}{true}
@@ -73,7 +77,15 @@
 \newcommand\eric[1]{\nb{Eric}{#1}}
 \newcommand\ali[1]{\nb{Ali}{#1}}
 
-\renewcommand*{\lstlistingname}{Sample Code}
+\renewcommand*{\lstlistingname}{Listing}
+
+\newcounter{head}
+\newcommand{\challenge}[1]{%
+  \refstepcounter{head}
+  \header{\thehead.\ \ #1.}
+%\newcommand{\head}[1]{\textbf{#1.}\ \ }
+}
+
 
 \begin{document}
 
