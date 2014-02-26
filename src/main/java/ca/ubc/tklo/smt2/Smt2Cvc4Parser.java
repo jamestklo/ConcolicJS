@@ -62,11 +62,11 @@ public class Smt2Cvc4Parser {
 			Map<String, Smt2Node> nodes = scp.nodes;
 			try {
 				br.readLine(); // skip a line
-				//System.out.println("cardinality="+ cardinality);
+				System.out.println("cardinality="+ cardinality);
 				for (int i=0; i < cardinality; ++i) {
 					line = br.readLine();
 					String name = line.substring(length_node);
-					//System.out.println("\""+ name +"\"");
+					System.out.println("\""+ name +"\"");
 					nodes.put(name, new Smt2Node());	
 				}
 			}
@@ -119,7 +119,9 @@ public class Smt2Cvc4Parser {
 					Set<String> keys = scp.nodes.keySet();
 					Iterator<String> iterator = keys.iterator();
 					while (iterator.hasNext()) {
-						this.set(iterator.next(), current);
+						String key = iterator.next();
+						System.out.println(key +" set "+ current);
+						this.set(key, current);
 					}
 					break;
 				}
@@ -139,7 +141,7 @@ public class Smt2Cvc4Parser {
 			if (node.position == -1) {
 				int position = Integer.parseInt(current);
 				node.position = position;
-				//System.out.println(node +" position "+ node.position);
+				System.out.println(key +" position "+ position);
 				return true;
 			}
 			return false;
@@ -155,6 +157,7 @@ public class Smt2Cvc4Parser {
 		public boolean set(String key, String current) {
 			Smt2Node node = scp.nodes.get(key);
 			if (node.length == -1) {
+				System.out.println(key +" length "+ current);
 				node.length = Integer.parseInt(current);
 				return true;
 			}
@@ -172,7 +175,7 @@ public class Smt2Cvc4Parser {
 			Smt2Node node = scp.nodes.get(key);
 			if (node.parent == null && node.position > 0) {
 				node.parent = scp.nodes.get(value);
-				//System.out.println(node +" "+ node.position +" parent "+ value);
+				System.out.println(key +" "+ node.position +" parent "+ value);
 				return true;
 			}
 			return false;
@@ -181,22 +184,27 @@ public class Smt2Cvc4Parser {
 	
 	static public class IdParser extends SetterParser {
 		public IdParser() {
-			super("(define-fun idStr ");
+			super("(define-fun id ");
 		}
 		
 		@Override
 		boolean set(String key, String value) {
-			if (value == null || value.equals("")) {
+			if (value == null) {
+				return false;
+			}			
+			Smt2Node node = scp.nodes.get(key);
+			if (node.id != null || value.equals(node.id)) {
 				return false;
 			}
 			System.out.println(key +" id "+ value);
-			return (scp.nodes.get(key).attributes.put("id", value) == null);
+			node.id = value;
+			return true;
 		}
 	}
 
 	static public class TagParser extends SetterParser {
 		public TagParser() {
-			super("(define-fun tagName ");
+			super("(define-fun tag ");
 		}
 		
 		@Override
@@ -204,11 +212,11 @@ public class Smt2Cvc4Parser {
 			if (value == null || value.equals("")) {
 				return false;
 			}
-			System.out.println(key +" tagName "+ value);
 			Smt2Node node = scp.nodes.get(key);
-			if (value.equals(node.tag)) {
+			if (node.tag != null || value.equals(node.tag)) {
 				return false;
 			}
+			System.out.println(key +" tagName "+ value);
 			node.tag = value;
 			return true;
 		}
@@ -356,9 +364,13 @@ public class Smt2Cvc4Parser {
 		}
 	}
 
+	Document document = null;
+	String defaultTag = null;
+	Map<Smt2Node, Map<Integer, Smt2Node>> childrens = null;
 	void toDOM(String defaultTag) {
+		this.defaultTag = defaultTag;
 		Set<Smt2Node> roots = new HashSet<Smt2Node>();
-		Map<Smt2Node, Map<Integer, Smt2Node>> childrens = new HashMap<Smt2Node, Map<Integer, Smt2Node>>();
+		childrens = new HashMap<Smt2Node, Map<Integer, Smt2Node>>();
 		Iterator<String> itr_str = nodes.keySet().iterator();
 		while (itr_str.hasNext()) {
 			Smt2Node node = nodes.get(itr_str.next());
@@ -378,25 +390,35 @@ public class Smt2Cvc4Parser {
 		
 		Iterator<Smt2Node> itr_node = roots.iterator();
 		Set<Element> elements = new HashSet<Element>();
-		Document document = null;
 		try {
 			document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 			while (itr_node.hasNext()) {
-				elements.add(createElement(document, defaultTag, itr_node.next(), childrens));
+				elements.add(createElement(itr_node.next()));
 			}
 		} 
 		catch (ParserConfigurationException e) {
 			e.printStackTrace();
-		};
+		}
+		finally {
+			this.document = null;
+			this.defaultTag = null;
+			this.childrens = null;
+		}
 	}
 	
-	private Element createElement(Document document, String defaultTag, Smt2Node node, Map<Smt2Node, Map<Integer, Smt2Node>> childrens) {
-		String tagName = node.tag;
-		Element element = document.createElement((tagName instanceof String)?((String) tagName):defaultTag);
+	private Element createElement(Smt2Node node) {
+		String str = node.tag;
+		Element element = document.createElement((str instanceof String)?((String) str):defaultTag);
 		Iterator<String> itr_str = node.attributes.keySet().iterator();
+		
+		str = node.id;
+		if (! (str == null || str.equals(""))) {
+			element.setAttribute("id", str);
+		}
 		while (itr_str.hasNext()) {
 			String key = itr_str.next();
-			element.setAttribute(key, node.attributes.get(key));
+			String value = node.attributes.get(key);
+			element.setAttribute(key, value);
 		}		
 		if (element.hasAttribute("class")) {
 			node.classNames.add(element.getAttribute("class"));
@@ -413,7 +435,7 @@ public class Smt2Cvc4Parser {
 				element.appendChild(document.createElement(defaultTag));
 			}
 			else {
-				element.appendChild(createElement(document, defaultTag, child, childrens));
+				element.appendChild(createElement(child));
 			}
 		}
 		return element;
@@ -424,9 +446,9 @@ public class Smt2Cvc4Parser {
 			BufferedReader br = new BufferedReader(new FileReader("/Users/tklo/git/ConcolicJs/smt/cvc4-out1a.smt2"));
 			ArrayList<PatternParser> parsers = new ArrayList<PatternParser>();
 			parsers.add(new CardinalityParser());
-			/*parsers.add(new PositionParser());
+			parsers.add(new PositionParser());
 			parsers.add(new LengthParser());
-			parsers.add(new ParentParser());*/
+			parsers.add(new ParentParser());
 			parsers.add(new IdParser());
 			parsers.add(new TagParser());
 			parsers.add(new ClassParser());

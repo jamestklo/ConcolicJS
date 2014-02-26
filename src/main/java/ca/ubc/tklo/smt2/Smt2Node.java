@@ -10,6 +10,7 @@ public class Smt2Node {
 	int position = -1;
 	int length = -1;
 
+	String id = null;
 	String tag = null;
 	Set<String> classNames = new HashSet<String>();
 	Map<String, String> attributes = new HashMap<String, String>();
