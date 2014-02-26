@@ -5,6 +5,7 @@
 (set-option :interactive-mode true);
 (set-option :incremental true);
 
+(declare-const sessionID String);
 (declare-sort Node 0);
 (declare-fun root (Node) Bool);
 (declare-fun leaf (Node) Bool);
@@ -24,7 +25,6 @@
 (declare-fun nextSibling (Node Node) Bool);
 (declare-fun prevSibling (Node Node) Bool);
 
-(declare-const sessionID String);
 (declare-fun id (Node) String);
 (declare-fun tag (Node) String);
 (assert
@@ -72,6 +72,8 @@
         (lastChild n0 n1)
         (not (= (id n0) (id n1)))
         (not (= (tag n0) (tag n1)))
+		(not (= (position n0) (position n1)))
+		(not (= (length n0) (length n1)))
       )
       (distinct n0 n1)
     )
@@ -110,11 +112,6 @@
             )
           )
         )
-        (or 
-          (= "" (id x))
-          (= "" (id y))
-          (not (= (id x) (id y)))
-        )
       )
     )
   )
@@ -133,6 +130,17 @@
          (not (= (position x) (position z)))
         )
       )
+    )
+  )
+);
+
+(declare-fun parentNode (Node) Node);
+(assert
+  (forall
+    ((x Node) (y Node))
+    (=>
+      (distinct x y)
+      (=> (parent y x) (= (parentNode x) y))
     )
   )
 );
@@ -163,35 +171,45 @@
             (and (parent y x) (parent y z) (> (position x) (position z)))
           )
         )
+       (or 
+          (= "" (id x))
+          (= "" (id z))
+          (not (= (id x) (id z)))
+        )
+		(or 
+		  (= "" (tag x))
+		  (= "" (tag z))
+		  (not (= (tag x) (tag z)))
+		  (not (= (position x) (position z)))
+		  (not (= (length x) (length z)))
+		  (not (= (parentNode x) (parentNode z)))
+		  (forall
+		    ((y Node))
+			(and 
+			  (=> (firstChild y x) (not (firstChild y z)))
+			  (=> (firstChild y z) (not (firstChild y x)))
+			)
+		  )	  
+		  (not (= (id x) (id z)))
+		)
       )
     )
   )
 );
 
-(declare-fun parentNode (Node) Node);
-(assert
-  (forall
-    ((x Node) (y Node))
-    (=>
-      (distinct x y)
-      (=> (parent y x) (= (parentNode x) y))
-    )
-  )
-);
-
 (declare-fun hasClass (String Node) Bool);
-(declare-fun classNode (Node) (Array String String));
+(declare-fun className (Node) (Array String String));
 (assert
   (forall
     ((x Node) (s String))
     (=>
       (hasClass s x)
-      (= (select (classNode x) s) s)
+      (= (select (className x) s) s)
     )
   )
 );
 
-(declare-fun hasttribute (Node String) String);
+(declare-fun attribute (Node String) String);
 (declare-fun attributeInt (Node String) Int);
 (declare-fun attributeBool (Node String) Bool);
 
@@ -218,14 +236,14 @@
 (assert (= (position n6) 11));
 (assert (= (length n3) 1));
 
-(assert (= (id n0)  "sessionID=n0"));
-(assert (= (id n3)  "sessionID=n3"));
-(assert (= (id n3a) "sessionID=n3"));
+(assert (= (id n0)  "sessionID_n0"));
+(assert (= (id n3)  "sessionID_n3"));
+(assert (= (id n3a) "sessionID_n3"));
 
-(assert (= (tag n0) "div"));
-(assert (= (tag n1) "span")); 
-(assert (= (tag n2) "span"));
-(assert (= (tag n5) "span"));
+(assert (= (tag n0) "sessionID_div"));
+(assert (= (tag n1) "sessionID_span")); 
+(assert (= (tag n2) "sessionID_span"));
+(assert (= (tag n5) "sessionID_span"));
 
 (assert (hasClass "content" n0));
 (assert (hasClass "body" n0));
