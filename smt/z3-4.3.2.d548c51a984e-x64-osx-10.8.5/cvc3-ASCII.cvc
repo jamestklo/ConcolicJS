@@ -1,0 +1,2 @@
+
+String: TYPE = ARRAY INT OF INT;
