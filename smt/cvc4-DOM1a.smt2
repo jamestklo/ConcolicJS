@@ -214,7 +214,7 @@
 (declare-fun attributeBool (Node String) Bool);
 
 
-(assert (= sessionID "sessionID"));
+(assert (= sessionID "sessionID_"));
 (declare-const n0 Node);
 (declare-const n1 Node);
 (declare-const n2 Node);
@@ -234,16 +234,16 @@
 (assert (lastChild n4 n3a));
 (assert (parent n5 n6));
 (assert (= (position n6) 11));
+(assert (= (length n5) 11));
 (assert (= (length n3) 1));
+(assert (= (id n0)	(str++ sessionID "n0")));
+(assert (= (id n3)	(str++ sessionID "n3")));
+(assert (= (id n3a)	(str++ sessionID "n3")));
 
-(assert (= (id n0)  "sessionID_n0"));
-(assert (= (id n3)  "sessionID_n3"));
-(assert (= (id n3a) "sessionID_n3"));
-
-(assert (= (tag n0) "sessionID_div"));
-(assert (= (tag n1) "sessionID_span")); 
-(assert (= (tag n2) "sessionID_span"));
-(assert (= (tag n5) "sessionID_span"));
+(assert (= (tag n0) (str++ sessionID "div")));
+(assert (= (tag n1) (str++ sessionID "span"))); 
+(assert (= (tag n2) (str++ sessionID "span")));
+(assert (= (tag n5) (str++ sessionID "span")));
 
 (assert (hasClass "content" n0));
 (assert (hasClass "body" n0));

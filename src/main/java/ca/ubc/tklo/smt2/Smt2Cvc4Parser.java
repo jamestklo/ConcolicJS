@@ -59,7 +59,7 @@ public class Smt2Cvc4Parser {
 		@Override
 		void parse(String line, BufferedReader br, Smt2Cvc4Parser scp) {
 			scp.sessionID = line.substring(length, line.length()-2);
-			scp.lengthID = scp.sessionID.length()+1;
+			scp.lengthID = scp.sessionID.length();
 			//System.out.println("sessionID="+ scp.sessionID);
 		}
 	}
@@ -134,7 +134,7 @@ public class Smt2Cvc4Parser {
 					Iterator<String> iterator = keys.iterator();
 					while (iterator.hasNext()) {
 						String key = iterator.next();
-						System.out.println(key +" set "+ current);
+						//System.out.println(key +" set "+ current);
 						this.set(key, current);
 					}
 					break;
@@ -425,9 +425,13 @@ public class Smt2Cvc4Parser {
 		}
 	}
 	
+	private String calTag(Smt2Node parent) {
+		return defaultTag;
+	}
+	
 	private Element createElement(Smt2Node node) {
 		String str = node.tag;
-		Element element = document.createElement(str.equals("")?defaultTag:str);
+		Element element = document.createElement(str.equals("")?calTag(node.parent):str);
 		Iterator<String> itr_str = node.attributes.keySet().iterator();
 		
 		str = node.id;
@@ -451,7 +455,7 @@ public class Smt2Cvc4Parser {
 		for (int i=1; i <= length; ++i) {
 			Smt2Node child = children.get(i);
 			if (child == null) {
-				element.appendChild(document.createElement(defaultTag));
+				element.appendChild(document.createElement(calTag(node)));
 			}
 			else {
 				element.appendChild(createElement(child));
