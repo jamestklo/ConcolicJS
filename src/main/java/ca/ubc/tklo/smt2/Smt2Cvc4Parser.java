@@ -3,6 +3,7 @@ package ca.ubc.tklo.smt2;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,10 @@ import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.rosettacode.sexpressions.Atom;
 import org.rosettacode.sexpressions.ExprList;
@@ -51,8 +56,8 @@ public class Smt2Cvc4Parser {
 		abstract void parse(String line, BufferedReader br, Smt2Cvc4Parser scp);
 	}
 	
-	static public class SessionIdParser extends PatternParser  {
-		public SessionIdParser() {
+	static public class SessionParser extends PatternParser  {
+		public SessionParser() {
 			super("(define-fun sessionID () String type \"");
 		}
 
@@ -80,8 +85,9 @@ public class Smt2Cvc4Parser {
 				for (int i=0; i < cardinality; ++i) {
 					line = br.readLine();
 					String name = line.substring(length_node);
-					System.out.println("\""+ name +"\"");
-					nodes.put(name, new Smt2Node());	
+					Smt2Node node = new Smt2Node();
+					nodes.put(name, node);	
+					System.out.println("\""+ name +"\" "+ node);
 				}
 			}
 			catch (IOException e) {
@@ -181,7 +187,7 @@ public class Smt2Cvc4Parser {
 	
 	static public class ParentParser extends SetterParser {	
 		public ParentParser() {
-			super("(define-fun parentNode ");
+			super("(define-fun parentAlias ");
 		}
 		
 		@Override
@@ -222,7 +228,6 @@ public class Smt2Cvc4Parser {
 		public TagParser() {
 			super("(define-fun tag ");
 		}
-		
 		@Override
 		boolean set(String key, String value) {
 			if (value == null || value.equals("")) {
@@ -270,16 +275,16 @@ public class Smt2Cvc4Parser {
 				String current = ((StringAtom) expr).getValue();
 				//System.out.println(expr.toString() +" "+ previous +" "+ active);
 				if (active == null) {
-					Set<String> keys = scp.nodes.keySet();
-					keys.removeAll(touched);
-					touched = keys;
 					active = "";
 				}
 				else if (isMatch(previous, current)) {
 					if (active.equals("")) {
-						Iterator<String> itr_name = touched.iterator();
+						Iterator<String> itr_name = scp.nodes.keySet().iterator();
 						while (itr_name.hasNext()) {
-							set(itr_name.next(), previous, current);
+							String key = itr_name.next();
+							if (! touched.contains(key)) {
+								set(key, previous, current);
+							}
 						}
 					}
 					else {
@@ -322,40 +327,40 @@ public class Smt2Cvc4Parser {
 
 		@Override
 		boolean set(String name, String key, String value) {
-			if (key.equals(" ")) {
-				return false;
-			}
 			System.out.println(name +" className "+ value);
 			scp.nodes.get(name).addClass(value);
 			return true;
 		}
 
 		@Override
-		boolean isMatch(String key, String value) {
-			return (value.equals(key) && value.equals("")==false);
-			
+		boolean isMatch(String key, String value) {	
+			return (key == null || key.equals(" ") || value == null || value.equals(" ") || value.equals(""))?
+					false:
+					(key.indexOf(scp.sessionID) == 0 && value.equals(key.substring(scp.lengthID)));
 		}
-
 	}
 	
 	static public class AttributeParser extends ArrayParser {
 
 		public AttributeParser() {
-			super("define-fun attrsNode ");
+			super("(define-fun attribute ");
 		}
 
 		@Override
 		boolean isMatch(String key, String value) {
-			return (value.length() > key.length() && value.indexOf(key) == 0);
+			return (key != null && key.indexOf("sessionID") == 0);
 		}
 
 		@Override
 		boolean set(String name, String key, String value) {
-			System.out.println(name +" "+ key +" "+ value);
-			return false;
+			key = key.substring(scp.lengthID);
+			if (key.equals(value)) {
+				return false;
+			}
+			System.out.println(name +" attribute "+ key +" "+ value);
+			scp.nodes.get(name).addAttribute(key, value);
+			return true;
 		}
-
-
 	}
 	private void parse(BufferedReader br, ListIterator<PatternParser> itr_parser) {
 		PatternParser parser = null;
@@ -386,7 +391,7 @@ public class Smt2Cvc4Parser {
 	Document document = null;
 	String defaultTag = null;
 	Map<Smt2Node, Map<Integer, Smt2Node>> childrens = null;
-	void toDOM(String defaultTag) {
+	Document toDOM(String defaultTag) {
 		this.defaultTag = defaultTag;
 		Set<Smt2Node> roots = new HashSet<Smt2Node>();
 		childrens = new HashMap<Smt2Node, Map<Integer, Smt2Node>>();
@@ -395,6 +400,7 @@ public class Smt2Cvc4Parser {
 			Smt2Node node = nodes.get(itr_str.next());
 			if (node.position == 0) {
 				roots.add(node);
+				//System.out.println("root "+ node);
 			}
 			else {
 				Smt2Node parent = node.parent;
@@ -402,17 +408,19 @@ public class Smt2Cvc4Parser {
 				if (children == null) {
 					children = new HashMap<Integer, Smt2Node>();
 					childrens.put(parent, children);
+					//System.out.println(node +" "+ parent +" "+ children);
 				}
 				children.put(node.position, node);
 			}
 		}
 		
 		Iterator<Smt2Node> itr_node = roots.iterator();
-		Set<Element> elements = new HashSet<Element>();
+		Document doc = null;
 		try {
-			document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+			doc = this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 			while (itr_node.hasNext()) {
-				elements.add(createElement(itr_node.next()));
+				document.appendChild(createElement(itr_node.next()));
+				
 			}
 		} 
 		catch (ParserConfigurationException e) {
@@ -423,6 +431,7 @@ public class Smt2Cvc4Parser {
 			this.defaultTag = null;
 			this.childrens = null;
 		}
+		return doc;
 	}
 	
 	private String calTag(Smt2Node parent) {
@@ -461,23 +470,39 @@ public class Smt2Cvc4Parser {
 				element.appendChild(createElement(child));
 			}
 		}
+		System.out.println(node +" "+ element);
 		return element;
+	}
+	
+	public static void outXML(Document document, OutputStream out) {
+		try {
+			//XML specific representation output (exact details not relevant)
+			TransformerFactory tf = TransformerFactory.newInstance();
+			Transformer transformer = tf.newTransformer();
+			transformer.transform(new DOMSource(document), new StreamResult(out));
+		}
+		catch(Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public static void main (String[] args) {
 		try {
-			//BufferedReader br = new BufferedReader(new FileReader("/Users/tklo/git/ConcolicJs/smt/cvc4-out1a.smt2"));
-			BufferedReader br = new BufferedReader(new FileReader("Z:/git/ConcolicJs/smt/cvc4-out1a.smt2"));
+			BufferedReader br = new BufferedReader(new FileReader("/Users/tklo/git/ConcolicJs/smt/cvc4-out1a.smt2"));
+			//BufferedReader br = new BufferedReader(new FileReader("Z:/git/ConcolicJs/smt/cvc4-out1a.smt2"));
 			ArrayList<PatternParser> parsers = new ArrayList<PatternParser>();
-			parsers.add(new SessionIdParser());
+			parsers.add(new SessionParser());
 			parsers.add(new CardinalityParser());
 			parsers.add(new PositionParser());
 			parsers.add(new LengthParser());
 			parsers.add(new IdParser());
 			parsers.add(new TagParser());			
 			parsers.add(new ParentParser());
-			parsers.add(new ClassParser());
+			//parsers.add(new ClassParser());
+			parsers.add(new AttributeParser());
 			Smt2Cvc4Parser smp = new Smt2Cvc4Parser(br, parsers.listIterator());
+			Document document = smp.toDOM("a");
+			Smt2Cvc4Parser.outXML(document, System.out);
 		} 
 		catch (IOException e) {
 			e.printStackTrace();

@@ -9,7 +9,7 @@
 (declare-sort Node 0);
 (declare-fun root (Node) Bool);
 (declare-fun leaf (Node) Bool);
-(declare-fun parent (Node Node) Bool);
+(declare-fun parentElement (Node Node) Bool);
 (declare-fun position (Node) Int);
 (declare-fun length (Node) Int);
 
@@ -19,34 +19,36 @@
 (declare-fun descendant (Node Node) Bool);
 (declare-fun ancestor (Node Node) Bool);
 
-(declare-fun firstChild (Node Node) Bool);
-(declare-fun lastChild (Node Node) Bool);
+(declare-fun firstElementChild (Node Node) Bool);
+(declare-fun lastElementChild (Node Node) Bool);
 
-(declare-fun nextSibling (Node Node) Bool);
-(declare-fun prevSibling (Node Node) Bool);
+(declare-fun nextElementSibling (Node Node) Bool);
+(declare-fun previousElementSibling (Node Node) Bool);
 
 (declare-fun id (Node) String);
 (declare-fun tag (Node) String);
+
 (assert
   (forall
     ((x Node))
     (and 
-      (not (parent x x))
-      (not (nextSibling x x))
-      (not (prevSibling x x))
+      (= x x)
+      (not (parentElement x x))
+      (not (nextElementSibling x x))
+      (not (previousElementSibling x x))
       (not (descendant x x))
       (not (ancestor x x))
       (not (following-sibling x x))
       (not (preceding-sibling x x))
-      (not (firstChild x x))
-      (not (lastChild x x))
+      (not (firstElementChild x x))
+      (not (lastElementChild x x))
       (ite 
-        (exists ((y Node)) (and (distinct y x) (parent y x))) 
+        (exists ((y Node)) (and (distinct y x) (parentElement y x))) 
         (> (position x) 0)
         (= (position x) 0)
       ) 
       (ite 
-        (exists ((y Node)) (and (distinct y x) (parent x y)))
+        (exists ((y Node)) (and (distinct y x) (parentElement x y)))
         (> (length x) 0)
         (= (length x) 0)
       )
@@ -61,15 +63,16 @@
     ((n0 Node) (n1 Node))
     (=>
       (or
-        (parent n0 n1)
-        (nextSibling n0 n1)
-        (prevSibling n0 n1)
+        (not (= n0 n1))
+        (parentElement n0 n1)
+        (nextElementSibling n0 n1)
+        (previousElementSibling n0 n1)
         (descendant n0 n1)
         (ancestor n0 n1)
         (following-sibling n0 n1)
         (preceding-sibling n0 n1)
-        (firstChild n0 n1)
-        (lastChild n0 n1)
+        (firstElementChild n0 n1)
+        (lastElementChild n0 n1)
         (not (= (id n0) (id n1)))
         (not (= (tag n0) (tag n1)))
 		(not (= (position n0) (position n1)))
@@ -86,29 +89,33 @@
     (=>
       (distinct x y)
       (and
+        (not (= x y))
         (=> 
-          (parent y x) 
+          (parentElement y x) 
           (and 
-            (not (parent x y))
+            (not (parentElement x y))
             (>  (position x) 0)
             (>  (length y) 0)
             (>= (length y) (position x))
           )
         )
-        (=  (and (parent y x) (= (position x) 1)) (firstChild x y))
-        (=> (firstChild x y) (not (firstChild y x)))
-        (=  (and (parent y x) (= (position x) (length y))) (lastChild x y))
-        (=> (lastChild x y) (not (lastChild y x)))      
+        (=  (and (parentElement y x) (= (position x) 1)) (firstElementChild x y))
+        (=> (firstElementChild x y) (not (firstElementChild y x)))
+        (=  (and (parentElement y x) (= (position x) (length y))) (lastElementChild x y))
+        (=> (lastElementChild x y) (not (lastElementChild y x)))      
         (=> (descendant x y) (not (descendant y x)))
         (=> (ancestor y x) (not (ancestor x y)))
         (=  
           (descendant x y)
           (ancestor y x)
           (or 
-            (parent y x)
+            (parentElement y x)
             (exists
               ((z Node))
-              (and (parent z x) (ancestor y z))
+              (or 
+                (and (parentElement z x) (ancestor y z))
+                (and (parentElement y z) (ancestor z x))
+              )
             )
           )
         )
@@ -123,10 +130,10 @@
     (=>
       (distinct x y z)
       (and 
-        (=> (parent y x) (not (parent z x)))
-        (=> (nextSibling x z) (not (nextSibling x y)))
+        (=> (parentElement y x) (not (parentElement z x)))
+        (=> (nextElementSibling x z) (not (nextElementSibling x y)))
         (=>
-         (and (parent y x) (parent y z))
+         (and (parentElement y x) (parentElement y z))
          (not (= (position x) (position z)))
         )
       )
@@ -134,13 +141,13 @@
   )
 );
 
-(declare-fun parentNode (Node) Node);
+(declare-fun parentAlias (Node) Node);
 (assert
   (forall
     ((x Node) (y Node))
     (=>
       (distinct x y)
-      (=> (parent y x) (= (parentNode x) y))
+      (=> (parentElement y x) (= (parentAlias x) y))
     )
   )
 );
@@ -151,14 +158,14 @@
     (=>
       (distinct x z)
       (and 
-        (=> (nextSibling x z) (not (nextSibling z x)))
-        (=> (prevSibling z x) (not (prevSibling x z)))
+        (=> (nextElementSibling x z) (not (nextElementSibling z x)))
+        (=> (previousElementSibling z x) (not (previousElementSibling x z)))
         (=
-          (nextSibling x z)
-          (prevSibling z x)
+          (nextElementSibling x z)
+          (previousElementSibling z x)
           (exists
             ((y Node))
-            (and (parent y x) (parent y z) (= (position x) (+ (position z) 1)))
+            (and (parentElement y x) (parentElement y z) (= (position x) (+ (position z) 1)))
           )
         )
         (=> (following-sibling x z) (not (following-sibling z x)))
@@ -168,26 +175,26 @@
           (preceding-sibling z x)
           (exists
             ((y Node))
-            (and (parent y x) (parent y z) (> (position x) (position z)))
+            (and (parentElement y x) (parentElement y z) (> (position x) (position z)))
           )
         )
-       (or 
-          (= "" (id x))
-          (= "" (id z))
+        (or 
+          (= " " (id x))
+          (= " " (id z))
           (not (= (id x) (id z)))
         )
 		(or 
-		  (= "" (tag x))
-		  (= "" (tag z))
+		  (= " " (tag x))
+		  (= " " (tag z))
 		  (not (= (tag x) (tag z)))
 		  (not (= (position x) (position z)))
 		  (not (= (length x) (length z)))
-		  (not (= (parentNode x) (parentNode z)))
+		  (not (= (parentAlias x) (parentAlias z)))
 		  (forall
 		    ((y Node))
 			(and 
-			  (=> (firstChild y x) (not (firstChild y z)))
-			  (=> (firstChild y z) (not (firstChild y x)))
+			  (=> (firstElementChild y x) (not (firstElementChild y z)))
+			  (=> (firstElementChild y z) (not (firstElementChild y x)))
 			)
 		  )	  
 		  (not (= (id x) (id z)))
@@ -197,60 +204,84 @@
   )
 );
 
-(declare-fun hasClass (String Node) Bool);
 (declare-fun className (Node) (Array String String));
-(assert
-  (forall
-    ((x Node) (s String))
-    (=>
-      (hasClass s x)
-      (= (select (className x) s) s)
-    )
-  )
-);
+(declare-fun attribute (Node) (Array String String));
+;(declare-fun attributeStr (Node String) String);
+;(declare-fun attributeInt (Node String) Int);
+;(declare-fun attributeBool (Node String) Bool);
 
-(declare-fun attribute (Node String) String);
-(declare-fun attributeInt (Node String) Int);
-(declare-fun attributeBool (Node String) Bool);
+;(declare-sort Object 0); 
 
+; product:      jalangi-opensource  jalangy-private
+; solvers:      jalangi-cvc4        jalangi-z3              cvc4-cloud      msz3-cloud
+; data types:   jalangi-DOM         jalangi-events
+; cloud:        jalangi-cloud       jalangi-parallel        jalangi-docker:[amazon, google, etc.]
+; analytics:    reporting, visualization, hadoop
+; workflow:     
 
 (assert (= sessionID "sessionID_"));
 (declare-const n0 Node);
+(declare-const n0a Node);
 (declare-const n1 Node);
 (declare-const n2 Node);
 (declare-const n3 Node);
 (declare-const n3a Node);
 (declare-const n4 Node);
 (declare-const n5 Node);
-(declare-const n6 Node);
 
-(assert (or (parent n0 n1) (parent n1 n0)));
-(assert (parent n0 n1));
-(assert (firstChild n1 n0));
-(assert (nextSibling n2 n1));
-(assert (nextSibling n3 n2));
-(assert (lastChild n3 n0));
-(assert (firstChild n4 n3));
-(assert (lastChild n4 n3a));
-(assert (parent n5 n6));
-(assert (= (position n6) 11));
+(assert (or (parentElement n0 n1) (parentElement n1 n0)));
+(assert (parentElement n0 n1));
+(assert (firstElementChild n1 n0));
+(assert (nextElementSibling n2 n1));
+(assert (nextElementSibling n3 n2));
+(assert (lastElementChild n3 n0));
+(assert (firstElementChild n4 n3));
+(assert (lastElementChild n4 n3a));
+(assert (parentElement n5 n0a));
+(assert (= (position n0a) 11));
 (assert (= (length n5) 11));
 (assert (= (length n3) 1));
-(assert (= (id n0)	(str++ sessionID "n0")));
-(assert (= (id n3)	(str++ sessionID "n3")));
-(assert (= (id n3a)	(str++ sessionID "n3")));
 
-(assert (= (tag n0) (str++ sessionID "div")));
-(assert (= (tag n1) (str++ sessionID "span"))); 
-(assert (= (tag n2) (str++ sessionID "span")));
-(assert (= (tag n5) (str++ sessionID "span")));
+(assert (= (id n0)	(str.++ sessionID "n0")));
+(assert (= (id n3)	(str.++ sessionID "n3")));
+(assert (= (id n3a)	(str.++ sessionID "n3")));
+(assert (= (tag n0) (str.++ sessionID "t0")));
+(assert (= (tag n1) (str.++ sessionID "t1"))); 
+(assert (= (tag n2) (str.++ sessionID "t2")));
+(assert (= (tag n4) (str.++ sessionID "t4")));
 
-(assert (hasClass "content" n0));
-(assert (hasClass "body" n0));
-(assert (hasClass "1.1" n0));
-(assert (hasClass "1.2" n0));
-(assert (hasClass "1.3" n0));
-(assert (hasClass "1.2" n2));
+;(assert (= (select (className n0) (str.++ sessionID "body")) "body"));
+;(assert (= (select (className n0) (str.++ sessionID "content")) "content"));
+;(assert (= (select (className n0) (str.++ sessionID "0.0")) "0.0"));
+;(assert (= (select (className n0) (str.++ sessionID "0.2")) "0.2"));
+;(assert (= (select (className n0) (str.++ sessionID "0.3")) "0.3"));
+;(assert (= (select (className n2) (str.++ sessionID "0.2")) "0.2"));
+;(assert (= (select (className n2) (str.++ sessionID "2.2")) "2.2"));
+;(assert (= (select (className n2) (str.++ sessionID "body")) "body"));
+;(assert (= (select (className n4) (str.++ sessionID "body")) "body"));
+;(assert (= (select (className n0a) "n0a") " "));
+;(assert (= (select (className n1) "n1") " "));
+;(assert (= (select (className n3) "n3") " "));
+;(assert (= (select (className n3a) "n3a") " "));
+;(assert (= (select (className n5) "n5") " "));
+
+(declare-const v00 String);
+(assert (= (select (attribute n0) (str.++ sessionID "k00")) v00));
+(assert (= (select (attribute n0) (str.++ sessionID "k01")) "v01"));
+(assert (= (select (attribute n0a)  "n0a") " "));
+(assert (= (select (attribute n1)   "n1") " "));
+(assert (= (select (attribute n2) (str.++ sessionID "k00")) "k00"));
+(assert (= (select (attribute n2) (str.++ sessionID "k20")) "k21"));
+(assert (= (select (attribute n3)   "n3") " "));
+(assert (= (select (attribute n3a)  "n3a") " "));
+(assert (= (select (attribute n4)   "n4") " "));
+(assert (= (select (attribute n5)   "n5") " "));
+
+(declare-const s0 String);
+(declare-const s1 String);
+(assert (= v00 "v00"));
+(assert (= (str.++ "abc" s1) s0));
+(assert (= (str.len s1) 3));
 
 (check-sat);
 (get-model);
