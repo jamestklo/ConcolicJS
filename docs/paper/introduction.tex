@@ -1,23 +1,41 @@
 \section{Introduction}
-% make it shorter of why JavaScript is important.  
-JavaScript is increasingly a popular language for software implementation: %; and the World Wide Web is increasingly an attractive platform for delivering applications.
-For end users, HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to those implemented for traditional desktops.  
-The latest round of browser wars makes executing JavaScript more efficient, robust, secure and consistent.  
-For programmers, JavaScript is relatively easy to adopt, and JavaScript does not have the burden of memory management and static typing.
-More operating systems in both the desktop~\cite{chromeApps, windows8javascript} and mobile~\cite{apacheCordova, iosWebView, blackberryWebWorks, firefoxOS, androidWebView, tizen} actually now support installing and running JavaScript apps on the OS similar to native apps.
-CSS3 and the responsive UI paradigm enable UI designers to use a single HTML and still support multiple devices of different screen sizes.  
-The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware heterogeneity, 
-which also makes JavaScript apps\footnote{JavaScript apps are preferred in Web browsers because they are lighter weight than Java applets and they do not require installation of any proprietary plugins such as Flash and Silverlight} 
-a conveniently portable solution for delivering the application front end (e.g.~\cite{BNSFoffice365}).
-Emergence and scalability of Node.js also make JavaScript widely adopted on the server side.  
-Consequently, many institutions such as the Khan Academy~\cite{khanAcademy} use JavaScript for teaching programming; and JavaScript has consistently been a top 2 in the RedMonk~\cite{redmonk} popularity rankings.%~\footnote{results are based on projects hosted at GitHub and questions asked at StackOverflow}.
+%JavaScript is increasingly a popular language for software implementation. 
+%; and the World Wide Web is increasingly an attractive platform for delivering applications.
+%For end users, HTML5 and its standardization enable Web apps to have an interactivity and feature-richness comparable to those implemented for traditional desktops.  
+%The latest round of browser wars makes executing JavaScript more efficient, robust, secure and consistent.  
+%For programmers, JavaScript is relatively easy to adopt, and JavaScript does not have the burden of memory management and static typing.
+%More operating systems in both the desktop~\cite{chromeApps, windows8javascript} and mobile~\cite{apacheCordova, iosWebView, blackberryWebWorks, firefoxOS, androidWebView, tizen} actually now support installing and running JavaScript apps on the OS similar to native apps.
+%CSS3 and the responsive UI paradigm enable UI designers to use a single HTML and still support multiple devices of different screen sizes.  
+%The Bring Your Own Device (BYOD) movement in Enterprise IT increases hardware heterogeneity, which also makes JavaScript apps\footnote{JavaScript apps are preferred in Web browsers because they are lighter weight than Java applets and they do not require installation of any proprietary plugins such as Flash and Silverlight} 
+%a conveniently portable solution for delivering the application front end (e.g.~\cite{BNSFoffice365}).
+%Emergence and scalability of Node.js also make JavaScript widely adopted on the server side.  
+%Consequently, many institutions such as the Khan Academy~\cite{khanAcademy} use JavaScript for teaching programming; and JavaScript has consistently been a top 2 in the RedMonk~\cite{redmonk} popularity rankings.%~\footnote{results are based on projects hosted at GitHub and questions asked at StackOverflow}.
+%
+JavaScript has become a popular language for web application development. 
+Despite its popularity, the highly dynamic nature of JavaScript as well as the complex interplay between JavaScript and  the Document Object Model (DOM) make it particularly challenging to test. 
 
-Yet, despite the language's promise and ubiquity, testing JavaScript is not easy.  
-For example, because HTML describes the graphical user interface of a Web app, considerable JavaScript code is written to access and mutate HTML through the Document Object Model (DOM) API.  
-When JavaScript code runs, its runtime execution would encounter operations on the DOM API (DOM operations) that would subtly imply the DOM tree (and thus the webpage's HTML) to have a particular structure.  
-In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.  
-Indeed, a recent empirical study~\cite{frolin2013} of bug reports has concluded that a majority of bugs in JavaScript Web applications are DOM related.  
-Being able to fully test JavaScript code that contain DOM operations would be critical in assuring the quality of a Web application.  
+The DOM is a tree-like structure that provides APIs \cite{w3dom} for accessing, traversing, and mutating the content and structure of HTML elements at runtime. To seamlessly update the client-side state of the application, developers write \js code that calls these DOM APIs. These JavaScript-DOM interactions are known to be error-prone~\cite{frolin2013}. They are also challenging to test because in order to unit test a \js function that has DOM operations, a DOM instance needs to be provided in the structure expected by the function. Otherwise, the execution of the function fails and the test case terminates prematurely.
+To avoid this problem, testers typically write test fixtures with the DOM structure required in their \js unit tests. However, this manual process is time-consuming and costly.
+
+In this paper, we provide a fully automated technique for generating the DOM structure needed for unit testing \js functions. Our technique works through a combination of (1) dynamic backward slicing of \js code, (2) inferring DOM constrains along different paths of the function, and (3) solving those DOM constraints through a DOM-aware constraint solver. We present our concolic engine called \tool, which iteratively analyzes \js  and generates satisfiable DOM structures to achieve code coverage. 
+
+\ali{I was here}
+\tool augments approaches that aim to generate tests automatically.  
+Random testing (e.g.~\cite{artemis}), mutation testing (e.g.~\cite{pythia}), concolic testing (e.g.~\cite{eventConcolic, feedbackConcolic, kudzu, jalangi, cute})... 
+to our best knowledge, almost all of existing research on test generation focused on generating 1) function arguments for unit testing, or 2) events and UI inputs (e.g strings for text fields and forms; mouse clicks for buttons and selection boxes; and key presses) for application-level testing.  
+However, having just the function arguments, events and UI inputs is often insufficient.  
+For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.  
+%JavaScript interacts with the DOM and DOM-related \javascript faults are prevalent 
+
+
+
+
+
+%For example, because HTML describes the graphical user interface of a Web app, considerable JavaScript code is written to access and mutate HTML through the Document Object Model (DOM) API.  
+%When JavaScript code runs, its runtime execution would encounter operations on the DOM API (DOM operations) that would subtly imply the DOM tree (and thus the webpage's HTML) to have a particular structure.  
+%In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.  
+%Indeed, a recent empirical study~\cite{frolin2013} of bug reports has concluded that a majority of bugs in JavaScript Web applications are DOM related.  
+%Being able to fully test JavaScript code that contain DOM operations would be critical in assuring the quality of a Web application.  
 
 
 
@@ -31,11 +49,7 @@ The following are the main contributions of the Research Proficiency Evaluation 
 \item We report how \tool and its generated DOM trees can help test suites improve coverage and reach complete execution.  If a function cannot be fully executed, the test case's assertions cannot be fully run.  
 \end {compactitem}
 
-\tool augments approaches that aim to generate tests automatically.  
-Random testing (e.g.~\cite{artemis}), mutation testing (e.g.~\cite{pythia}), concolic testing (e.g.~\cite{eventConcolic, feedbackConcolic, kudzu, jalangi, cute})... 
-to our best knowledge, almost all of existing research on test generation focused on generating 1) function arguments for unit testing, or 2) events and UI inputs (e.g strings for text fields and forms; mouse clicks for buttons and selection boxes; and key presses) for application-level testing.  
-However, having just the function arguments, events and UI inputs is often insufficient.  
-For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.  
+
 
 
 % present emprical results
@@ -48,3 +62,14 @@ For example, in a Web app, a properly satisfied dependency such as the DOM is of
 %\item Children of a {\tt row} are blocks that make up a piece.  
 %\item etc.
 %\end {compactitem}
+
+%% intro
+\begin{comment}
+
+1. JavaScript interacts with the DOM and DOM-related \javascript faults are prevalent 
+2. Unit testing JavaScript functions required the DOM as input, not any DOM but the DOM in a specific structure
+3. Other techniques only focus on input values to functions and ignore the DOM
+4. Our technique addresses this important issue by...
+5. Our contributions are... our results show that...
+
+\end{comment}
