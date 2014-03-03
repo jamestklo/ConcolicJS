@@ -122,6 +122,22 @@ Thus having a prioritized concolic engine would give the tester greater control 
 
 \subsection{Other Applications}
 
+\begin{figure*}[t]
+\centerline{
+\begin{tabular}{|*2l|*3c|*3c|*3c|}
+\hline
+& & \multicolumn{3}{|c|}{Statements} & \multicolumn{3}{|c|}{Branches} & \multicolumn{3}{|c|}{Paths}\\ 
+App & \# func. & None & Static & Conc. & None & Static & Conc. & None & Static & Conc. \\ \hline
+DOMtris &  &  &  & & & & & & &\\ \hline
+Mancala &  &  &  & & & & & & &  \\ \hline
+Ghostbusters &  &  &  & & & & & & &  \\ \hline
+etc... &  &  &  & & & & & & & \\ \hline
+\end{tabular}
+}
+\caption{Average number of Statements, Branches and Paths for functions being evaluated for a number of applications. For each metric, a column presents the results Without HTML (None), With existing HTML (Static), and using our tool (Conc.).} 
+\label{paths}
+\end{figure*}
+
 % yahoo
 % Tinysort
 %  http://tinysort.sjeiti.com/
