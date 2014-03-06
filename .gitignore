@@ -37,3 +37,4 @@ paper.pdf
 *.vrb
 *.xdy
 *.tdo
+.DS_Store
