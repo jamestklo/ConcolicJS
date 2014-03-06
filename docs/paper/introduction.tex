@@ -11,42 +11,46 @@
 %Emergence and scalability of Node.js also make JavaScript widely adopted on the server side.  
 %Consequently, many institutions such as the Khan Academy~\cite{khanAcademy} use JavaScript for teaching programming; and JavaScript has consistently been a top 2 in the RedMonk~\cite{redmonk} popularity rankings.%~\footnote{results are based on projects hosted at GitHub and questions asked at StackOverflow}.
 %
-JavaScript has become a popular language for web application development. 
-Despite its popularity, the highly dynamic nature of JavaScript as well as the complex interplay between JavaScript and  the Document Object Model (DOM) make it particularly challenging to test. 
+JavaScript has become a popular language for application development. 
+To create responsive web applications, developers write \js code that interacts dynamically with the Document Object Model (DOM). 
 
-The DOM is a tree-like structure that provides APIs \cite{w3dom} for accessing, traversing, and mutating the content and structure of HTML elements at runtime. To seamlessly update the client-side state of the application, developers write \js code that calls these DOM APIs. These JavaScript-DOM interactions are known to be error-prone~\cite{frolin2013}. They are also challenging to test because in order to unit test a \js function that has DOM operations, a DOM instance needs to be provided in the structure expected by the function. Otherwise, the execution of the function fails and the test case terminates prematurely.
-To avoid this problem, testers typically write test fixtures with the DOM structure required in their \js unit tests. However, this manual process is time-consuming and costly.
+The DOM is a tree-like structure that provides APIs \cite{w3dom} for accessing, traversing, and mutating the content and structure of HTML elements at runtime. As such, changes made through \js code via these DOM API calls become directly visible in the browser. 
 
-In this paper, we provide a fully automated technique for generating the DOM structure needed for unit testing \js functions. Our technique works through a combination of (1) dynamic backward slicing of \js code, (2) inferring DOM constrains along different paths of the function, and (3) solving those DOM constraints through a DOM-aware constraint solver. We present our concolic engine called \tool, which iteratively analyzes \js  and generates satisfiable DOM structures to achieve code coverage. 
+The complex interplay between JavaScript and the DOM makes it particularly challenging for developers to understand \cite{clematisICSE14}, analyze~\cite{staticJsFSE11, staticJsFSE13}, and test~\cite{artemis, pythia} \js applications. Recent empirical studies have also shown that these JavaScript-DOM interactions are particularly error-prone~\cite{frolin2013}.
 
-\ali{I was here}
-\tool augments approaches that aim to generate tests automatically.  
-Random testing (e.g.~\cite{artemis}), mutation testing (e.g.~\cite{pythia}), concolic testing (e.g.~\cite{eventConcolic, feedbackConcolic, kudzu, jalangi, cute})... 
-to our best knowledge, almost all of existing research on test generation focused on generating 1) function arguments for unit testing, or 2) events and UI inputs (e.g strings for text fields and forms; mouse clicks for buttons and selection boxes; and key presses) for application-level testing.  
-However, having just the function arguments, events and UI inputs is often insufficient.  
-For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.  
+In order to unit test a \js function that has DOM operations, a DOM instance needs to be provided in the exact structure as expected by the function. Otherwise, the execution of the function fails (e.g., due to null exceptions) and the test case terminates prematurely.
+To avoid this problem, testers typically write test fixtures for the DOM structure required in their \js unit tests. This manual process is, however, time-consuming and costly.
+
+Current automated web testing techniques ignore the DOM as a test input and mainly focus on generating (1) event-sequences and UI inputs, e.g., strings for form input fields \cite{mesbah:tse12, kudzu}, or (2) test inputs in the form of function arguments~\cite{artemis, pythia, jalangi}.
+
+In this paper, we provide a fully automated technique for generating the DOM structure needed for unit testing \js functions. Our technique works through a combination of (1) dynamic backward slicing of \js code, (2) inferring DOM constrains along different paths of the function, and (3) solving those DOM constraints through a DOM-aware constraint solver. We present our concolic engine called \tool, which iteratively analyzes \js code and generates satisfiable DOM structures to achieve runnable test cases with high code coverage. 
+
+ To the best of our knowledge, our work is the first to consider the DOM as an important test input artifact and generate satisfied DOM structures for \js unit testing.
+
+
+%Random testing (e.g.~\cite{artemis}), mutation testing (e.g.~\cite{pythia}), concolic testing (e.g.~\cite{eventConcolic, feedbackConcolic, kudzu, jalangi, cute})... to our best knowledge, almost all of existing research on test generation focused on generating 1) function arguments for unit testing, or 2) events and UI inputs (e.g strings for text fields and forms; mouse clicks for buttons and selection boxes; and key presses) for application-level testing.  
+%However, having just the function arguments, events and UI inputs is often insufficient.  
+%For example, in a Web app, a properly satisfied dependency such as the DOM is often necessary for test cases and assertions to reach complete execution.  
+%
+% To seamlessly update the client-side state of the application, developers write \js code that calls these DOM APIs. 
+%\tool augments approaches that aim to generate tests automatically.  
 %JavaScript interacts with the DOM and DOM-related \javascript faults are prevalent 
-
-
-
-
-
 %For example, because HTML describes the graphical user interface of a Web app, considerable JavaScript code is written to access and mutate HTML through the Document Object Model (DOM) API.  
 %When JavaScript code runs, its runtime execution would encounter operations on the DOM API (DOM operations) that would subtly imply the DOM tree (and thus the webpage's HTML) to have a particular structure.  
 %In other words, when trying to run a test case, if the DOM structure does not satisfy what the code expects it to be, execution would fail and the test case would terminate prematurely.  
 %Indeed, a recent empirical study~\cite{frolin2013} of bug reports has concluded that a majority of bugs in JavaScript Web applications are DOM related.  
 %Being able to fully test JavaScript code that contain DOM operations would be critical in assuring the quality of a Web application.  
+%\header{Contributions.}
+%The following are the main contributions of the Research Proficiency Evaluation (RPE) report:
 
+Our work makes the following key contributions:
 
-
-\header{Contributions.}
-The following are the main contributions of the Research Proficiency Evaluation (RPE) report:
-\begin {compactitem}
-\item We propose an automated, generic, transparent and browser-independent approach for systematically generating DOM tree structures to test JavaScript code that contains DOM operations.
-\item We describe how JavaScript code and its execution can dynamically be analyzed for deducing constraints relevant for generating DOM trees.
-\item We design a novel DOM solver to support the DOM's 2D tree structure, to infer implicit clues from DOM operations that are partial and incomplete, and to tailor the DOM tree for targeting precise subsets of the code base.
-\item We present an implementation of our end to end automatic system from deducing constraints to generating HTML and driving test execution.
-\item We report how \tool and its generated DOM trees can help test suites improve coverage and reach complete execution.  If a function cannot be fully executed, the test case's assertions cannot be fully run.  
+\begin{compactitem}
+\item We propose a generic, automated concolic approach for generating DOM tree structures to effectively unit test JavaScript code. %that contains DOM operations.
+\item We describe a technique for deducing DOM structure constraints based on dynamic backward slicing of \js code.
+\item We present a novel method for solving the deduced DOM constraints. The method supports the DOM's 2D tree structure, infers implicit clues from DOM operations that are partial and incomplete, and tailors the DOM tree for targeting precise subsets of the code base.
+\item We present an implementation of our approach called \tool, which is browser-independent and fr\-eely available. \tool has an end-to-end concolic engine that supports deducing and solving DOM constraints, generating HTML test fixtures, and driving test execution.
+\item We report an empirical evaluation of our approach in which we assess the efficacy of \tool in improving test execution completion and coverage.  %If a function cannot be fully executed, the test case's assertions cannot be fully run.  
 \end {compactitem}
 
 
