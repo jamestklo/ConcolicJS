@@ -49,8 +49,8 @@ Next, we define how children are ordered and quantify {\tt children.length}:
 The parent SMT functions are quantified as the inverse of the child SMT functions (e.g. {\tt line 48}).  Similar to {\tt firstChild()} and {\tt lastChild()}, the sibling SMT functions are defined by extending {\tt children(x, y, j)}.  
 For example, the next sibling of a node has the same parent and child index {\tt j+1}, when the node has child index {\tt j}.
 
-\begin{figure}
-\begin{lstlisting}[caption=SMT functions for defining the children.length DOM operation.  We start with defining the parent-child relationships; then move on to the ordering of children; then use the child index of the last child to define and quantify the {\tt childrenLength()} boolean function,label=childrenLength]  
+\begin{figure}[th]
+\begin{lstlisting}[caption=SMT functions for defining the children.length DOM operation.  We start with defining the parent-child relationships; then move on to the ordering of children; then use the child index of the last child to define and quantify the {\tt childrenLength()} boolean function,label=childrenLength.]  
 % child(x, y): x is a child of y.
 child: (Node, Node) -> BOOLEAN;	
 
