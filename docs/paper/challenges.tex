@@ -6,8 +6,8 @@
 % how to deal with incomplete traces.  concolic testing, seed.  
 \header{Motivating Example.}
 We use \autoref{dom0} to further illustrate the necessity of having satisfiable DOM structures as input for \js unit testing.
-This example is simplified code from a feature Chrome Experiment~\cite{domtris} that uses the DOM to implement the game Tetris.  
-
+This example is simplified code from a feature Chrome Experiment~\cite{domtris} that uses \js to implement the Tetris game.
+%
 %To further illustrate the necessity of having a satisfiable DOM structure, suppose we conduct concolic testing on the {\tt function clearBoard()} in Sample Code \ref{dom0}.  
 %The function comes from a sample Web application written by Intel~\cite{mancala} for developing in the Tizen OS. 
 %Tizen OS
@@ -16,39 +16,41 @@ This example is simplified code from a feature Chrome Experiment~\cite{domtris} 
 %A path is a sequential permutation of branches.  For example, an {\tt if} statement has at least a {\tt True} branch and a {\tt False} branch.  
 %A loop has 2 branches, {\tt Stay} and {\tt Break}.  The condition inside the statement or loop decides which branch the execution would follow.  
 %Maximizing path coverage would be to generate inputs for executing every possible permutation of condition branches.  
-For instance, to achieve branch coverage for the \code{checkRows()} function, we must visit both the {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}.
-To cover the \code{True} branch, the function  needs to have access to a DOM tree structure satisfying many constraints:
+To achieve branch coverage for the \code{checkRows()} function, we must visit both the {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}. 
+Note that {\tt checkRows()} does not take any input arguments;\footnote{Functions without input arguments are common in JavaScript programs.} 
+instead brach decisions are made based on the structure and properties of the DOM.
+To cover the \code{True} branch, the function  needs to have access to a DOM tree  satisfying the following constraints:
 \\
 \begin{sloppy}
 \begin {compactitem}
 \item a DOM element with ID {\tt "field"} exists ({\tt line 2}).
-\item {\tt field} contains children elements, so that we can  enter the {\tt for} loop ({\tt line 4}).
-\item rows with ID's in the nomenclature {\tt row0}, {\tt row1}, $\dots$, exist ({\tt line 5}).
-\item the number of rows must be greater than or equal to the number of children that {\tt field} has (because the ID of each {\tt row} is made distinct by {\tt i} ({\tt line 5}),   and according to the {\tt for} loop, {\tt i} spans from {\tt field.children.length} to 1 ({\tt line 4}).
-\item at least one of the rows must have exactly 10 children ({\tt line 6}).
+\item {\tt field} has child nodes, so that we can enter the {\tt for} loop ({\tt line 4}).
+\item rows exist with ID's in the nomenclature {\tt row0}, {\tt row1}, {\tt row2}, $\dots$,  ({\tt line 5}).
+\item the number of rows is greater than or equal to the number of children of {\tt field} (because the ID of each {\tt row} is made distinct by {\tt i} ({\tt line 5}),   and according to the {\tt for} loop, {\tt i} spans from {\tt field.children.length} to 1 ({\tt line 4}).
+\item at least one of the rows must have exactly 10 child nodes ({\tt line 6}).
 \end {compactitem}
 \end{sloppy}
+\ \
 
-Unless a DOM instance with all of the above constraints is provided, the \code{True} branch will not be covered. In fact, if such a DOM structure is not present during the execution of the function, the execution would even halt due to null/undefined exceptions. For example, when the DOM tree does not have an element with ID {\tt "field"}, the variable {\tt field} would have a {\tt null} value. Consequently, the property access {\tt field.children} would result in a {\tt Type Error} and the rest of the function cannot be execution  nor tested. Thus, a satisfying DOM tree must be generated so that the function's execution would first of all not crash and secondly cover the specific DOM-dependent branch.
-
+Unless a DOM instance with all of the above constraints is provided, the \code{True} branch will not be covered. In fact, if such a DOM structure is not present during the test execution of the function, the execution would even halt due to null/undefined exceptions. For example, when the DOM tree does not have an element with ID {\tt "field"}, the variable {\tt field} would have a {\tt null} value. Consequently, the property access {\tt field.children} would result in a {\tt Type Error} and the rest of the function cannot be execution  nor tested. Thus, for effective unit testing of \js code that interacts with the DOM, a satisfying DOM tree must be created so that the execution (1) does not terminate, and (2) covers the specific DOM-dependent branch. 
+%
 %While manual generation of DOM trees is possible, the manual approach would quickly become tedious and not scalable.  
 %The reason is that a unique structure of the DOM tree is required for going through a different execution path.  
 %For example, to go to the {\tt False} branch of the above {\tt if} statement, rows cannot have 10 children.
-To cover both the {\tt True} and {\tt False} branch of the {\tt if} statement in {\tt line 6}, we must generate 2 separate DOM trees.  %Generally for an {\tt if} statement, we have to consider generating an unique DOM tree for each of the {\tt true} branch,  all {\tt else if} branches, and the {\tt else} branch.  
+To cover multiple DOM-dependent branches, multiple DOM instances need to be created. For example, to cover the two {\tt True} and {\tt False} branches of the {\tt if} statement in {\tt line 6}, two separate DOM instances must be created.  %Generally for an {\tt if} statement, we have to consider generating an unique DOM tree for each of the {\tt true} branch,  all {\tt else if} branches, and the {\tt else} branch.  
 %Loops are more difficult for achieving path coverage, because generally it is not easy to determine what the upper limit is for iterating a loop.  
-The same applies for path coverage when considering loops, i.e., depending on our path coverage adequacy criteria, we need to generate multiple DOM trees.
+The same applies for path coverage. %when considering loops, i.e., depending on our path coverage adequacy criteria, we need to generate multiple DOM trees.
 %For example, {\tt field} can have any number of children in \autoref{dom0}.  Thus the loop can get iterated any number of times.  
 
 %Overall, covering an additional conditional statement, be it an {\tt if}, a {\tt switch} or a loop, would potentially multiply the number of unique DOM trees.  
 
 %Nevertheless, the number of unique DOM structures would at least double whenever we try to cover an additional DOM-dependent condition, be the condition is inside an {\tt if}, a {\tt switch} or a loop.  
-%Manual generation can become complex as DOM-dependent conditions can get scattered across multiple files in the code, making it labor intensive to accurately trace all of the DOM elements and relevant constraints.  
-Random generation is not feasible in this case because the required DOM tree typically would have a specific structure that cannot be matched by chance. Thus the desired approach has to be automated, systematic, and precisely targeted.
+Manually creating these DOM structures is challenging as tracking DOM operations and related constraints across multiple \js functions and files can become labor intensive.  Random generation is not feasible because required DOM instances typically have  specific structures that cannot be matched by chance. 
+%Thus, the desired approach has to be automatic as well as targeted.
+Our goal in this work is to provide an automatic targeted solution for generating satisfiable DOM trees. These generated DOM tress would serve as \emph{test fixtures} in \js unit tests, facilitating proper code execution and coverage.
 
-Further, it should be noted that the {\tt checkRows()} function does not take any input arguments; and functions without input arguments are common in JavaScript programs.
 %Yet, these functions have major dependencies such as the DOM.
 %Thus even when we have a test suite that is very well defined and can potentially yield a very high coverage, whether through manual or automatic generation, considerable JavaScript code cannot get properly tested or covered unless the corresponding DOM structure is properly defined.  
-Our goal in this work is to provide an automated and systematic solution for generating satisfiable DOM trees.
 
 \begin{figure}[t]
 \centering
@@ -102,8 +104,7 @@ function checkRows() {
 %\label{mancala}
 %\end{figure*}
 
-\ali{I was here!}
-\header{Challenges}
+\header{Challenges.}
 While trying to generate satisfiable DOM trees, we encountered challenges that motivate us to pursue a concolic approach.  
 In the concolic approach, we also had to resolve challenges that are associated with supporting the 2D tree structure of the DOM.  
 
