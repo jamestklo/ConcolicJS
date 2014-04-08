@@ -1,10 +1,10 @@
-\section{Motivation and Challenges}
+\section{Motivation and Goal}
 %We encountered and had to resolve several challenges while trying to generate satisfiable DOM trees:
 % want 1 example
 % keep language consistent: DOM (not HTML). 
 % give challenge numbers, approach solves challenge number say 1.  
 % how to deal with incomplete traces.  concolic testing, seed.  
-\header{Motivating Example.}
+%\header{Motivating Example.}
 We use \autoref{dom0} to further illustrate the necessity of having satisfiable DOM structures as input for \js unit testing.
 This example is simplified code from a feature Chrome Experiment~\cite{domtris} that uses \js to implement the Tetris game.
 %
@@ -47,7 +47,7 @@ The same applies for path coverage. %when considering loops, i.e., depending on 
 %Nevertheless, the number of unique DOM structures would at least double whenever we try to cover an additional DOM-dependent condition, be the condition is inside an {\tt if}, a {\tt switch} or a loop.  
 Manually creating these DOM structures is challenging as tracking DOM operations and related constraints across multiple \js functions and files can become labor intensive.  Random generation is not feasible because required DOM instances typically have  specific structures that cannot be matched by chance. 
 %Thus, the desired approach has to be automatic as well as targeted.
-Our goal in this work is to provide an automatic targeted solution for generating satisfiable DOM trees. These generated DOM tress would serve as \emph{test fixtures} in \js unit tests, facilitating proper code execution and coverage.
+Our goal in this work is to provide an automatic targeted solution for generating satisfiable DOM trees. These generated DOM tress would serve as \emph{test fixtures} in unit tests, facilitating proper \js code execution and coverage.
 
 %Yet, these functions have major dependencies such as the DOM.
 %Thus even when we have a test suite that is very well defined and can potentially yield a very high coverage, whether through manual or automatic generation, considerable JavaScript code cannot get properly tested or covered unless the corresponding DOM structure is properly defined.  
@@ -104,6 +104,7 @@ function checkRows() {
 %\label{mancala}
 %\end{figure*}
 
+%\begin{comment}
 \header{Challenges.}
 While trying to generate satisfiable DOM trees, we encountered challenges that motivate us to pursue a concolic approach.  
 In the concolic approach, we also had to resolve challenges that are associated with supporting the 2D tree structure of the DOM.  
@@ -249,6 +250,7 @@ Aliasing can become complex because multiple sub-chains of varying length can re
 Thus the DOM tree's 2D structure and implicit clues are another reason for requiring a DOM specific solver.  
 A non-solver approach would simply not work when it tries to generate a na\"{i}ve tree (\autoref{trees} Na\"{i}ve DOM) by grouping individual DOM chains and connecting them na\"{i}vely to a master root (the dashed lines in \autoref{trees}).  
 
+%\end{comment}
 
 % \header{DOM Mutations}  
 % give update score as example

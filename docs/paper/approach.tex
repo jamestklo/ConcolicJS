@@ -1,10 +1,59 @@
-\section{DOM Constraints}
-Given a piece of JavaScript code, and a path that we intend the code execution to follow, 
-our goal is to generate a DOM tree to guide and support the code execution.  
+\section{Approach}
+%Given a piece of JavaScript code, and a path that we intend the code execution to follow,  our goal is to generate a DOM tree to guide and support the code execution.  
 
-As an overview, our approach is to first instrument the JavaScript code so that we can log the code's execution for producing a dynamic trace and a dynamic backward slice.    
-Next we analyze the trace and the slice to extract DOM-specific operations and to deduce constraints, which the DOM solver would take as input for generating a satisfying DOM tree.  
-The resulting DOM tree would be transformed into HTML, which we will insert into the webpage for guiding code execution.  
+At a high-level, our approach concolically generates DOM trees to achieve path coverage. We first instrument the \js code to trace the execution. Next, we identify dynamic backward slices of DOM operations and deduce DOM-specific constraints from the slices. Then, We feed these constraints into a DOM-aware solver for generating the expected DOM structure. 
+The resulting DOM tree is then transformed into HTML and used as a test fixture in a \js unit test. We continue this process recursively until all DOM-based paths in the \js function are covered.
+
+We present an overview of some challenges in generating satisfiable DOM trees, followed by a salient description of our approach.
+
+\subsection{Challenges}
+
+\header{Multiple Constraints.}
+Each DOM operation provides a single constraint or clue to a subset of the overall DOM tree structure. A simple approach would be to generate DOM elements {\tt "}just in time{\tt "}.  
+However, such na\"ive approach does not work when there are multiple DOM constraints in the logic of the code. 
+For example when the index page of Wikipedia~\cite{wikipedia} is loaded,  a jQuery function retrieves the DOM element with a specific ID: {\tt \$("\#B13\_120517\_dwrNode\_enYY")}.
+To satisfy this DOM operation, we can simply create a DOM element with ID {\tt "B13\_120517\_dwrNode\_enYY"}.  
+However, as the webpage continues to load, there is call made to {\tt \$("div\#B13\_120517\_dwrNode\_enYY")}.  
+This time the DOM is expected to have a \code{<div>} element by the exact same ID.  
+The second DOM operation can be satisfied {\em only} if we created a \code{<div>} element in the first place.  Thus, DOM operations have to be collectively analyzed for proper constraint inference.
+
+\begin{figure}[t]
+\begin{lstlisting}[caption=Example code showing how DOM operations can have logical constraints that are interdependent with each other: {\tt line 3} and {\tt line 6}.  To make all these {\tt if} statements {\tt true} the sub conditions in {\tt line 3} and {\tt line 6} become mutually exclusive: they cannot be {\tt true} at the same time because {\tt d} cannot be both a parent and a child of the same DOM element {\tt elem}.   Note that the final 2 conditions ({\tt line 9} and {\tt line 12}) would collectively influence the DOM solver to decide which sub condition ({\tt line 3} vs. {\tt line 6}) to become {\tt true}.,label=domOr]  
+if (d === elem.firstElementChild
+ || d === b.lastElementChild) {}
+... 
+if (d === elem.parentElement
+ || d === b.parentElement) {}
+...
+if (b.previousElementSibling === 
+    c.firstElementChild) {}
+... 
+if (elem.parentElement.parentElement 
+    === c.lastElementChild.previousElementSibling) {}  
+\end{lstlisting}
+\end{figure}
+
+
+\header{2D Tree Structure.}  
+The DOM tree has a 2-dimensional hierarchical structure that makes it a more challenging target to reason about than traditional single dimensional data types (e.g., integers, real numbers, or strings). 
+For instance, when given the constraint \code{(a.previousElementSibling === c.firstElementChild)}, we must infer that \code{c} is the parent of \code{b}. 
+\sloppy{
+This type of aliasing can become quite complex because DOM operations can be chained and multiple sub-chains of varying length can refer to the same DOM element.
+%In JavaScript, a DOM operation on a DOM element (e.g. {\tt elem.parentElement}) returns another DOM element.
+%Thus chaining occurs when more DOM operations build on an existing DOM chain.
+For example, when we extend the chain {\tt elem.parentElement} with another {\tt .parentElement} DOM operation, {\tt elem.parentElement.parentElement} returns the grandparent of {\tt elem}.
+To solve the constraint {(\tt elem.parentElement.parentElement === c.lastElementChild.previousElementSibling}) (In \autoref{domOr}, {\tt line 12}), one has to infer that {\tt b.nextElementSibling} is also {\tt c.lastElementChild} (see \autoref{trees} Solved DOM), because the code also stated that ({\tt d === b.lastElementChild}) and ({\tt d === elem.parentElement}).  
+Note that such chains can span in both parental and sibling dimensions. %, e.g., {\tt elem.parentElement.parentElement.nextElementSibling} {\tt .children[2].previousElementSibling}.    
+}
+
+
+
+ 
+
+
+
+
+
 
 \begin{figure}
 \begin{lstlisting}[caption=Example showing how code is instrumented for dynamic analysis.  The comment at line 9 shows the decorated object {\tt a} and its nested tree data structure.    
@@ -25,6 +74,9 @@ if (__cond("IF_NAME filename.js 1", a)){}
 \end{lstlisting}
 \end{figure}
 
+\subsection{challenges}
+
+\section{Inferring DOM Constraints}
 
 \header{Decorated Execution.}
 Decorated execution is where we instrument the JavaScript code so that the execution of each JavaScript operator can be captured and decorated with additional data for producing a dynamic trace and a dynamic backward slice.  
